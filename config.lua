@@ -7,6 +7,10 @@ Config.police = {
     job = 'police',                    -- job name gate for every server-side check in this resource
 }
 
+Config.performance = {
+    diagnostics = false,               -- true prints bounded spike/ALPR scan totals when their lifecycle-bound workers stop
+}
+
 Config.cuff = {
     cuffTime = 5000,                   -- ms the hard-cuff animation/progressbar takes
     distance = 2.5,                    -- max distance to cuff/uncuff/escort/drag/put-in-vehicle a target

@@ -46,6 +46,6 @@ end)
 
 RegisterCommand('backup', function()
     if not Police.isOnDuty() then return end
-    local coords = GetEntityCoords(PlayerPedId())
+    local coords = QB.cache.coords()
     TriggerServerEvent('qbpolice:server:requestBackup', { message = 'Officer requesting backup', coords = coords })
 end, false)
