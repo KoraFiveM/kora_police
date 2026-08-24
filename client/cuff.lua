@@ -48,8 +48,8 @@ end)
 -- only fires on the next actual transition.
 if Police.cuffed then startCuffedControlThread() end
 
-exports.qbtarget:addGlobalType('player', {
-    options = {
+local function registerCuffTargets()
+    exports.qbtarget:addGlobalType('player', {
         {
             label = 'Cuff',
             icon = 'lock',
@@ -70,5 +70,10 @@ exports.qbtarget:addGlobalType('player', {
                 TriggerServerEvent('qbpolice:server:uncuff', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
-    },
-}, Config.cuff.distance)
+    }, Config.cuff.distance)
+end
+registerCuffTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerCuffTargets() end
+end)

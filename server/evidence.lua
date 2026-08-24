@@ -23,13 +23,24 @@
 --    goes through qbinventory's real player-inspection + transfer protocol,
 --    not a bespoke mechanism.
 
-CreateThread(function()
+-- Registers the evidence-locker stash against qbinventory. Called once at
+-- load AND again on every qbinventory onResourceStart -- a qbinventory
+-- restart mid-session wipes qbinventory's own stash table, and a
+-- `dependency 'qbinventory'` declaration only guarantees start order on a
+-- fresh boot, not survival of that later restart.
+local function registerEvidenceLocker()
     exports.qbinventory:RegisterStash(
         Config.evidence.lockerStashId, Config.evidence.lockerLabel,
         Config.evidence.lockerSlots, Config.evidence.lockerMaxWeight,
         nil, { [Config.police.job] = Config.evidence.minGradeToAccess },
         Config.evidence.lockerCoords
     )
+end
+
+CreateThread(registerEvidenceLocker)
+
+AddEventHandler('onResourceStart', function(resourceName)
+    if resourceName == 'qbinventory' then CreateThread(registerEvidenceLocker) end
 end)
 
 -- Legacy "world evidence" compat -- blood drops / casings / fingerprints left

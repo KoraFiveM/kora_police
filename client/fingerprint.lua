@@ -1,7 +1,7 @@
 -- Reveal a suspect's fingerprint id via search.
 
-exports.qbtarget:addGlobalType('player', {
-    options = {
+local function registerFingerprintTargets()
+    exports.qbtarget:addGlobalType('player', {
         {
             label = 'Check Fingerprint',
             icon = 'fingerprint',
@@ -14,8 +14,13 @@ exports.qbtarget:addGlobalType('player', {
                 if fingerprint then Police.notify(('Fingerprint: %s'):format(fingerprint), 'info') end
             end,
         },
-    },
-}, Config.cuff.distance)
+    }, Config.cuff.distance)
+end
+registerFingerprintTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerFingerprintTargets() end
+end)
 
 RegisterNetEvent('police:client:showFingerprint', function(fingerprint)
     Police.notify(('Fingerprint: %s'):format(fingerprint), 'info')

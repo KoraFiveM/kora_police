@@ -14,7 +14,13 @@
 
 Police.armoryShops = Police.armoryShops or {}
 
-CreateThread(function()
+-- Registers every armory-room shop against qbinventory. Called once at load
+-- (via the dependency-ordering guarantee below) AND again on every
+-- qbinventory onResourceStart -- a `dependency 'qbinventory'` declaration
+-- only guarantees START ORDER on a fresh boot, not survival of a later
+-- qbinventory RESTART mid-session, which wipes qbinventory's own shop table
+-- without touching qbpolice at all.
+local function registerArmoryShops()
     for _, shop in ipairs(Config.armory.shops) do
         -- `groups` is qbinventory's own job/grade access check (see its
         -- server.lua canAccess/groupAllowed) -- set here so the shop is
@@ -28,6 +34,12 @@ CreateThread(function()
         })
         Police.armoryShops[shop.id] = { config = shop, key = key }
     end
+end
+
+CreateThread(registerArmoryShops)
+
+AddEventHandler('onResourceStart', function(resourceName)
+    if resourceName == 'qbinventory' then CreateThread(registerArmoryShops) end
 end)
 
 ---@param src integer

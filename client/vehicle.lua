@@ -16,8 +16,8 @@ RegisterNetEvent('qbpolice:client:takeOutVehicle', function()
     end
 end)
 
-exports.qbtarget:addGlobalType('vehicle', {
-    options = {
+local function registerVehicleTargets()
+    exports.qbtarget:addGlobalType('vehicle', {
         {
             label = 'Put Suspect In Vehicle',
             icon = 'car',
@@ -31,5 +31,10 @@ exports.qbtarget:addGlobalType('vehicle', {
                 TriggerServerEvent('qbpolice:server:putInVehicle', target, netId, -1)
             end,
         },
-    },
-})
+    })
+end
+registerVehicleTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerVehicleTargets() end
+end)

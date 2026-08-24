@@ -1,8 +1,8 @@
 -- Cuff-and-book: officer targets a cuffed suspect to send them to jail for
 -- Config.jail.defaultMinutes. Server clears cuff/escort/drag state on booking.
 
-exports.qbtarget:addGlobalType('player', {
-    options = {
+local function registerJailTargets()
+    exports.qbtarget:addGlobalType('player', {
         {
             label = 'Book (Jail)',
             icon = 'gavel',
@@ -19,5 +19,10 @@ exports.qbtarget:addGlobalType('player', {
                 TriggerServerEvent('qbpolice:server:jailPlayer', targetServerId, result.values.minutes, result.values.reason)
             end,
         },
-    },
-}, Config.cuff.distance)
+    }, Config.cuff.distance)
+end
+registerJailTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerJailTargets() end
+end)

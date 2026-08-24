@@ -1,8 +1,8 @@
 -- Citations. Officer enters an amount/reason via QB.nui.openInputDialog; the
 -- server is authoritative on whether the target can actually be charged.
 
-exports.qbtarget:addGlobalType('player', {
-    options = {
+local function registerBillTargets()
+    exports.qbtarget:addGlobalType('player', {
         {
             label = 'Issue Citation',
             icon = 'receipt',
@@ -19,5 +19,10 @@ exports.qbtarget:addGlobalType('player', {
                 TriggerServerEvent('qbpolice:server:bill', targetServerId, result.values.amount, result.values.reason)
             end,
         },
-    },
-}, Config.cuff.distance)
+    }, Config.cuff.distance)
+end
+registerBillTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerBillTargets() end
+end)

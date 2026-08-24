@@ -27,7 +27,7 @@ local function attemptBreach(door)
     end)
 end
 
-CreateThread(function()
+local function registerBreachDoorTargets()
     for _, door in ipairs(Config.breach.doors) do
         exports.qbtarget:addBoxZone({
             coords = door.coords,
@@ -47,4 +47,10 @@ CreateThread(function()
             },
         })
     end
+end
+
+CreateThread(registerBreachDoorTargets)
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerBreachDoorTargets() end
 end)

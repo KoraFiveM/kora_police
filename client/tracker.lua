@@ -27,8 +27,8 @@ RegisterNetEvent('police:client:TrackerMessage', function(_, message)
     Police.notify(message, 'info')
 end)
 
-exports.qbtarget:addGlobalType('player', {
-    options = {
+local function registerTrackerTargets()
+    exports.qbtarget:addGlobalType('player', {
         {
             label = 'Attach Tracker',
             icon = 'radar',
@@ -39,5 +39,10 @@ exports.qbtarget:addGlobalType('player', {
                 TriggerServerEvent('qbpolice:server:setTracker', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)), true)
             end,
         },
-    },
-}, Config.cuff.distance)
+    }, Config.cuff.distance)
+end
+registerTrackerTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerTrackerTargets() end
+end)

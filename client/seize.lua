@@ -1,7 +1,7 @@
 -- SeizeCash / SeizeDriverLicense targeting on a restrained suspect.
 
-exports.qbtarget:addGlobalType('player', {
-    options = {
+local function registerSeizeTargets()
+    exports.qbtarget:addGlobalType('player', {
         {
             label = 'Seize Cash',
             icon = 'banknote',
@@ -22,5 +22,10 @@ exports.qbtarget:addGlobalType('player', {
                 TriggerServerEvent('qbpolice:server:seizeDriverLicense', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
-    },
-}, Config.cuff.distance)
+    }, Config.cuff.distance)
+end
+registerSeizeTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerSeizeTargets() end
+end)

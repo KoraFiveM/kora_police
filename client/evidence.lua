@@ -1,24 +1,31 @@
 -- Evidence locker UI wiring -- opens the qbinventory stash registered in
 -- server/evidence.lua. No inventory logic lives here at all.
 
-exports.qbtarget:addBoxZone({
-    coords = Config.evidence.lockerCoords,
-    size = { x = 1.5, y = 1.5, z = 2.0 },
-    heading = Config.evidence.lockerCoords.w,
-    distance = Config.evidence.lockerDistance,
-    options = {
-        {
-            label = Config.evidence.lockerLabel,
-            icon = 'archive',
-            canInteract = function()
-                return Police.isOnDuty()
-            end,
-            onSelect = function()
-                exports.qbinventory:openInventory('stash', Config.evidence.lockerStashId)
-            end,
+local function registerEvidenceLockerTargets()
+    exports.qbtarget:addBoxZone({
+        coords = Config.evidence.lockerCoords,
+        size = { x = 1.5, y = 1.5, z = 2.0 },
+        heading = Config.evidence.lockerCoords.w,
+        distance = Config.evidence.lockerDistance,
+        options = {
+            {
+                label = Config.evidence.lockerLabel,
+                icon = 'archive',
+                canInteract = function()
+                    return Police.isOnDuty()
+                end,
+                onSelect = function()
+                    exports.qbinventory:openInventory('stash', Config.evidence.lockerStashId)
+                end,
+            },
         },
-    },
-})
+    })
+end
+registerEvidenceLockerTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerEvidenceLockerTargets() end
+end)
 
 -- World evidence markers (blood/casing/fingerprint) -- compat rendering for
 -- the legacy evidence:server:Create* events; deliberately simple blips, not

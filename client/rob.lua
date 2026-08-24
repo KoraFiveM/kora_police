@@ -1,7 +1,7 @@
 -- Legacy RobPlayer -- plain player-vs-player, no cuff requirement.
 
-exports.qbtarget:addGlobalType('player', {
-    options = {
+local function registerRobTargets()
+    exports.qbtarget:addGlobalType('player', {
         {
             label = 'Rob',
             icon = 'hand-coins',
@@ -12,5 +12,10 @@ exports.qbtarget:addGlobalType('player', {
                 TriggerServerEvent('qbpolice:server:rob', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
-    },
-}, Config.cuff.distance)
+    }, Config.cuff.distance)
+end
+registerRobTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerRobTargets() end
+end)

@@ -3,8 +3,8 @@
 -- `FlaggedPlateTriggered` for every on-duty officer (server-side dedupe of
 -- who gets notified; this client only decides when to ask).
 
-exports.qbtarget:addGlobalType('vehicle', {
-    options = {
+local function registerPlateFlagTargets()
+    exports.qbtarget:addGlobalType('vehicle', {
         {
             label = 'Flag Plate',
             icon = 'flag',
@@ -31,8 +31,13 @@ exports.qbtarget:addGlobalType('vehicle', {
                 TriggerServerEvent('qbpolice:server:unflagPlate', GetVehicleNumberPlateText(entity))
             end,
         },
-    },
-})
+    })
+end
+registerPlateFlagTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerPlateFlagTargets() end
+end)
 
 local checked = {}
 local lastReset = GetGameTimer()

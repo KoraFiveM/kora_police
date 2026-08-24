@@ -63,8 +63,8 @@ RegisterNetEvent('qbpolice:client:dragStopSelf', function()
     Police.draggedTarget = nil
 end)
 
-exports.qbtarget:addGlobalType('player', {
-    options = {
+local function registerEscortTargets()
+    exports.qbtarget:addGlobalType('player', {
         {
             label = 'Escort',
             icon = 'footprints',
@@ -105,5 +105,10 @@ exports.qbtarget:addGlobalType('player', {
                 TriggerServerEvent('qbpolice:server:stopDrag', Police.draggedTarget)
             end,
         },
-    },
-}, Config.cuff.distance)
+    }, Config.cuff.distance)
+end
+registerEscortTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerEscortTargets() end
+end)

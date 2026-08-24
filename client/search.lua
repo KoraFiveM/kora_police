@@ -7,8 +7,8 @@ RegisterNetEvent('qbpolice:client:openSearch', function(targetServerId)
     exports.qbinventory:openInventory('player', targetServerId)
 end)
 
-exports.qbtarget:addGlobalType('player', {
-    options = {
+local function registerSearchTargets()
+    exports.qbtarget:addGlobalType('player', {
         {
             label = 'Search',
             icon = 'search',
@@ -19,5 +19,10 @@ exports.qbtarget:addGlobalType('player', {
                 TriggerServerEvent('qbpolice:server:search', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
-    },
-}, Config.cuff.distance)
+    }, Config.cuff.distance)
+end
+registerSearchTargets()
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName == 'qbtarget' then registerSearchTargets() end
+end)
