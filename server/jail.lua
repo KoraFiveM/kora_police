@@ -1,0 +1,29 @@
+-- Thin wrapper over qbcore's Core.jail (exports.qbcore:jailPlayer). Adds
+-- nothing to the jail mechanism itself -- teleport/timer/persistence and the
+-- external-prison-resource deference all already live in qbcore -- this file
+-- only adds the police-specific bookkeeping (officer authority, minutes
+-- default, and clearing cuff/escort/drag state on booking).
+
+---@param officerSrc integer
+---@param targetSrc integer
+---@param minutes number|nil
+---@param reason string|nil
+---@return boolean, string|nil
+function Police.jailPlayer(officerSrc, targetSrc, minutes, reason)
+    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
+    if not exports.qbcore:getPlayerData(targetSrc) then return false, 'target not found' end
+
+    minutes = tonumber(minutes) or Config.jail.defaultMinutes
+    local ok, err = exports.qbcore:jailPlayer(targetSrc, minutes, reason)
+    if not ok then return false, err end
+
+    Police.deEscort(officerSrc, targetSrc)
+    Police.stopDrag(officerSrc, targetSrc)
+    Police.uncuff(officerSrc, targetSrc)
+    return true
+end
+
+RegisterNetEvent('qbpolice:server:jailPlayer', function(target, minutes, reason)
+    local ok, err = Police.jailPlayer(source, tonumber(target), minutes, reason)
+    if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+end)

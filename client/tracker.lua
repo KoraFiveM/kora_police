@@ -1,0 +1,43 @@
+-- GPS tracker: officer attaches one, then that suspect's own client answers
+-- periodic location pings; every on-duty officer receives the position.
+
+RegisterNetEvent('qbpolice:client:requestTrackerPing', function()
+    TriggerServerEvent('qbpolice:server:sendTrackerLocation')
+end)
+
+Police.trackerBlips = Police.trackerBlips or {}
+
+local function upsertTrackerBlip(targetServerId, coords)
+    local blip = Police.trackerBlips[targetServerId]
+    if blip then
+        SetBlipCoords(blip, coords.x, coords.y, coords.z)
+        return
+    end
+    blip = QB.blips.create(coords, { sprite = 8, color = 1, scale = 0.9, label = ('Tracker %d'):format(targetServerId) })
+    if blip then Police.trackerBlips[targetServerId] = blip end
+end
+
+RegisterNetEvent('qbpolice:client:trackerLocation', function(targetServerId, coords)
+    upsertTrackerBlip(targetServerId, coords)
+end)
+RegisterNetEvent('police:client:SendTrackerLocation', function(targetServerId, coords)
+    upsertTrackerBlip(targetServerId, coords)
+end)
+RegisterNetEvent('police:client:TrackerMessage', function(_, message)
+    Police.notify(message, 'info')
+end)
+
+exports.qbtarget:addGlobalType('player', {
+    options = {
+        {
+            label = 'Attach Tracker',
+            icon = 'radar',
+            canInteract = function(entity)
+                return Police.isOnDuty() and IsPedCuffed(entity)
+            end,
+            onSelect = function(entity)
+                TriggerServerEvent('qbpolice:server:setTracker', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)), true)
+            end,
+        },
+    },
+}, Config.cuff.distance)
