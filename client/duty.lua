@@ -49,7 +49,7 @@ local function registerDutyZones()
             label = 'Store Patrol Vehicle',
             icon = 'car',
             canInteract = function(entity)
-                return Police.isOnDuty() and GetPedInVehicleSeat(entity, -1) == PlayerPedId()
+                return Police.isOnDuty() and GetPedInVehicleSeat(entity, -1) == QB.cache.ped()
             end,
             onSelect = function(entity)
                 local plate = GetVehicleNumberPlateText(entity)
