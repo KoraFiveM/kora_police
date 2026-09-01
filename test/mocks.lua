@@ -70,8 +70,20 @@ function M.install()
     function _G.GetAllVehicles() return {} end
     function _G.GetVehicleNumberPlateText(_) return '' end
 
+    local notifications = {}
     _G.QB = {
         callback = { register = function() end, trigger = function() end },
+        notify = { send = function(src, payload)
+            notifications[#notifications + 1] = { src = src, payload = payload }
+        end },
+        commands = { add = function() end, remove = function() end },
+        keybind = { add = function() end },
+        timers = {
+            setInterval = function() return 1 end,
+            clearInterval = function() return true end,
+            throttle = function(fn) return fn end,
+            debounce = function(fn) return fn end,
+        },
     }
 
     -- Controllable exports.qbcore / exports.qbinventory. Any resource name /
@@ -301,6 +313,9 @@ function M.install()
         lastClient = function(name)
             for i = #clientEvents, 1, -1 do if clientEvents[i].name == name then return clientEvents[i] end end
         end,
+        notifications = notifications,
+        lastNotification = function() return notifications[#notifications] end,
+        advanceClock = function(ms) clock = clock + ms end,
         clientEventsFor = function(name)
             local out = {}
             for _, e in ipairs(clientEvents) do if e.name == name then out[#out + 1] = e end end

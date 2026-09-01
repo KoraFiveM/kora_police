@@ -84,6 +84,7 @@ h.test('the panic button raises TWO calls, one per service', function()
 end)
 
 h.test('panic coordinates come from the server, never the client', function()
+    Police.clearPanicCooldown(COP1) -- the previous test just used the alarm
     handle.setCoords(COP1, 111.0, 222.0, 33.0)
     _G.source = COP1
     TriggerEvent('qbpolice:server:panic')
@@ -91,6 +92,94 @@ h.test('panic coordinates come from the server, never the client', function()
     local call = handle.dispatchCalls[#handle.dispatchCalls - 1]
     h.assertEqual(call.coords.x, 111.0, "read from the officer's own ped")
     h.assertEqual(call.coords.y, 222.0, 'so a modified client cannot pull every unit to a chosen spot')
+end)
+
+-- --- panic cooldown ---------------------------------------------------------
+
+h.test('a mashed panic button raises one alarm, not one per press', function()
+    Police.clearPanicCooldown(COP1)
+    local before = #handle.dispatchCalls
+
+    _G.source = COP1
+    for _ = 1, 5 do TriggerEvent('qbpolice:server:panic') end
+
+    -- One press is already TWO calls (LEO + EMS). Without the gate, five
+    -- presses would put ten duplicates across both services' feeds, at exactly
+    -- the moment a clean feed matters most.
+    h.assertEqual(#handle.dispatchCalls, before + 2, 'only the first press raised anything')
+end)
+
+h.test('a suppressed press tells the officer their alarm is already out', function()
+    Police.clearPanicCooldown(COP1)
+    _G.source = COP1
+    TriggerEvent('qbpolice:server:panic')
+
+    TriggerEvent('qbpolice:server:panic')
+
+    -- Silence would be the wrong answer here: somebody pressing this is having
+    -- the worst moment of their shift and needs to know it was heard.
+    local note = handle.lastNotification()
+    h.assertEqual(note.src, COP1, 'addressed to the officer')
+    h.assertTrue(note.payload.message:find('already active', 1, true) ~= nil,
+        'and says the alarm is out: ' .. tostring(note.payload.message))
+end)
+
+h.test('the alarm can be raised again once the cooldown elapses', function()
+    Police.clearPanicCooldown(COP1)
+    _G.source = COP1
+    TriggerEvent('qbpolice:server:panic')
+    local before = #handle.dispatchCalls
+
+    handle.advanceClock(Config.dispatch.panicCooldown + 1)
+    TriggerEvent('qbpolice:server:panic')
+
+    -- An officer still down a minute later, in a new position, is raising a
+    -- genuinely new alarm.
+    h.assertEqual(#handle.dispatchCalls, before + 2, 'a fresh alarm after the window')
+end)
+
+h.test('the cooldown is per officer, not global', function()
+    Police.clearPanicCooldown(COP1)
+    Police.clearPanicCooldown(DEPUTY)
+
+    _G.source = COP1
+    TriggerEvent('qbpolice:server:panic')
+    local before = #handle.dispatchCalls
+
+    -- A sheriff's deputy, deliberately: dispatch targets the LEO service, so a
+    -- deputy receives these calls and must be able to raise one too.
+    _G.source = DEPUTY
+    TriggerEvent('qbpolice:server:panic')
+
+    h.assertEqual(#handle.dispatchCalls, before + 2,
+        "one officer's alarm must never mute another officer's")
+end)
+
+h.test('a sheriff can raise LEO calls, a civilian cannot', function()
+    -- Police.isPolice gates on the job NAME, which is right for this force's
+    -- armory and evidence but wrong for dispatch -- being alerted to an officer
+    -- down while unable to raise your own alarm is the worst of both.
+    h.assertTrue(Police.isLeo(DEPUTY), 'an on-duty deputy is law enforcement')
+    h.assertTrue(Police.isLeo(COP1), 'so is an on-duty officer')
+    h.assertFalse(Police.isLeo(EMS1), 'a paramedic is not')
+    h.assertFalse(Police.isLeo(9), 'nor is a civilian')
+
+    -- COP2 is off duty in the fixture and must be left that way -- the
+    -- cop-count assertions further down depend on it.
+    h.assertFalse(Police.isLeo(COP2), 'nor is an off-duty officer')
+end)
+
+h.test('going off duty clears the cooldown', function()
+    Police.clearPanicCooldown(COP1)
+    _G.source = COP1
+    TriggerEvent('qbpolice:server:panic')
+
+    -- Off duty ends the shift the alarm belonged to; coming back on and
+    -- immediately needing help is a new emergency, not a repeat of the old one.
+    TriggerEvent('QBCore:Server:SetDuty', COP1, false)
+
+    local elapsed = Police.panicCooldownElapsed(COP1)
+    h.assertTrue(elapsed, 'the cooldown should not survive the shift')
 end)
 
 h.test('a client-reported crime is re-anchored to the reporter position', function()

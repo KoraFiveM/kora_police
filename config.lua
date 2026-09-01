@@ -125,6 +125,15 @@ Config.dispatch = {
     accent = '#3B82F6',                -- law enforcement blue, applied to this player's dispatch UI
     panicKey = 'F10',                  -- officer-down panic button (rebindable in FiveM's key settings)
 
+    -- ms before the same officer can raise another panic alarm. One press is
+    -- two calls (LEO + EMS), so an officer mashing the key while being shot at
+    -- fills both services' feeds with duplicates of the incident they are
+    -- already responding to -- exactly when a clean feed matters most.
+    --
+    -- Deliberately short: an officer who is still down a minute later, in a new
+    -- position, is raising a genuinely new alarm and should be able to.
+    panicCooldown = 60000,
+
     -- Detector throttles, in ms. These are per-player cooldowns on ALERTS, not
     -- on detection: a shootout produces one call, not one per trigger pull.
     -- Long enough that a single incident reads as a single incident; short

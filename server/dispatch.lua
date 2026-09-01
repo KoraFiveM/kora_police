@@ -6,6 +6,14 @@
 -- written against the older fan-out -- qbdispatch mirrors it -- but nothing here
 -- goes through it any more.
 
+-- src -> GetGameTimer() of that officer's last panic alarm. Server-side because
+-- a client-side cooldown is a suggestion: the net event is reachable directly.
+--
+-- Declared at the top because the lifecycle handlers below clear it; a `local`
+-- further down would leave those reading an undeclared GLOBAL instead, which is
+-- nil and errors on index.
+local lastPanicAt = {}
+
 ---Raises a law-enforcement call. Defaults target the whole LEO service (police,
 ---sheriff, state troopers -- whatever this server has registered with
 ---`type = 'leo'`), not just this resource's own job name.
@@ -41,8 +49,29 @@ AddEventHandler('QBCore:Server:OnJobUpdate', function(_, job)
 end)
 AddEventHandler('playerDropped', function()
     local job = Police.job(source)
+    lastPanicAt[source] = nil
     if job and job.type == Config.police.jobType then broadcastCopCount() end
 end)
+
+-- Going off duty ends the shift the alarm belonged to. Coming back on and
+-- immediately needing help is a new emergency, not a repeat of the old one.
+AddEventHandler('QBCore:Server:SetDuty', function(src, onDuty)
+    if not onDuty then lastPanicAt[src] = nil end
+end)
+
+---Whether a source is on-duty law enforcement, by job TYPE.
+---
+---Police.isPolice gates on the job NAME, which is right for department-specific
+---things (this force's armory, its evidence lockers). It is wrong for dispatch:
+---calls target the whole LEO service, so a sheriff already RECEIVES them --
+---without this they could be alerted to an officer down but not raise their own
+---panic alarm or request backup.
+---@param src integer
+---@return boolean
+function Police.isLeo(src)
+    local job = Police.job(src)
+    return job ~= nil and job.type == Config.police.jobType and job.onduty == true
+end
 
 ---Names an officer the way dispatch should read them out: callsign first,
 ---falling back to a surname, and only then to a bare source id.
@@ -62,7 +91,7 @@ end
 -- exports.qbdispatch:createCall directly.
 RegisterNetEvent('qbpolice:server:requestBackup', function(payload)
     local src = source
-    if not Police.isPolice(src) then return end
+    if not Police.isLeo(src) then return end
 
     payload = type(payload) == 'table' and payload or {}
 
@@ -84,9 +113,41 @@ end)
 -- paramedic needs a patient location. Bundling them into one "emergency" call
 -- would give both services a shared feed neither could clear independently,
 -- which is exactly why qbdispatch refuses a multi-service call.
+---@param src integer
+---@return boolean elapsed
+---@return integer remainingMs
+function Police.panicCooldownElapsed(src)
+    local last = lastPanicAt[src]
+    if not last then return true, 0 end
+
+    local remaining = Config.dispatch.panicCooldown - (GetGameTimer() - last)
+    if remaining <= 0 then return true, 0 end
+    return false, remaining
+end
+
+---Test seam and duty hook: forgets an officer's cooldown.
+---@param src integer
+function Police.clearPanicCooldown(src)
+    lastPanicAt[src] = nil
+end
+
 RegisterNetEvent('qbpolice:server:panic', function()
     local src = source
-    if not Police.isPolice(src) then return end
+    if not Police.isLeo(src) then return end
+
+    -- One press raises TWO calls, so a mashed key doubles up in both services'
+    -- feeds. The officer is told their alarm is already out rather than being
+    -- silently ignored -- somebody pressing this is having the worst moment of
+    -- their shift and needs to know it was heard.
+    local elapsed, remaining = Police.panicCooldownElapsed(src)
+    if not elapsed then
+        QB.notify.send(src, {
+            message = ('Your panic alarm is already active (%ds).'):format(math.ceil(remaining / 1000)),
+            type = 'error',
+        })
+        return
+    end
+    lastPanicAt[src] = GetGameTimer()
 
     local name = officerName(src)
 

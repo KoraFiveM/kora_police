@@ -198,7 +198,21 @@ service.
 
 **Panic button** — `Config.dispatch.panicKey` (default `F10`, rebindable) fires
 `qbpolice:server:panic`, which raises **two** calls: `10-99 Officer Down` to law
-enforcement and `10-52` to EMS. They are separate incidents with separate wording
+enforcement and `10-52` to EMS.
+
+Rate-limited per officer by `Config.dispatch.panicCooldown` (default 60s),
+server-side — a client-side gate would be a suggestion, since the net event is
+reachable directly. One press is already two calls, so a mashed key would put
+duplicates across both services' feeds at exactly the moment a clean feed
+matters most. A suppressed press tells the officer their alarm is already
+active rather than silently doing nothing. The cooldown clears when they go off
+duty or disconnect.
+
+Backup and panic gate on `Police.isLeo` (the job **type**), not
+`Police.isPolice` (the job **name**): dispatch targets the whole LEO service, so
+a sheriff's deputy already receives these calls and must be able to raise one
+too. `Police.isPolice` remains the gate for department-specific things — this
+force's armory and evidence lockers. They are separate incidents with separate wording
 and separate histories; qbdispatch refuses a single call targeting two services
 for exactly this reason. Coordinates are read server-side from the officer's own
 ped, never taken from the client.
