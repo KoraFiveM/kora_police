@@ -1,38 +1,49 @@
--- Renders dispatch alerts (qbcore ships no NUI/UI of its own for these --
--- see Core.dispatch's own header). Legacy `police:client:policeAlert` is
--- fired automatically by qbcore's Core.dispatch.alert; this file renders
--- both the modern and legacy payload shape.
+-- Dispatch presentation now belongs entirely to qbdispatch: the call feed, the
+-- map, history, the response state machine and the route blip all live there.
+--
+-- What used to be here was a renderer -- two notifies and a routed blip on a
+-- SetTimeout, with an activeBlips table that grew forever because entries were
+-- never removed from it. All of that is gone rather than duplicated; a call
+-- rendered twice, once by each system, is worse than one rendered well.
+--
+-- What remains is the police-specific side: the officer-facing commands that
+-- RAISE calls, and the cop-count listeners other police features read.
 
-local activeBlips = {}
-
-local function renderAlert(payload)
-    if type(payload) ~= 'table' then payload = { message = tostring(payload) } end
-    Police.notify(payload.title or 'Dispatch', payload.message and 'warning' or 'info')
-    if payload.message then Police.notify(payload.message, 'warning') end
-
-    if payload.coords then
-        local blipOpts = payload.blip or {}
-        local blip = QB.blips.create(payload.coords, {
-            sprite = blipOpts.sprite or 161,
-            color = blipOpts.color or 1,
-            scale = blipOpts.scale or 1.0,
-            label = payload.title or 'Dispatch',
-            route = true,
-        })
-        if blip then
-            activeBlips[#activeBlips + 1] = blip
-            SetTimeout(blipOpts.duration or 60000, function()
-                QB.blips.remove(blip)
-            end)
-        end
+local function requestBackup(message, priority)
+    if not Police.isOnDuty() then
+        return Police.notify('You must be on duty to request backup.', 'error')
     end
+
+    TriggerServerEvent('qbpolice:server:requestBackup', {
+        message = message,
+        priority = priority,
+        coords = QB.cache.coords(),
+    })
 end
 
-RegisterNetEvent('qbcore:client:dispatchAlert', renderAlert)
+RegisterCommand('backup', function(_, args)
+    requestBackup(#args > 0 and table.concat(args, ' ') or nil, 2)
+end, false)
 
-RegisterNetEvent('police:client:policeAlert', function(message, coords)
-    renderAlert({ title = 'Dispatch', message = message, coords = coords })
-end)
+-- The panic button. Real qb-policejob had one (police:client:SendPoliceEmergencyAlert)
+-- and the new resource lost it entirely -- an officer down had no way to say so.
+--
+-- It raises TWO calls on purpose: one to law enforcement, one to EMS. They are
+-- separate incidents with different wording, different priorities from each
+-- service's point of view, and separate histories to clear -- which is exactly
+-- why dispatch refuses to bundle services into a single call.
+QB.keybind.add({
+    name = 'qbpolice_panic',
+    description = 'Police: panic button (officer down)',
+    defaultKey = Config.dispatch.panicKey,
+    onPressed = function()
+        if not Police.isOnDuty() then return end
+        -- No coordinates sent: the server reads them from the officer's own
+        -- ped, so a modified client cannot fire the alarm at a location of its
+        -- choosing and pull every unit on the server there.
+        TriggerServerEvent('qbpolice:server:panic')
+    end,
+})
 
 RegisterNetEvent('qbpolice:client:updateCopCount', function(count)
     Police.copCount = count
@@ -44,8 +55,10 @@ RegisterNetEvent('police:client:SetCopCount', function(count)
     Police.copCount = count
 end)
 
-RegisterCommand('backup', function()
-    if not Police.isOnDuty() then return end
-    local coords = QB.cache.coords()
-    TriggerServerEvent('qbpolice:server:requestBackup', { message = 'Officer requesting backup', coords = coords })
-end, false)
+-- Law enforcement blue. Client-side because it is per-player: an officer and a
+-- paramedic on the same server see different accents at the same moment, so this
+-- can never be a server setting.
+CreateThread(function()
+    Wait(1500) -- let qbdispatch's own frame mount before pushing tokens at it
+    exports.qbdispatch:setTheme(Config.dispatch.accent)
+end)

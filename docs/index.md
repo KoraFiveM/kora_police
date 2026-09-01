@@ -71,20 +71,31 @@ TriggerServerEvent('qbpolice:server:putInVehicle', target, netId, -1) -- -1 = dr
 TriggerServerEvent('qbpolice:server:jailPlayer', target, 15, 'Resisting arrest')
 ```
 
-### Request backup / react to a dispatch alert
+### Raise a police call
 ```lua
 -- client -- the /backup command already does this for an on-duty officer:
-TriggerServerEvent('qbpolice:server:requestBackup', {
-    title = '10-78',
-    message = 'Shots fired downtown',
-    coords = GetEntityCoords(PlayerPedId()),
-})
-
--- any resource can listen for the rendered alert:
-RegisterNetEvent('qbcore:client:dispatchAlert', function(payload)
-    print(payload.title, payload.message)
-end)
+TriggerServerEvent('qbpolice:server:requestBackup', { message = 'Shots fired downtown' })
 ```
+
+Anything else wanting a police call (a robbery script, a drug lab) calls
+**qbdispatch** directly rather than going through this resource:
+
+```lua
+-- server
+exports.qbdispatch:createCall({
+    jobTypes = { 'leo' },   -- the whole law-enforcement service, not one job name
+    code     = '10-90',
+    title    = 'Bank Robbery',
+    message  = 'Silent alarm at Fleeca, Legion Square.',
+    priority = 1,
+    coords   = coords,
+    icon     = 'banknote',
+})
+```
+
+Presentation — the feed, the map, history, the response state machine, the route
+blip — belongs entirely to qbdispatch. This resource no longer renders alerts;
+see `qbdispatch/docs/index.md`.
 
 ### Check restraint/armory access via a callback
 ```lua
@@ -175,10 +186,28 @@ TriggerServerEvent('qbpolice:server:toggleDuty')
 TriggerServerEvent('qbpolice:server:spawnDutyVehicle', plate, coords, heading)
 TriggerServerEvent('qbpolice:server:storeDutyVehicle', plate)
 ```
-`Police.dispatch(payload)` (server Lua, `jobs` defaults to `{'police'}`) wraps
-`exports.qbcore:alert`, which fires `qbcore:client:dispatchAlert` and the
-legacy `police:client:policeAlert` to recipients. Cop-count changes broadcast
-`qbpolice:client:updateCopCount` (and legacy `police:client:UpdateCurrentCops`/`SetCopCount`).
+`Police.dispatch(payload)` (server Lua) raises a call through
+`exports.qbdispatch:createCall`, defaulting the target to the `Config.police.jobType`
+**service** (`leo`) rather than a single job name — so a server that adds a
+sheriff or state-trooper job with `type = 'leo'` gets them on the same radio with
+no change here.
+
+Cop-count changes broadcast `qbpolice:client:updateCopCount` (and legacy
+`police:client:UpdateCurrentCops`/`SetCopCount`), counted across the whole LEO
+service.
+
+**Panic button** — `Config.dispatch.panicKey` (default `F10`, rebindable) fires
+`qbpolice:server:panic`, which raises **two** calls: `10-99 Officer Down` to law
+enforcement and `10-52` to EMS. They are separate incidents with separate wording
+and separate histories; qbdispatch refuses a single call targeting two services
+for exactly this reason. Coordinates are read server-side from the officer's own
+ped, never taken from the client.
+
+**Detectors** — `client/detectors.lua` watches for shots fired, vehicle theft and
+melee combat, each throttled by its own `Config.dispatch.*Cooldown`. On-duty
+officers are excluded from every detector, so a firearms unit returning fire does
+not alert dispatch about itself. The client decides *when*; the server decides
+whether that player may raise a call and re-anchors it to their real position.
 
 ### Spikes / plate flags / tracker / fingerprint / impound
 ```lua
@@ -225,6 +254,7 @@ working unmodified.
 `Config.evidence.*` (locker stash id/coords/grade gate, world-marker TTL and
 cap), `Config.armory.shops` (per-room coords/`minGrade`/inventory),
 `Config.jail.defaultMinutes`, `Config.dispatch.robberyRadius`,
+`Config.dispatch.jobType`/`emsJobType`/`accent`/`panicKey`/`*Cooldown`,
 `Config.duty.points`/`.vehicles` (duty toggle zones and patrol fleet spawns),
 `Config.spikes.*`, `Config.impound.lots`, `Config.fine.tiers`/`.account`.
 

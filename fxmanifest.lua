@@ -9,6 +9,7 @@ description 'Police/LEO job -- cuff/escort/search/evidence/armory/jail/dispatch 
 
 dependency 'qblib'
 dependency 'qbcore'
+dependency 'qbdispatch'
 dependency 'qbinventory'
 dependency 'qbtarget'
 
@@ -60,6 +61,7 @@ client_scripts {
     'client/jail.lua',
     'client/bill.lua',
     'client/dispatch.lua',
+    'client/detectors.lua',
     'client/evidence.lua',
     'client/spikes.lua',
     'client/breach_minigame.lua',

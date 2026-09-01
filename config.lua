@@ -5,6 +5,15 @@ Config = Config or {}
 
 Config.police = {
     job = 'police',                    -- job name gate for every server-side check in this resource
+
+    -- The qbcore job TYPE this resource dispatches to. Alerts target the type,
+    -- not the job name, so a server that adds a `sheriff` or `statetrooper` job
+    -- with `type = 'leo'` gets them on the same radio with no code change here.
+    jobType = 'leo',
+
+    -- Where an officer-down escalation goes. It is a SECOND, separate call --
+    -- police and EMS keep separate feeds, wording and histories.
+    emsJobType = 'ems',
 }
 
 Config.performance = {
@@ -113,6 +122,17 @@ Config.minigames = {
 }
 
 Config.dispatch = {
+    accent = '#3B82F6',                -- law enforcement blue, applied to this player's dispatch UI
+    panicKey = 'F10',                  -- officer-down panic button (rebindable in FiveM's key settings)
+
+    -- Detector throttles, in ms. These are per-player cooldowns on ALERTS, not
+    -- on detection: a shootout produces one call, not one per trigger pull.
+    -- Long enough that a single incident reads as a single incident; short
+    -- enough that a genuinely new event a minute later still gets reported.
+    shotsFiredCooldown = 20000,
+    vehicleTheftCooldown = 30000,
+    meleeCooldown = 30000,
+
     robberyRadius = 30.0,              -- metres, informational only -- passed through in the alert payload's `radius`
 }
 

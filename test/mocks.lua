@@ -93,7 +93,21 @@ function M.install()
     })
 
     local qbcore = exportImpls.qbcore
-    function qbcore.getJob(src) local p = players[src]; return p and p.job end
+
+    -- Job types mirror qbcore/shared/jobs.lua. Dispatch alerts target the TYPE,
+    -- so 'police' and a hypothetical 'sheriff' both answer to 'leo'.
+    local JOB_TYPES = { police = 'leo', sheriff = 'leo', ambulance = 'ems', tow = 'recovery' }
+
+    -- `type` is present on the returned job because real qbcore puts it on
+    -- PlayerData.job (CoreInternal.player.buildJob copies it from the registry).
+    -- A mock that omitted it would let a job.type check pass here and fail in
+    -- game -- the exact mock-drift trap this codebase has been bitten by before.
+    function qbcore.getJob(src)
+        local p = players[src]
+        if not p or not p.job then return nil end
+        if p.job.type == nil then p.job.type = JOB_TYPES[p.job.name] or 'none' end
+        return p.job
+    end
     function qbcore.getPlayerData(src, path)
         local p = players[src]
         if not p then return nil end
@@ -163,6 +177,36 @@ function M.install()
     function qbcore.getDutyCount(name)
         return #qbcore.getPlayersByJob(name, true)
     end
+    function qbcore.getPlayersByJobType(jobType, onDutyOnly)
+        local out = {}
+        for src, p in pairs(players) do
+            if p.job and JOB_TYPES[p.job.name] == jobType and (not onDutyOnly or p.job.onduty) then
+                out[#out + 1] = src
+            end
+        end
+        table.sort(out)
+        return out
+    end
+    function qbcore.getDutyCountByType(jobType)
+        return #qbcore.getPlayersByJobType(jobType, true)
+    end
+    function qbcore.getOnDutyRoster(filter)
+        filter = filter or {}
+        local out = {}
+        for src, p in pairs(players) do
+            local jobType = p.job and JOB_TYPES[p.job.name] or 'none'
+            local ok = p.job and p.job.onduty
+                and (not filter.job or filter.job == p.job.name)
+                and (not filter.jobType or filter.jobType == jobType)
+            if ok then
+                out[#out + 1] = { src = src, citizenid = ('CID%d'):format(src), name = p.name or ('Unit %d'):format(src),
+                                  callsign = p.callsign, job = p.job.name, jobType = jobType,
+                                  grade = 1, gradeLabel = 'Grade', onDuty = true }
+            end
+        end
+        table.sort(out, function(a, b) return a.src < b.src end)
+        return out
+    end
     function qbcore.jailPlayer(src, minutes, reason)
         if not players[src] then return false, 'no such player' end
         minutes = tonumber(minutes)
@@ -194,6 +238,28 @@ function M.install()
     function qbcore.storeVehicle() return true end
     function qbcore.spawnVehicle() return 1 end
 
+    -- qbdispatch owns the call lifecycle now; qbpolice only raises calls through
+    -- it. Recorded rather than simulated: what these tests care about is the
+    -- payload qbpolice builds, not qbdispatch's own storage (which has its own
+    -- suite).
+    local dispatchCalls = {}
+    exportImpls.qbdispatch = {}
+    local qbdispatch = exportImpls.qbdispatch
+    function qbdispatch.createCall(payload)
+        dispatchCalls[#dispatchCalls + 1] = payload
+        local recipients = {}
+        for _, jobName in ipairs(payload.jobs or {}) do
+            for _, src in ipairs(qbcore.getPlayersByJob(jobName, true)) do recipients[src] = true end
+        end
+        for _, jobType in ipairs(payload.jobTypes or {}) do
+            for _, src in ipairs(qbcore.getPlayersByJobType(jobType, true)) do recipients[src] = true end
+        end
+        local count = 0
+        for _ in pairs(recipients) do count = count + 1 end
+        return #dispatchCalls, count
+    end
+    function qbdispatch.setTheme() return true end
+
     local qbinventory = exportImpls.qbinventory
     function qbinventory.registerInspectionAccess() return 1 end
     function qbinventory.RegisterStash() return 'stash:mock' end
@@ -207,10 +273,14 @@ function M.install()
         exportImpls = exportImpls,
         resourceStates = resourceStates,
         vec3 = vec3,
+        dispatchCalls = dispatchCalls,
+        lastDispatchCall = function() return dispatchCalls[#dispatchCalls] end,
         addPlayer = function(src, opts)
             opts = opts or {}
             players[src] = {
                 coords = opts.coords or vec3(0.0, 0.0, 0.0),
+                name = opts.name,
+                callsign = opts.callsign,
                 job = opts.job or { name = 'unemployed', onduty = false, grade = { level = 1 } },
                 data = {
                     citizenid = opts.citizenid or ('CID%d'):format(src),
