@@ -1,6 +1,24 @@
 -- Duty toggle and the patrol-fleet register/spawn/store loop, all on
 -- Core.garage (job-fleet rows: citizenid is nil, job = Config.police.job).
 
+-- Duty is normally toggled at a station target zone, which is fine in play but
+-- makes the whole resource awkward to exercise -- you cannot go on duty without
+-- travelling to a specific spot. This is the same toggle as a chat command,
+-- mirroring qbambulance's own /ems-duty.
+QB.commands.add('police-duty', 'Toggle police duty', {}, false, function(source)
+    local job = exports.qbcore:getJob(source)
+    if not job or job.type ~= Config.police.jobType then
+        return QB.notify.send(source, { message = 'You are not employed in law enforcement.', type = 'error' })
+    end
+
+    local onDuty = not job.onduty
+    exports.qbcore:setJobDuty(source, onDuty)
+    QB.notify.send(source, {
+        message = onDuty and 'You are now on duty.' or 'You are now off duty.',
+        type = 'success',
+    })
+end)
+
 RegisterNetEvent('qbpolice:server:toggleDuty', function()
     local src = source
     local job = Police.job(src)
