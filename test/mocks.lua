@@ -71,7 +71,18 @@ function M.install()
     function _G.GetVehicleNumberPlateText(_) return '' end
 
     local notifications = {}
+    -- Every blip client code asks qblib for, in creation order. Recorded rather
+    -- than discarded so a restart test can assert a station blip is created
+    -- once per registration pass and not duplicated on the next one.
+    local blips = {}
     _G.QB = {
+        blips = {
+            create = function(coords, options)
+                blips[#blips + 1] = { coords = coords, options = options }
+                return #blips
+            end,
+            remove = function() return true end,
+        },
         callback = { register = function() end, trigger = function() end },
         notify = { send = function(src, payload)
             notifications[#notifications + 1] = { src = src, payload = payload }
@@ -81,8 +92,26 @@ function M.install()
         timers = {
             setInterval = function() return 1 end,
             clearInterval = function() return true end,
-            throttle = function(fn) return fn end,
-            debounce = function(fn) return fn end,
+            -- Shaped like the real handles, NOT a bare function. qblib returns a
+            -- table whose __call metamethod does not survive the export
+            -- boundary, so consumers must use `.run(...)`; a mock that hands
+            -- back a plain function makes `handle()` look fine here and crash in
+            -- game with "attempt to call a table value". Deliberately NOT
+            -- callable, so a call site that forgets `.run` fails in the tests.
+            throttle = function(fn)
+                return {
+                    run = function(...) fn(...); return true end,
+                    reset = function() end,
+                    remaining = function() return 0 end,
+                }
+            end,
+            debounce = function(fn)
+                return {
+                    run = function(...) fn(...) end,
+                    cancel = function() return false end,
+                    isPending = function() return false end,
+                }
+            end,
         },
     }
 
@@ -287,6 +316,7 @@ function M.install()
         vec3 = vec3,
         dispatchCalls = dispatchCalls,
         lastDispatchCall = function() return dispatchCalls[#dispatchCalls] end,
+        blips = blips,
         addPlayer = function(src, opts)
             opts = opts or {}
             players[src] = {

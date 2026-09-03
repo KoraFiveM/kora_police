@@ -1,6 +1,23 @@
 -- Duty toggle (QB.interact -- a lighter primitive than a full qbtarget zone
 -- for a simple point of interaction) and the patrol-fleet spawn/store loop.
 
+-- Station blips. Deliberately NOT inside registerDutyZones below: that function
+-- re-runs on every qbtarget restart (qbtarget drops its own registrations when
+-- it stops, so they have to be re-made), while qblib's blip registry only clears
+-- when QBPOLICE stops. Creating them there stacked a second station blip on the
+-- map every time qbtarget was restarted.
+--
+-- Coordinates come from the same Config.duty.points a zone is built from, so a
+-- moved station cannot leave a stale blip behind.
+local function registerStationBlips()
+    for _, point in ipairs(Config.duty.points) do
+        if point.blip and point.blip.enabled then
+            QB.blips.create(point.coords, point.blip)
+        end
+    end
+end
+registerStationBlips()
+
 local function registerDutyZones()
     for _, point in ipairs(Config.duty.points) do
         exports.qbtarget:addSphereZone({

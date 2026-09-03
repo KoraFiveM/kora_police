@@ -147,8 +147,15 @@ Config.dispatch = {
 
 Config.duty = {
     vehicleSpawnDistance = 15.0,
+    -- `blip` is optional per point; omit it for a duty point that should not
+    -- appear on the map. `category = 11` collapses every station into one
+    -- "Police Station" heading in the pause-map legend rather than listing each
+    -- one separately -- see qblib modules/blips/docs.md.
     points = {
-        { coords = vector4(441.5, -980.0, 30.7, 90.0), radius = 1.5, label = 'Police Duty' },
+        {
+            coords = vector4(441.5, -980.0, 30.7, 90.0), radius = 1.5, label = 'Police Duty',
+            blip = { enabled = true, sprite = 60, color = 29, scale = 0.8, shortRange = true, label = 'Police Station', category = 11 },
+        },
     },
     vehicles = {
         { model = 'police',  label = 'Police Cruiser', coords = vector4(454.6, -1017.7, 28.7, 90.0) },

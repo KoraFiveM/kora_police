@@ -93,29 +93,44 @@ end, Config.dispatch.meleeCooldown)
 -- not per frame: these are all "is this still happening" state checks, and
 -- polling them sixty times a second would burn client frames to learn nothing a
 -- twice-a-second check misses.
+--
+-- Each throttle is invoked through `.run(...)` rather than by calling the handle:
+-- QB.timers.throttle returns a table made callable by a __call metamethod, and
+-- metatables do not survive the qblib export boundary, so from here the handle
+-- arrives as a plain table and `reportMelee()` raised "attempt to call a table
+-- value". See qblib modules/timers/docs.md.
+local function tick()
+    local ped = QB.cache.ped()
+
+    -- On-duty officers are excluded from every detector. A firearms unit
+    -- returning fire must not spawn a "shots fired" call about itself, and
+    -- the resulting feedback loop (alert -> officers respond -> more
+    -- shooting -> more alerts) is the classic way these systems become
+    -- unusable during exactly the incident they exist for.
+    if not ped or Police.isOnDuty() or IsPedDeadOrDying(ped, true) then return end
+
+    if IsPedShooting(ped) then
+        reportShots.run(IsPedCurrentWeaponSilenced(ped), GetSelectedPedWeapon(ped))
+    end
+
+    if IsPedJacking(ped) or IsPedTryingToEnterALockedVehicle(ped) then
+        reportTheft.run(GetVehiclePedIsTryingToEnter(ped))
+    end
+
+    if IsPedInMeleeCombat(ped) then
+        reportMelee.run()
+    end
+end
+
 CreateThread(function()
     while true do
         Wait(500)
 
-        local ped = QB.cache.ped()
-
-        -- On-duty officers are excluded from every detector. A firearms unit
-        -- returning fire must not spawn a "shots fired" call about itself, and
-        -- the resulting feedback loop (alert -> officers respond -> more
-        -- shooting -> more alerts) is the classic way these systems become
-        -- unusable during exactly the incident they exist for.
-        if ped and not Police.isOnDuty() and not IsPedDeadOrDying(ped, true) then
-            if IsPedShooting(ped) then
-                reportShots(IsPedCurrentWeaponSilenced(ped), GetSelectedPedWeapon(ped))
-            end
-
-            if IsPedJacking(ped) or IsPedTryingToEnterALockedVehicle(ped) then
-                reportTheft(GetVehiclePedIsTryingToEnter(ped))
-            end
-
-            if IsPedInMeleeCombat(ped) then
-                reportMelee()
-            end
-        end
+        -- pcall so one throwing detector cannot kill the loop. A dead detector
+        -- thread is silent -- no alerts, and no second error to notice -- which
+        -- is the worst failure mode for a reporting system, so the error is
+        -- surfaced instead of ending the thread.
+        local ok, err = pcall(tick)
+        if not ok then QB.print.error('qbpolice detector tick failed:', err) end
     end
 end)

@@ -37,6 +37,8 @@ function _G.DoorSystemSetDoorState() end
 function _G.vector3(x, y, z) return { x = x or 0.0, y = y or 0.0, z = z or 0.0 } end
 function _G.vector4(x, y, z, w) return { x = x or 0.0, y = y or 0.0, z = z or 0.0, w = w or 0.0 } end
 
+local blipCalls = 0
+
 _G.QB = {
     cache = {
         vehicle = function() return false end,
@@ -44,6 +46,10 @@ _G.QB = {
         ped = function() return 0 end,
         playerId = function() return 0 end,
         onChange = function() end,
+    },
+    blips = {
+        create = function() blipCalls = blipCalls + 1; return blipCalls end,
+        remove = function() return true end,
     },
 }
 
@@ -87,6 +93,9 @@ h.test('every listed client file registers at least one qbtarget zone/type on in
     h.assertTrue(qbtargetCalls > 0, 'expected qbtarget registration calls during initial load')
 end)
 
+-- Blips are NOT part of the re-registration contract, and that asymmetry is the
+-- point -- see the test at the bottom of this file.
+local blipsAfterInitialLoad = blipCalls
 local afterInitialLoad = qbtargetCalls
 
 h.test('firing onClientResourceStart for qbtarget re-registers every zone/type from every file', function()
@@ -106,6 +115,21 @@ h.test('firing onClientResourceStart for an unrelated resource does not re-regis
     local before = qbtargetCalls
     TriggerEvent('onClientResourceStart', 'some-other-resource')
     h.assertEqual(qbtargetCalls, before, 'onClientResourceStart for a non-qbtarget resource must be a no-op here')
+end)
+
+-- Runs last, so it observes the qbtarget restarts the tests above already
+-- fired rather than firing its own (which would break their exact-count
+-- assertions).
+--
+-- Blips are deliberately outside the re-registration contract: qbtarget drops
+-- its own registrations when it stops, so those have to be re-made, but qblib's
+-- blip registry only clears when QBPOLICE stops -- so re-making a blip stacks a
+-- duplicate station marker on the map rather than replacing it. This is why
+-- client/duty.lua creates them in their own function, called once at load.
+h.test('station blips are created once at load, not per qbtarget restart', function()
+    h.assertTrue(blipsAfterInitialLoad > 0, 'the station blip is created on initial load')
+    h.assertEqual(blipCalls, blipsAfterInitialLoad,
+        'a qbtarget restart must not stack another station blip')
 end)
 
 h.report('target_restart')
