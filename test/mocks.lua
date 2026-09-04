@@ -39,8 +39,13 @@ function M.install()
     function _G.TriggerClientEvent(name, target, ...)
         table.insert(clientEvents, { name = name, target = target, args = { ... } })
     end
+    -- Run through a first cooperative wait, matching FiveM closely enough for
+    -- perpetual sweep workers without executing their infinite loop in a
+    -- plain-Lua test process.
+    function _G.Wait() coroutine.yield() end
     function _G.CreateThread(fn)
-        local ok, err = pcall(fn)
+        local thread = coroutine.create(fn)
+        local ok, err = coroutine.resume(thread)
         if not ok then print(('CreateThread error: %s'):format(tostring(err))) end
     end
     function _G.SetTimeout(_, fn) table.insert(timeouts, fn) end
@@ -120,6 +125,10 @@ function M.install()
     -- returning nil, same fallback convention qbcore's own test mocks use.
     local exportImpls = { qbcore = {}, qbinventory = {} }
     _G.exports = setmetatable({}, {
+        -- FiveM exposes the `exports` registrar as a callable table in a
+        -- resource entry file. Evidence now publishes its ballistics API, so
+        -- preserve that real shape while this mock still serves named exports.
+        __call = function() end,
         __index = function(_, resourceName)
             return setmetatable({}, {
                 __index = function(_, fnName)

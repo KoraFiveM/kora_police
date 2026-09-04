@@ -8,12 +8,16 @@ version '0.1.0'
 description 'Police/LEO job -- cuff/escort/search/evidence/armory/jail/dispatch on top of qbcore+qblib+qbinventory+qbtarget'
 
 dependency 'qblib'
+dependency 'qbsql'
 dependency 'qbcore'
 dependency 'qbdispatch'
 dependency 'qbinventory'
 dependency 'qbtarget'
 
-shared_script '@qblib/init.lua'
+shared_scripts {
+    '@qblib/init.lua',
+    '@qbsql/init.lua',
+}
 
 shared_scripts {
     'config.lua'
@@ -26,6 +30,7 @@ shared_scripts {
 -- load first; compat/police.lua calls into nearly every other file's
 -- Police.* functions and must load last.
 server_scripts {
+    'server/migrate.lua',
     'server/core.lua',
     'server/items.lua',
     'server/cuff.lua',

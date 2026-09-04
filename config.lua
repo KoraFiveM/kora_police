@@ -44,6 +44,15 @@ Config.evidence = {
     maxWorldMarkers = 500,             -- hard memory/broadcast cap across all world evidence
     createCooldown = 250,              -- minimum milliseconds between marker submissions from one player
     collectDistance = 2.5,             -- server-side distance required to collect a marker
+    ballistic = {
+        enabled = true,                -- whether fired server-owned rounds leave collectible casings
+        casingOffset = 0.75,           -- randomised distance from the shooter where a casing lands
+        databaseRetentionDays = 90,    -- retained case records; cleanup can be scheduled by the server owner
+        analysis = {
+            requiredStages = 3,        -- microscopy, comparison, and registry confirmation
+            games = { 'skillbar', 'circuit', 'pinpad' }, -- qblib server-validated stages in this order
+        },
+    },
 }
 
 Config.armory = {
