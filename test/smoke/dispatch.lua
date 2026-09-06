@@ -41,23 +41,21 @@ h.test('the configured robbery radius rides along on the call', function()
     h.assertEqual(handle.lastDispatchCall().radius, Config.dispatch.robberyRadius, 'radius defaulted')
 end)
 
-h.test('backup names the requesting officer by callsign', function()
-    _G.source = COP1
-    TriggerEvent('qbpolice:server:requestBackup', {})
+h.test('backup uses its registered fixed presentation', function()
+    handle.QB.events.registry['qbpolice:server:requestBackup'](COP1)
 
     local call = handle.lastDispatchCall()
     h.assertEqual(call.code, '10-78', 'a backup request has its own code')
     h.assertEqual(call.priority, 2, 'backup is high priority, not critical')
-    h.assertTrue(call.message:find('1-ADAM-12', 1, true) ~= nil,
-        'dispatch reads out the callsign, not a source id: ' .. tostring(call.message))
+    h.assertEqual(call.message, 'An on-duty officer is requesting backup.',
+        'a caller cannot inject arbitrary dispatch presentation')
 end)
 
 h.test('a civilian cannot request police backup', function()
     handle.addPlayer(9, { job = { name = 'unemployed', onduty = true, grade = { level = 1 } } })
     local before = #handle.dispatchCalls
 
-    _G.source = 9
-    TriggerEvent('qbpolice:server:requestBackup', { message = 'send everyone' })
+    handle.QB.events.registry['qbpolice:server:requestBackup'](9)
 
     h.assertEqual(#handle.dispatchCalls, before, 'no call should have been raised')
 end)
@@ -182,24 +180,18 @@ h.test('going off duty clears the cooldown', function()
     h.assertTrue(elapsed, 'the cooldown should not survive the shift')
 end)
 
-h.test('a client-reported crime is re-anchored to the reporter position', function()
+h.test('a client-reported crime selects only a registered fixed incident', function()
     handle.setCoords(9, 500.0, 600.0, 20.0)
-    _G.source = 9
-
-    TriggerEvent('qbpolice:server:crimeDetected', {
-        code = '10-31', title = 'Shots Fired', priority = 1,
-        coords = { x = -9999.0, y = -9999.0, z = 0.0 }, -- a lying client
-    })
+    handle.QB.events.registry['qbpolice:server:crimeDetected'](9, 'qbpolice:gunfire')
 
     local call = handle.lastDispatchCall()
-    h.assertEqual(call.coords.x, 500.0, 'the payload coordinates are ignored entirely')
-    h.assertEqual(call.title, 'Shots Fired', 'the descriptive fields still come from the detector')
+    h.assertEqual(call.coords.x, 500.0, 'coordinates are derived from the reporter')
+    h.assertEqual(call.title, 'Shots Fired', 'presentation comes from the server registration')
 end)
 
-h.test('a malformed crime report is dropped rather than raising a blank call', function()
+h.test('an unknown crime key is dropped rather than raising a call', function()
     local before = #handle.dispatchCalls
-    _G.source = 9
-    TriggerEvent('qbpolice:server:crimeDetected', 'not a table')
+    handle.QB.events.registry['qbpolice:server:crimeDetected'](9, 'qbpolice:not-registered')
     h.assertEqual(#handle.dispatchCalls, before, 'nothing raised')
 end)
 

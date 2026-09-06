@@ -14,6 +14,40 @@
 -- nil and errors on index.
 local lastPanicAt = {}
 
+local playerAlerts = {
+    ['qbpolice:backup'] = {
+        jobTypes = { Config.police.jobType }, code = '10-78', title = 'Backup Requested',
+        message = 'An on-duty officer is requesting backup.', priority = 2, icon = 'radio',
+        cooldown = Config.dispatch.backupCooldown,
+        requiredJobType = Config.police.jobType,
+    },
+    ['qbpolice:gunfire'] = {
+        jobTypes = { Config.police.jobType }, code = '10-31', title = 'Shots Fired',
+        message = 'Gunfire was reported nearby.', priority = 1, icon = 'crosshair',
+        cooldown = Config.dispatch.shotsFiredCooldown,
+    },
+    ['qbpolice:gunfire:suppressed'] = {
+        jobTypes = { Config.police.jobType }, code = '10-31', title = 'Suppressed Gunfire',
+        message = 'Possible suppressed gunfire was reported nearby.', priority = 2, icon = 'crosshair',
+        cooldown = Config.dispatch.shotsFiredCooldown,
+    },
+    ['qbpolice:vehicle-theft'] = {
+        jobTypes = { Config.police.jobType }, code = '10-16', title = 'Vehicle Theft',
+        message = 'A vehicle theft was reported nearby.', priority = 2, icon = 'car',
+        cooldown = Config.dispatch.vehicleTheftCooldown,
+    },
+    ['qbpolice:melee'] = {
+        jobTypes = { Config.police.jobType }, code = '10-10', title = 'Fight in Progress',
+        message = 'A fight was reported nearby.', priority = 3, icon = 'person',
+        cooldown = Config.dispatch.meleeCooldown,
+    },
+}
+
+for key, definition in pairs(playerAlerts) do
+    local ok, err = exports.qbdispatch:registerPlayerAlert(key, definition)
+    if not ok then print(('^3[qbpolice]^7 could not register dispatch alert %s: %s'):format(key, err)) end
+end
+
 ---Raises a law-enforcement call. Defaults target the whole LEO service (police,
 ---sheriff, state troopers -- whatever this server has registered with
 ---`type = 'leo'`), not just this resource's own job name.
@@ -89,22 +123,19 @@ end
 -- Officer-requested backup. Only for the calling PLAYER's own request; anything
 -- else wanting a police call (a robbery script, a drug lab) calls
 -- exports.qbdispatch:createCall directly.
-RegisterNetEvent('qbpolice:server:requestBackup', function(payload)
-    local src = source
+QB.events.register('qbpolice:server:requestBackup', function(src)
     if not Police.isLeo(src) then return end
 
-    payload = type(payload) == 'table' and payload or {}
-
-    Police.dispatch({
-        code = '10-78',
-        title = 'Backup Requested',
-        message = payload.message or ('%s is requesting backup.'):format(officerName(src)),
-        priority = payload.priority or 2,
-        coords = payload.coords,
-        icon = 'radio',
-        data = { officer = officerName(src) },
-    })
-end)
+    local callId, reason, remaining = exports.qbdispatch:createPlayerCall(src, 'qbpolice:backup')
+    if not callId then
+        QB.notify.send(src, {
+            message = remaining
+                and ('A backup request is already active (%ds).'):format(math.ceil(remaining / 1000))
+                or ('Dispatch could not create the call: %s.'):format(reason or 'unknown error'),
+            type = 'error',
+        })
+    end
+end, { rateLimit = { max = 2, window = 5000 } })
 
 -- The panic button: officer down.
 --
@@ -186,24 +217,7 @@ end)
 -- decides WHEN, the server decides whether that player is allowed to generate a
 -- call and what it may contain -- a client cannot hand over a priority, a
 -- service, or anyone else's coordinates.
-RegisterNetEvent('qbpolice:server:crimeDetected', function(payload)
-    local src = source
-    if type(payload) ~= 'table' then return end
-
-    -- Coordinates are read server-side from the reporting player's own ped, not
-    -- taken from the payload: a modified client could otherwise put a fake
-    -- shots-fired call anywhere on the map.
-    local ped = GetPlayerPed(src)
-    if not ped or ped == 0 then return end
-    local coords = GetEntityCoords(ped)
-
-    Police.dispatch({
-        code = payload.code,
-        title = payload.title,
-        message = payload.message,
-        priority = payload.priority,
-        icon = payload.icon,
-        coords = { x = coords.x, y = coords.y, z = coords.z },
-        data = type(payload.data) == 'table' and payload.data or nil,
-    })
-end)
+QB.events.register('qbpolice:server:crimeDetected', function(src, incident)
+    if playerAlerts[incident] == nil or incident == 'qbpolice:backup' then return end
+    exports.qbdispatch:createPlayerCall(src, incident)
+end, { rateLimit = { max = 8, window = 5000 } })

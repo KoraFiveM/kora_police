@@ -112,6 +112,7 @@ Config.spikes = {
     model = 'p_ld_stinger_s',          -- model name string; converted via GetHashKey at the CreateObject call site
     lifetime = 120000,                 -- ms a deployed strip stays networked before auto-cleanup
     maxDeployed = 6,                   -- per-officer concurrent strip cap
+    deployDistance = 5.0,              -- max server-observed distance from an officer to a requested strip position
     deflateDistance = 1.2,             -- metres from a strip's coords that pops a tyre
 }
 
@@ -127,12 +128,20 @@ Config.breach = {
 
 Config.minigames = {
     breach = { type = 'lockpick', opts = { pinCount = 5, attempts = 2 } },     -- door-breach minigame (new differentiator)
-    breakCuffs = { type = 'mash' },     -- ported qbx_police-style escape skillcheck; per-attempt difficulty from Config.cuff.breakCuffsDifficulty
+    breakCuffs = {
+        type = 'mash',                  -- ported qbx_police-style escape skillcheck
+        opts = {
+            easy = { requiredPresses = 12, timeLimit = 8000, attempts = 1 },   -- server-owned easy round
+            medium = { requiredPresses = 20, timeLimit = 7000, attempts = 1 }, -- server-owned medium round
+            hard = { requiredPresses = 30, timeLimit = 6000, attempts = 1 },   -- server-owned hard round
+        },
+    },
 }
 
 Config.dispatch = {
     accent = '#3B82F6',                -- law enforcement blue, applied to this player's dispatch UI
     panicKey = 'F10',                  -- officer-down panic button (rebindable in FiveM's key settings)
+    backupCooldown = 15000,            -- server-enforced interval between backup calls from one officer
 
     -- ms before the same officer can raise another panic alarm. One press is
     -- two calls (LEO + EMS), so an officer mashing the key while being shot at
@@ -155,6 +164,7 @@ Config.dispatch = {
 }
 
 Config.duty = {
+    actionCooldown = 1000,
     vehicleSpawnDistance = 15.0,
     -- `blip` is optional per point; omit it for a duty point that should not
     -- appear on the map. Category 2 lists the station by name instead of

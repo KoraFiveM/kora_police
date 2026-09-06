@@ -13,21 +13,37 @@ Police.spikesByOfficer = Police.spikesByOfficer or {}  -- officerSrc -> count
 ---@return string|nil error
 function Police.deploySpike(officerSrc, coords)
     if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if type(coords) ~= 'table' or not coords.x then return false, 'invalid coords' end
+    if type(coords) ~= 'table' or not QB.util.isFiniteNumber(coords.x)
+        or not QB.util.isFiniteNumber(coords.y) or not QB.util.isFiniteNumber(coords.z) then
+        return false, 'invalid coords'
+    end
     if (Police.spikesByOfficer[officerSrc] or 0) >= Config.spikes.maxDeployed then
         return false, 'too many strips deployed'
     end
 
-    local obj = CreateObject(GetHashKey(Config.spikes.model), coords.x, coords.y, coords.z, true, true, false)
+    local ped = GetPlayerPed(officerSrc)
+    if not ped or ped == 0 then return false, 'no ped' end
+
+    -- Coordinates originate at the client because only it knows the camera's
+    -- forward vector. The server still owns where a networked object may be
+    -- created: accept the small forward offset used by client/spikes.lua, not
+    -- arbitrary world positions or non-finite native arguments.
+    local requested = vector3(coords.x, coords.y, coords.z)
+    if #(GetEntityCoords(ped) - requested) > Config.spikes.deployDistance then
+        return false, 'deployment position is too far away'
+    end
+
+    local cleanCoords = { x = coords.x, y = coords.y, z = coords.z }
+    local obj = CreateObject(GetHashKey(Config.spikes.model), cleanCoords.x, cleanCoords.y, cleanCoords.z, true, true, false)
     if not obj or obj == 0 then return false, 'failed to create strip' end
     PlaceObjectOnGroundProperly(obj)
 
     local netId = NetworkGetNetworkIdFromEntity(obj)
-    Police.spikes[netId] = { entity = obj, officer = officerSrc, coords = coords, deployedAt = GetGameTimer() }
+    Police.spikes[netId] = { entity = obj, officer = officerSrc, coords = cleanCoords, deployedAt = GetGameTimer() }
     Police.spikesByOfficer[officerSrc] = (Police.spikesByOfficer[officerSrc] or 0) + 1
 
-    TriggerClientEvent('qbpolice:client:spikeDeployed', -1, netId, coords)
-    TriggerClientEvent('police:client:spawnObject', -1, netId, coords)
+    TriggerClientEvent('qbpolice:client:spikeDeployed', -1, netId, cleanCoords)
+    TriggerClientEvent('police:client:spawnObject', -1, netId, cleanCoords)
 
     SetTimeout(Config.spikes.lifetime, function() Police.removeSpike(netId) end)
     return netId
@@ -36,11 +52,15 @@ end
 ---@param netId integer
 function Police.removeSpike(netId)
     local entry = Police.spikes[netId]
-    if not entry then return end
+    if not entry then return false end
     Police.spikes[netId] = nil
     Police.spikesByOfficer[entry.officer] = math.max(0, (Police.spikesByOfficer[entry.officer] or 1) - 1)
     if entry.entity and DoesEntityExist(entry.entity) then DeleteEntity(entry.entity) end
     TriggerClientEvent('qbpolice:client:spikeRemoved', -1, netId)
+    -- Legacy listeners still get lifecycle parity, but only after this
+    -- server-owned registry has actually removed a known strip.
+    TriggerClientEvent('police:client:SyncSpikes', -1, netId, false)
+    return true
 end
 
 RegisterNetEvent('qbpolice:server:deploySpike', function(coords)

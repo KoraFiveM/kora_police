@@ -16,6 +16,10 @@ function M.install()
     local timeouts = {}
     local resourceStates = {}
     local clock = 0
+    local nextEntity = 0
+    local entities = {}
+    local minigameAuthorizations, minigameProofs = {}, {}
+    local nextMinigameProof = 0
 
     local VEC3 = {}
     VEC3.__index = VEC3
@@ -54,12 +58,16 @@ function M.install()
     function _G.GetCurrentResourceName() return 'qbpolice' end
     function _G.GetResourceState(name) return resourceStates[name] or 'missing' end
     function _G.GetHashKey(s) return s end
-    function _G.CreateObject() return 1 end
+    function _G.CreateObject()
+        nextEntity = nextEntity + 1
+        entities[nextEntity] = true
+        return nextEntity
+    end
     function _G.PlaceObjectOnGroundProperly() end
     function _G.NetworkGetNetworkIdFromEntity(e) return 1000 + (tonumber(e) or 0) end
     function _G.NetworkDoesNetworkIdExist() return true end
-    function _G.DoesEntityExist() return true end
-    function _G.DeleteEntity() end
+    function _G.DoesEntityExist(entity) return entities[entity] == true or players[entity] ~= nil end
+    function _G.DeleteEntity(entity) entities[entity] = nil end
     _G.os = os
     _G.math = math
 
@@ -81,6 +89,11 @@ function M.install()
     -- once per registration pass and not duplicated on the next one.
     local blips = {}
     _G.QB = {
+        util = {
+            isFiniteNumber = function(value)
+                return type(value) == 'number' and value == value and value > -math.huge and value < math.huge
+            end,
+        },
         blips = {
             create = function(coords, options)
                 blips[#blips + 1] = { coords = coords, options = options }
@@ -88,11 +101,39 @@ function M.install()
             end,
             remove = function() return true end,
         },
-        callback = { register = function() end, trigger = function() end },
+        callback = {
+            registry = {},
+            register = function(name, handler) QB.callback.registry[name] = handler end,
+            trigger = function() end,
+        },
+        events = {
+            registry = {},
+            register = function(name, handler) QB.events.registry[name] = handler end,
+            trigger = function() end,
+        },
+        minigames = {
+            authorizeProof = function(src, gameType, opts)
+                nextMinigameProof = nextMinigameProof + 1
+                local token = ('authorization:%d'):format(nextMinigameProof)
+                minigameAuthorizations[token] = { src = src, gameType = gameType, opts = opts }
+                return token
+            end,
+            consumeProof = function(src, token, gameType, authorization)
+                local proof = minigameProofs[token]
+                if not proof then return false end
+                if proof.src ~= src or proof.gameType ~= gameType or proof.authorization ~= authorization then return false end
+                minigameProofs[token] = nil
+                return true
+            end,
+        },
         notify = { send = function(src, payload)
             notifications[#notifications + 1] = { src = src, payload = payload }
         end },
-        commands = { add = function() end, remove = function() end },
+        commands = {
+            registry = {},
+            add = function(name, _, _, _, handler) QB.commands.registry[name] = handler end,
+            remove = function(name) QB.commands.registry[name] = nil end,
+        },
         keybind = { add = function() end },
         timers = {
             setInterval = function() return 1 end,
@@ -178,6 +219,11 @@ function M.install()
     function qbcore.setMetaData(src, key, value)
         local p = players[src]; if not p then return false, 'no such player' end
         p.data.metadata[key] = value
+        return true
+    end
+    function qbcore.setJobDuty(src, onDuty)
+        local p = players[src]; if not p then return false, 'no such player' end
+        p.job.onduty = onDuty == true
         return true
     end
     function qbcore.incrementMetaData(src, key, delta, min, max)
@@ -293,6 +339,7 @@ function M.install()
     -- payload qbpolice builds, not qbdispatch's own storage (which has its own
     -- suite).
     local dispatchCalls = {}
+    local playerAlertDefinitions = {}
     exportImpls.qbdispatch = {}
     local qbdispatch = exportImpls.qbdispatch
     function qbdispatch.createCall(payload)
@@ -308,6 +355,20 @@ function M.install()
         for _ in pairs(recipients) do count = count + 1 end
         return #dispatchCalls, count
     end
+    function qbdispatch.registerPlayerAlert(key, definition)
+        playerAlertDefinitions[key] = definition
+        return true
+    end
+    function qbdispatch.createPlayerCall(src, key)
+        local definition = playerAlertDefinitions[key]
+        if not definition then return false, 'unknown player alert type' end
+
+        local payload = {}
+        for field, value in pairs(definition) do payload[field] = value end
+        payload.coords = players[src] and players[src].coords or nil
+        payload.data = { incident = key, reporter = src }
+        return qbdispatch.createCall(payload)
+    end
     function qbdispatch.setTheme() return true end
 
     local qbinventory = exportImpls.qbinventory
@@ -322,8 +383,10 @@ function M.install()
         netHandlers = netHandlers,
         exportImpls = exportImpls,
         resourceStates = resourceStates,
+        QB = QB,
         vec3 = vec3,
         dispatchCalls = dispatchCalls,
+        playerAlertDefinitions = playerAlertDefinitions,
         lastDispatchCall = function() return dispatchCalls[#dispatchCalls] end,
         blips = blips,
         addPlayer = function(src, opts)
@@ -355,6 +418,12 @@ function M.install()
         notifications = notifications,
         lastNotification = function() return notifications[#notifications] end,
         advanceClock = function(ms) clock = clock + ms end,
+        issueMinigameProof = function(src, gameType, authorization)
+            nextMinigameProof = nextMinigameProof + 1
+            local token = ('proof:%d'):format(nextMinigameProof)
+            minigameProofs[token] = { src = src, gameType = gameType, authorization = authorization }
+            return token
+        end,
         clientEventsFor = function(name)
             local out = {}
             for _, e in ipairs(clientEvents) do if e.name == name then out[#out + 1] = e end end

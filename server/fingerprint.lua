@@ -17,8 +17,20 @@ function Police.getFingerprint(citizenId)
     return fingerprint
 end
 
-QB.callback.register('qbpolice:server:getFingerprint', function(src, target)
-    local cid = Police.citizenId(target or src)
+---@param officerSrc integer
+---@param targetSrc integer
+---@return string|nil fingerprint
+function Police.getFingerprintForOfficer(officerSrc, targetSrc)
+    targetSrc = tonumber(targetSrc)
+    if not targetSrc or not Police.isPolice(officerSrc) then return nil end
+    if not Police.isCuffed(targetSrc) then return nil end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return nil end
+
+    local cid = Police.citizenId(targetSrc)
     if not cid then return nil end
     return Police.getFingerprint(cid)
+end
+
+QB.callback.register('qbpolice:server:getFingerprint', function(src, target)
+    return Police.getFingerprintForOfficer(src, target)
 end)

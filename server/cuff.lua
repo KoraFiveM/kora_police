@@ -79,15 +79,22 @@ exports.qbcore:createUseable('handcuffs', function(src)
 end)
 
 ---A soft-cuffed suspect's client won the QB.minigames escape skillcheck --
----revalidate server-side (still soft-cuffed, attempts/cooldown) before
----actually releasing.
+---revalidate both the cuff state and qblib's one-use server-issued proof
+---before actually releasing.
 ---@param src integer
+---@param proof string
 ---@return boolean, string|nil
-function Police.breakCuffs(src)
+function Police.breakCuffs(src, proof)
     local state = Police.cuffState[src]
     if not state or not state.soft then return false, 'not soft-cuffed' end
     if GetGameTimer() < state.cooldownUntil then return false, 'on cooldown' end
     if state.attemptsUsed >= Config.cuff.breakCuffsAttempts then return false, 'no attempts remaining' end
+    local authorization = state.breakAuthorization
+    state.breakAuthorization = nil
+    if not authorization or not QB.minigames.consumeProof(src, proof,
+        Config.minigames.breakCuffs.type, authorization) then
+        return false, 'invalid minigame proof'
+    end
 
     state.attemptsUsed = state.attemptsUsed + 1
     return Police.uncuff(src, src)
@@ -98,8 +105,28 @@ end
 function Police.breakCuffsFailed(src)
     local state = Police.cuffState[src]
     if not state or not state.soft then return end
+    state.breakAuthorization = nil
     state.attemptsUsed = state.attemptsUsed + 1
     state.cooldownUntil = GetGameTimer() + Config.cuff.breakCuffsCooldown
+end
+
+---@param src integer
+---@return string|nil authorization
+---@return string|nil reason
+function Police.beginBreakCuffs(src)
+    local state = Police.cuffState[src]
+    if not state or not state.soft then return nil, 'not soft-cuffed' end
+    if state.breakAuthorization then return nil, 'attempt already in progress' end
+    if GetGameTimer() < state.cooldownUntil then return nil, 'on cooldown' end
+    if state.attemptsUsed >= Config.cuff.breakCuffsAttempts then return nil, 'no attempts remaining' end
+
+    local attempt = state.attemptsUsed + 1
+    local difficulty = Config.cuff.breakCuffsDifficulty[math.min(attempt, #Config.cuff.breakCuffsDifficulty)]
+    local opts = Config.minigames.breakCuffs.opts[difficulty] or Config.minigames.breakCuffs.opts.medium
+    local authorization = QB.minigames.authorizeProof(src, Config.minigames.breakCuffs.type, opts)
+    if not authorization then return nil, 'could not authorize escape attempt' end
+    state.breakAuthorization = authorization
+    return authorization
 end
 
 RegisterNetEvent('qbpolice:server:cuff', function(target)
@@ -110,12 +137,17 @@ RegisterNetEvent('qbpolice:server:uncuff', function(target)
     local ok, err = Police.uncuff(source, tonumber(target))
     if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
 end)
-RegisterNetEvent('qbpolice:server:breakCuffsResult', function(success)
-    if success then
-        Police.breakCuffs(source)
+RegisterNetEvent('qbpolice:server:breakCuffsResult', function(proof)
+    local escaped = type(proof) == 'string' and Police.breakCuffs(source, proof)
+    if escaped then
+        TriggerClientEvent('QBCore:Notify', source, 'You broke free!', 'success')
     else
         Police.breakCuffsFailed(source)
     end
+end)
+
+QB.callback.register('qbpolice:server:beginBreakCuffs', function(src)
+    return Police.beginBreakCuffs(src)
 end)
 
 QB.callback.register('qbpolice:server:getCuffed', function(src, target)

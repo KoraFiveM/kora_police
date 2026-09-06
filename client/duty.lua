@@ -33,7 +33,7 @@ local function registerDutyZones()
                         return job ~= nil and job.name == Config.police.job
                     end,
                     onSelect = function()
-                        TriggerServerEvent('qbpolice:server:toggleDuty')
+                        QB.events.trigger('qbpolice:server:toggleDuty')
                     end,
                 },
             },

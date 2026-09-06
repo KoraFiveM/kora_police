@@ -9,21 +9,15 @@
 -- What remains is the police-specific side: the officer-facing commands that
 -- RAISE calls, and the cop-count listeners other police features read.
 
-local function requestBackup(message, priority)
+local function requestBackup()
     if not Police.isOnDuty() then
         return Police.notify('You must be on duty to request backup.', 'error')
     end
 
-    TriggerServerEvent('qbpolice:server:requestBackup', {
-        message = message,
-        priority = priority,
-        coords = QB.cache.coords(),
-    })
+    QB.events.trigger('qbpolice:server:requestBackup')
 end
 
-RegisterCommand('backup', function(_, args)
-    requestBackup(#args > 0 and table.concat(args, ' ') or nil, 2)
-end, false)
+RegisterCommand('backup', requestBackup, false)
 
 -- The panic button. Real qb-policejob had one (police:client:SendPoliceEmergencyAlert)
 -- and the new resource lost it entirely -- an officer down had no way to say so.

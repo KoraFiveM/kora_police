@@ -103,18 +103,12 @@ RegisterNetEvent('police:server:SetCopCount', function() Police.broadcastCopCoun
 RegisterNetEvent('police:server:UpdateBlips', function() Police.broadcastCopCount() end)
 
 RegisterNetEvent('police:server:showFingerprint', function(target)
-    local targetSrc = tonumber(target) or source
-    if not Police.isPolice(source) or Police.distanceBetween(source, targetSrc) > Config.cuff.distance then return end
-    local cid = Police.citizenId(targetSrc)
-    if not cid then return end
-    TriggerClientEvent('police:client:showFingerprint', source, Police.getFingerprint(cid))
+    local fingerprint = Police.getFingerprintForOfficer(source, target)
+    if fingerprint then TriggerClientEvent('police:client:showFingerprint', source, fingerprint) end
 end)
 RegisterNetEvent('police:server:showFingerprintId', function(target)
-    local targetSrc = tonumber(target) or source
-    if not Police.isPolice(source) or Police.distanceBetween(source, targetSrc) > Config.cuff.distance then return end
-    local cid = Police.citizenId(targetSrc)
-    if not cid then return end
-    TriggerClientEvent('police:client:showFingerprintId', source, Police.getFingerprint(cid))
+    local fingerprint = Police.getFingerprintForOfficer(source, target)
+    if fingerprint then TriggerClientEvent('police:client:showFingerprintId', source, fingerprint) end
 end)
 
 RegisterNetEvent('police:server:SetTracker', function(target)
@@ -146,5 +140,10 @@ RegisterNetEvent('police:server:spawnObject', function(coords)
     Police.deploySpike(source, coords)
 end)
 RegisterNetEvent('police:server:SyncSpikes', function(netId, active)
-    TriggerClientEvent('police:client:SyncSpikes', -1, tonumber(netId), active)
+    local id = tonumber(netId)
+    local entry = id and Police.spikes[id]
+    -- Deployment is always server-created through spawnObject/deploySpike.
+    -- The only safe legacy sync request is the owning officer removing a
+    -- strip the server still tracks; Police.removeSpike performs the fanout.
+    if active == false and entry and entry.officer == source then Police.removeSpike(id) end
 end)

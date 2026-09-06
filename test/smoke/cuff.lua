@@ -97,7 +97,9 @@ h.test('a soft cuff can be broken via breakCuffs, consuming an attempt', functio
     Police.softCuffNearby(OFFICER)
     h.assertTrue(Police.isCuffed(CIVILIAN))
 
-    local ok = Police.breakCuffs(CIVILIAN)
+    local authorization = Police.beginBreakCuffs(CIVILIAN)
+    local proof = handle.issueMinigameProof(CIVILIAN, Config.minigames.breakCuffs.type, authorization)
+    local ok = Police.breakCuffs(CIVILIAN, proof)
     h.assertTrue(ok)
     h.assertFalse(Police.isCuffed(CIVILIAN))
     handle.setCoords(CIVILIAN, 0.0, FAR, 0.0)
@@ -106,11 +108,50 @@ end)
 h.test('breakCuffs refuses a hard cuff', function()
     handle.setCoords(SUSPECT, 0.0, 0.0, 0.0)
     Police.cuff(OFFICER, SUSPECT)
-    local ok, err = Police.breakCuffs(SUSPECT)
+    local ok, err = Police.breakCuffs(SUSPECT, 'not-a-proof')
     h.assertFalse(ok)
     h.assertTrue(err ~= nil)
     Police.uncuff(OFFICER, SUSPECT)
     handle.setCoords(SUSPECT, FAR, 0.0, 0.0)
+end)
+
+h.test('the network result rejects a forged client success boolean', function()
+    handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0)
+    Police.softCuffNearby(OFFICER)
+    Police.beginBreakCuffs(CIVILIAN)
+
+    handle.fireEvent('qbpolice:server:breakCuffsResult', CIVILIAN, true)
+
+    h.assertTrue(Police.isCuffed(CIVILIAN))
+    h.assertEqual(Police.cuffState[CIVILIAN].attemptsUsed, 1)
+    Police.uncuff(OFFICER, CIVILIAN)
+    handle.setCoords(CIVILIAN, 0.0, FAR, 0.0)
+end)
+
+h.test('the network result rejects another player\'s minigame proof', function()
+    handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0)
+    Police.softCuffNearby(OFFICER)
+    local authorization = Police.beginBreakCuffs(CIVILIAN)
+    local proof = handle.issueMinigameProof(SUSPECT, Config.minigames.breakCuffs.type, authorization)
+
+    handle.fireEvent('qbpolice:server:breakCuffsResult', CIVILIAN, proof)
+
+    h.assertTrue(Police.isCuffed(CIVILIAN))
+    Police.uncuff(OFFICER, CIVILIAN)
+    handle.setCoords(CIVILIAN, 0.0, FAR, 0.0)
+end)
+
+h.test('the network result accepts one source-bound mash proof', function()
+    handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0)
+    Police.softCuffNearby(OFFICER)
+    local authorization = Police.beginBreakCuffs(CIVILIAN)
+    local proof = handle.issueMinigameProof(CIVILIAN, Config.minigames.breakCuffs.type, authorization)
+
+    handle.fireEvent('qbpolice:server:breakCuffsResult', CIVILIAN, proof)
+
+    h.assertFalse(Police.isCuffed(CIVILIAN))
+    h.assertEqual(handle.lastClient('QBCore:Notify').target, CIVILIAN)
+    handle.setCoords(CIVILIAN, 0.0, FAR, 0.0)
 end)
 
 h.test('breakCuffsFailed applies a cooldown that blocks an immediate retry', function()
@@ -119,7 +160,7 @@ h.test('breakCuffsFailed applies a cooldown that blocks an immediate retry', fun
     h.assertTrue(Police.isCuffed(CIVILIAN))
 
     Police.breakCuffsFailed(CIVILIAN)
-    local ok, err = Police.breakCuffs(CIVILIAN)
+    local ok, err = Police.breakCuffs(CIVILIAN, 'not-a-proof')
     h.assertFalse(ok)
     h.assertTrue(err ~= nil)
 end)
@@ -128,7 +169,7 @@ h.test('breakCuffs refuses once the attempt cap is reached', function()
     local state = Police.cuffState[CIVILIAN]
     state.cooldownUntil = 0
     state.attemptsUsed = Config.cuff.breakCuffsAttempts
-    local ok, err = Police.breakCuffs(CIVILIAN)
+    local ok, err = Police.breakCuffs(CIVILIAN, 'not-a-proof')
     h.assertFalse(ok)
     h.assertTrue(err ~= nil)
 end)

@@ -1,29 +1,57 @@
 -- Duty toggle and the patrol-fleet register/spawn/store loop, all on
 -- Core.garage (job-fleet rows: citizenid is nil, job = Config.police.job).
 
--- Duty is normally toggled at a station target zone, which is fine in play but
--- makes the whole resource awkward to exercise -- you cannot go on duty without
--- travelling to a specific spot. This is the same toggle as a chat command,
--- mirroring qbambulance's own /ems-duty.
-QB.commands.add('police-duty', 'Toggle police duty', {}, false, function(source)
-    local job = exports.qbcore:getJob(source)
-    if not job or job.type ~= Config.police.jobType then
-        return QB.notify.send(source, { message = 'You are not employed in law enforcement.', type = 'error' })
-    end
+local lastDutyChange = {}
 
-    local onDuty = not job.onduty
-    exports.qbcore:setJobDuty(source, onDuty)
-    QB.notify.send(source, {
-        message = onDuty and 'You are now on duty.' or 'You are now off duty.',
-        type = 'success',
+local function nearDutyPoint(src)
+    local ped = GetPlayerPed(src)
+    if not ped or ped == 0 then return false end
+    local coords = GetEntityCoords(ped)
+    for _, point in ipairs(Config.duty.points) do
+        local radius = (tonumber(point.radius) or 1.5) + 1.0
+        if #(coords - vector3(point.coords.x, point.coords.y, point.coords.z)) <= radius then return true end
+    end
+    return false
+end
+
+local function setDuty(src, onDuty)
+    local job = exports.qbcore:getJob(src)
+    if not job or job.name ~= Config.police.job then return false, 'You are not employed by this police service.' end
+    if not nearDutyPoint(src) then return false, 'Use a police duty point to change duty status.' end
+    onDuty = onDuty == true
+    if job.onduty == onDuty then return true end
+
+    local current = GetGameTimer()
+    if lastDutyChange[src] and current - lastDutyChange[src] < Config.duty.actionCooldown then
+        return false, 'Wait before changing duty status again.'
+    end
+    local changed, err = exports.qbcore:setJobDuty(src, onDuty)
+    if changed then lastDutyChange[src] = current end
+    return changed, err
+end
+
+local function toggleDuty(src)
+    local job = exports.qbcore:getJob(src)
+    local onDuty = job ~= nil and not job.onduty
+    local changed, err = setDuty(src, onDuty)
+    QB.notify.send(src, {
+        message = changed and (onDuty and 'You are now on duty.' or 'You are now off duty.')
+            or (err or 'Duty status could not be changed.'),
+        type = changed and 'success' or 'error',
     })
+    return changed
+end
+
+QB.commands.add('police-duty', 'Toggle police duty at a police station', {}, false, function(source)
+    toggleDuty(source)
 end)
 
-RegisterNetEvent('qbpolice:server:toggleDuty', function()
-    local src = source
-    local job = Police.job(src)
-    if not job or job.name ~= Config.police.job then return end
-    exports.qbcore:setJobDuty(src, not job.onduty)
+QB.events.register('qbpolice:server:toggleDuty', function(src)
+    toggleDuty(src)
+end, { rateLimit = { max = 2, window = 3000 } })
+
+AddEventHandler('playerDropped', function()
+    lastDutyChange[source] = nil
 end)
 
 ---Ensures every configured duty vehicle has a `player_vehicles` row (job
