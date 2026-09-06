@@ -38,6 +38,7 @@ function _G.vector3(x, y, z) return { x = x or 0.0, y = y or 0.0, z = z or 0.0 }
 function _G.vector4(x, y, z, w) return { x = x or 0.0, y = y or 0.0, z = z or 0.0, w = w or 0.0 } end
 
 local blipCalls = 0
+local stationBlips = {}
 
 _G.QB = {
     cache = {
@@ -48,7 +49,11 @@ _G.QB = {
         onChange = function() end,
     },
     blips = {
-        create = function() blipCalls = blipCalls + 1; return blipCalls end,
+        create = function(_, options)
+            blipCalls = blipCalls + 1
+            stationBlips[#stationBlips + 1] = options
+            return blipCalls
+        end,
         remove = function() return true end,
     },
 }
@@ -130,6 +135,8 @@ h.test('station blips are created once at load, not per qbtarget restart', funct
     h.assertTrue(blipsAfterInitialLoad > 0, 'the station blip is created on initial load')
     h.assertEqual(blipCalls, blipsAfterInitialLoad,
         'a qbtarget restart must not stack another station blip')
+    h.assertEqual(stationBlips[1].category, 2,
+        'station blips use their named legend entry, not GTA\'s Owned Property category')
 end)
 
 h.report('target_restart')
