@@ -43,6 +43,48 @@ RegisterNetEvent('qbpolice:client:escortStopSelf', function()
     Police.escortedTarget = nil
 end)
 
+-- The escorted player is attached just behind the officer, so relying only on
+-- a target option makes the stop action difficult to aim at. `/escort` is a
+-- toggle: use it again while escorting to release the current suspect.
+local function closestPlayerServerId()
+    local myPed = PlayerPedId()
+    local myCoords = GetEntityCoords(myPed)
+    local closest, closestDistance = nil, Config.cuff.distance
+
+    for _, player in ipairs(GetActivePlayers()) do
+        if player ~= PlayerId() then
+            local ped = GetPlayerPed(player)
+            if ped and ped ~= 0 then
+                local distance = #(GetEntityCoords(ped) - myCoords)
+                if distance <= closestDistance then
+                    closest, closestDistance = GetPlayerServerId(player), distance
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
+RegisterCommand('escort', function()
+    if not Police.isOnDuty() then
+        Police.notify('You must be on duty to escort a player.', 'error')
+        return
+    end
+
+    if Police.escortedTarget then
+        TriggerServerEvent('qbpolice:server:deEscort', Police.escortedTarget)
+        return
+    end
+
+    local target = closestPlayerServerId()
+    if not target then
+        Police.notify('No player nearby.', 'error')
+        return
+    end
+    TriggerServerEvent('qbpolice:server:escort', target)
+end, false)
+
 -- Dragged side --------------------------------------------------------
 
 RegisterNetEvent('qbpolice:client:dragStart', function(draggerServerId)

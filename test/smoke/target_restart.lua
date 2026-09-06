@@ -16,6 +16,7 @@ local eventHandlers = {}
 local qbtargetCalls = 0
 
 function _G.RegisterNetEvent(_, _) end
+function _G.RegisterCommand(_, _) end
 function _G.AddEventHandler(name, cb)
     eventHandlers[name] = eventHandlers[name] or {}
     table.insert(eventHandlers[name], cb)
@@ -135,8 +136,8 @@ h.test('station blips are created once at load, not per qbtarget restart', funct
     h.assertTrue(blipsAfterInitialLoad > 0, 'the station blip is created on initial load')
     h.assertEqual(blipCalls, blipsAfterInitialLoad,
         'a qbtarget restart must not stack another station blip')
-    h.assertEqual(stationBlips[1].category, 2,
-        'station blips use their named legend entry, not GTA\'s Owned Property category')
+    h.assertEqual(stationBlips[1].category, stationBlips[1].label,
+        'station blips group beneath their named legend heading')
 end)
 
 h.report('target_restart')

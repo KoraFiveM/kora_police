@@ -167,12 +167,12 @@ Config.duty = {
     actionCooldown = 1000,
     vehicleSpawnDistance = 15.0,
     -- `blip` is optional per point; omit it for a duty point that should not
-    -- appear on the map. Category 2 lists the station by name instead of
-    -- placing it in GTA's built-in "Owned Property" category (11).
+    -- appear on the map. A named category groups every configured station
+    -- beneath one pause-map legend heading.
     points = {
         {
             coords = vector4(441.5, -980.0, 30.7, 90.0), radius = 1.5, label = 'Police Duty',
-            blip = { enabled = true, sprite = 60, color = 29, scale = 0.8, shortRange = true, label = 'Police Station', category = 2 },
+            blip = { enabled = true, sprite = 60, color = 29, scale = 0.8, shortRange = true, label = 'Police Station', category = 'Police Station' },
         },
     },
     vehicles = {
