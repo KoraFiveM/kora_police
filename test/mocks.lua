@@ -58,6 +58,7 @@ function M.install()
     function _G.GetCurrentResourceName() return 'qbpolice' end
     function _G.GetResourceState(name) return resourceStates[name] or 'missing' end
     function _G.GetHashKey(s) return s end
+    function _G.joaat(s) return s end
     function _G.CreateObject()
         nextEntity = nextEntity + 1
         entities[nextEntity] = true

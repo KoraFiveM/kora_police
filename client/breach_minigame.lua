@@ -6,8 +6,8 @@
 
 CreateThread(function()
     for _, door in ipairs(Config.breach.doors) do
-        local doorHash = GetHashKey(door.id)
-        AddDoorToSystem(doorHash, GetHashKey(door.model), door.coords.x, door.coords.y, door.coords.z, false, false, false)
+        local doorHash = joaat(door.id)
+        AddDoorToSystem(doorHash, joaat(door.model), door.coords.x, door.coords.y, door.coords.z, false, false, false)
         DoorSystemSetDoorState(doorHash, 1, false, false)  -- locked
         door.hash = doorHash
     end

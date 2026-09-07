@@ -34,7 +34,7 @@ function Police.deploySpike(officerSrc, coords)
     end
 
     local cleanCoords = { x = coords.x, y = coords.y, z = coords.z }
-    local obj = CreateObject(GetHashKey(Config.spikes.model), cleanCoords.x, cleanCoords.y, cleanCoords.z, true, true, false)
+    local obj = CreateObject(joaat(Config.spikes.model), cleanCoords.x, cleanCoords.y, cleanCoords.z, true, true, false)
     if not obj or obj == 0 then return false, 'failed to create strip' end
     PlaceObjectOnGroundProperly(obj)
 

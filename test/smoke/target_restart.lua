@@ -33,6 +33,7 @@ function _G.SetTimeout(_, _) end
 function _G.Wait(_) end
 function _G.GetGameTimer() return 0 end
 function _G.GetHashKey(s) return s end
+function _G.joaat(s) return s end
 function _G.AddDoorToSystem() end
 function _G.DoorSystemSetDoorState() end
 function _G.vector3(x, y, z) return { x = x or 0.0, y = y or 0.0, z = z or 0.0 } end
