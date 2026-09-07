@@ -19,7 +19,6 @@ function Police.cuff(officerSrc, targetSrc)
     exports.qbcore:setMetaData(targetSrc, 'ishandcuffed', true)
     Police.cuffState[targetSrc] = { soft = false, officer = officerSrc, attemptsUsed = 0, cooldownUntil = 0 }
     TriggerClientEvent('qbpolice:client:cuffed', targetSrc, true, false)
-    TriggerClientEvent('qbpolice:client:cuffed', officerSrc, true, false, targetSrc)
     return true
 end
 
@@ -68,7 +67,6 @@ function Police.softCuffNearby(src)
     exports.qbcore:setMetaData(target, 'ishandcuffed', true)
     Police.cuffState[target] = { soft = true, officer = nil, attemptsUsed = 0, cooldownUntil = 0 }
     TriggerClientEvent('qbpolice:client:cuffed', target, true, true)
-    TriggerClientEvent('qbpolice:client:cuffed', src, true, true, target)
     return true
 end
 
