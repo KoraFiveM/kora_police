@@ -28,8 +28,9 @@ local function attemptBreach(door)
 end
 
 local function registerBreachDoorTargets()
+    Police.target.reset('breachDoors')
     for _, door in ipairs(Config.breach.doors) do
-        exports.qbtarget:addBoxZone({
+        Police.target.box('breachDoors', {
             coords = door.coords,
             size = { x = 1.2, y = 1.2, z = 2.2 },
             distance = 2.0,

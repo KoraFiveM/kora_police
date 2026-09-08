@@ -172,7 +172,7 @@ Config.duty = {
     points = {
         {
             coords = vector4(441.5, -980.0, 30.7, 90.0), radius = 1.5, label = 'Police Duty',
-            blip = { enabled = true, sprite = 60, color = 29, scale = 0.8, shortRange = true, label = 'Police Station', category = 'Police Station' },
+            blip = { enabled = true, sprite = 60, color = 29, scale = 0.8, shortRange = true, category = 'Police' },
         },
     },
     vehicles = {

@@ -106,7 +106,8 @@ RegisterNetEvent('qbpolice:client:dragStopSelf', function()
 end)
 
 local function registerEscortTargets()
-    exports.qbtarget:addGlobalType('player', {
+    Police.target.reset('escort')
+    Police.target.global('escort', 'player', {
         {
             label = 'Escort',
             icon = 'footprints',

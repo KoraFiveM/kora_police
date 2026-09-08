@@ -17,7 +17,8 @@ RegisterNetEvent('qbpolice:client:takeOutVehicle', function()
 end)
 
 local function registerVehicleTargets()
-    exports.qbtarget:addGlobalType('vehicle', {
+    Police.target.reset('vehicle')
+    Police.target.global('vehicle', 'vehicle', {
         {
             label = 'Put Suspect In Vehicle',
             icon = 'car',

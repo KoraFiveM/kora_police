@@ -1,7 +1,8 @@
 -- Legacy RobPlayer -- plain player-vs-player, no cuff requirement.
 
 local function registerRobTargets()
-    exports.qbtarget:addGlobalType('player', {
+    Police.target.reset('rob')
+    Police.target.global('rob', 'player', {
         {
             label = 'Rob',
             icon = 'hand-coins',

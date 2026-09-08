@@ -15,7 +15,7 @@ local function registerStationBlips()
             local blip = QB.blips.create(point.coords, point.blip)
             if blip and not point.blip.info then
                 QB.blips.setInfo(blip, {
-                    title = point.blip.label or point.label,
+                    title = point.blip.name or point.blip.category or point.label,
                     rows = {
                         { kind = 'wrappedText', value = 'Clock in here to access police duty facilities.' },
                     },
@@ -27,8 +27,9 @@ end
 registerStationBlips()
 
 local function registerDutyZones()
+    Police.target.reset('duty')
     for _, point in ipairs(Config.duty.points) do
-        exports.qbtarget:addSphereZone({
+        Police.target.sphere('duty', {
             coords = point.coords,
             radius = point.radius,
             distance = point.radius + 1.0,
@@ -50,7 +51,7 @@ local function registerDutyZones()
 
     for index, veh in ipairs(Config.duty.vehicles) do
         local plate = ('POLICE%02d'):format(index)
-        exports.qbtarget:addSphereZone({
+        Police.target.sphere('duty', {
             coords = veh.coords,
             radius = 2.0,
             distance = 3.0,
@@ -69,7 +70,7 @@ local function registerDutyZones()
         })
     end
 
-    exports.qbtarget:addGlobalType('vehicle', {
+    Police.target.global('duty', 'vehicle', {
         {
             label = 'Store Patrol Vehicle',
             icon = 'car',

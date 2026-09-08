@@ -2,7 +2,8 @@
 -- server is authoritative on whether the target can actually be charged.
 
 local function registerBillTargets()
-    exports.qbtarget:addGlobalType('player', {
+    Police.target.reset('bill')
+    Police.target.global('bill', 'player', {
         {
             label = 'Issue Citation',
             icon = 'receipt',

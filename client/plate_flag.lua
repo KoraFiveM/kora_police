@@ -4,7 +4,8 @@
 -- who gets notified; this client only decides when to ask).
 
 local function registerPlateFlagTargets()
-    exports.qbtarget:addGlobalType('vehicle', {
+    Police.target.reset('plateFlag')
+    Police.target.global('plateFlag', 'vehicle', {
         {
             label = 'Flag Plate',
             icon = 'flag',

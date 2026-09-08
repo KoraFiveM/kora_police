@@ -2,7 +2,8 @@
 -- Config.jail.defaultMinutes. Server clears cuff/escort/drag state on booking.
 
 local function registerJailTargets()
-    exports.qbtarget:addGlobalType('player', {
+    Police.target.reset('jail')
+    Police.target.global('jail', 'player', {
         {
             label = 'Book (Jail)',
             icon = 'gavel',

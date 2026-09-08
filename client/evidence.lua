@@ -2,7 +2,8 @@
 -- server/evidence.lua. No inventory logic lives here at all.
 
 local function registerEvidenceLockerTargets()
-    exports.qbtarget:addBoxZone({
+    Police.target.reset('evidenceLocker')
+    Police.target.box('evidenceLocker', {
         coords = Config.evidence.lockerCoords,
         size = { x = 1.5, y = 1.5, z = 2.0 },
         heading = Config.evidence.lockerCoords.w,
@@ -39,7 +40,8 @@ RegisterNetEvent('qbpolice:client:worldEvidenceCreated', function(id, evType, co
         sprite = sprite,
         color = 1,
         scale = 0.7,
-        label = ('Evidence: %s'):format(evType),
+        category = 'Evidence',
+        name = evType,
         info = {
             title = 'Evidence marker',
             rows = {

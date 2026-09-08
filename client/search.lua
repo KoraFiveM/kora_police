@@ -8,7 +8,8 @@ RegisterNetEvent('qbpolice:client:openSearch', function(targetServerId)
 end)
 
 local function registerSearchTargets()
-    exports.qbtarget:addGlobalType('player', {
+    Police.target.reset('search')
+    Police.target.global('search', 'player', {
         {
             label = 'Search',
             icon = 'search',

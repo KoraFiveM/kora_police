@@ -1,7 +1,8 @@
 -- SeizeCash / SeizeDriverLicense targeting on a restrained suspect.
 
 local function registerSeizeTargets()
-    exports.qbtarget:addGlobalType('player', {
+    Police.target.reset('seize')
+    Police.target.global('seize', 'player', {
         {
             label = 'Seize Cash',
             icon = 'banknote',

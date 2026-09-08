@@ -3,7 +3,8 @@
 -- server/impound.lua -- no vehicle persistence lives here.
 
 local function registerImpoundTargets()
-    exports.qbtarget:addGlobalType('vehicle', {
+    Police.target.reset('impound')
+    Police.target.global('impound', 'vehicle', {
         {
             label = 'Impound Vehicle',
             icon = 'lock',
@@ -19,7 +20,7 @@ local function registerImpoundTargets()
     })
 
     for _, lot in ipairs(Config.impound.lots) do
-        exports.qbtarget:addSphereZone({
+        Police.target.sphere('impound', {
             coords = lot.coords,
             radius = 2.0,
             distance = 3.0,

@@ -17,7 +17,8 @@ local function upsertTrackerBlip(targetServerId, coords)
         sprite = 8,
         color = 1,
         scale = 0.9,
-        label = ('Tracker %d'):format(targetServerId),
+        category = 'Vehicle Tracking',
+        name = tostring(targetServerId),
         info = {
             title = 'Active tracker',
             rows = {
@@ -40,7 +41,8 @@ RegisterNetEvent('police:client:TrackerMessage', function(_, message)
 end)
 
 local function registerTrackerTargets()
-    exports.qbtarget:addGlobalType('player', {
+    Police.target.reset('tracker')
+    Police.target.global('tracker', 'player', {
         {
             label = 'Attach Tracker',
             icon = 'radar',

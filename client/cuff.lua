@@ -49,7 +49,8 @@ end)
 if Police.cuffed then startCuffedControlThread() end
 
 local function registerCuffTargets()
-    exports.qbtarget:addGlobalType('player', {
+    Police.target.reset('cuff')
+    Police.target.global('cuff', 'player', {
         {
             label = 'Cuff',
             icon = 'lock',

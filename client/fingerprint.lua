@@ -1,7 +1,8 @@
 -- Reveal a suspect's fingerprint id via search.
 
 local function registerFingerprintTargets()
-    exports.qbtarget:addGlobalType('player', {
+    Police.target.reset('fingerprint')
+    Police.target.global('fingerprint', 'player', {
         {
             label = 'Check Fingerprint',
             icon = 'fingerprint',

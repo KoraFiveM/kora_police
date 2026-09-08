@@ -2,12 +2,11 @@
 -- entity/model/globalType API takes the options ARRAY positionally --
 -- addGlobalType(entityType, { {label=...}, ... }, distance) -- while the
 -- legacy qb-target envelope ({ options = {...}, distance = n }) is only
--- unwrapped by qbtarget's qb-target compat identity. qbpolice shipped 13
--- registrations using the envelope against the native export; every one
--- failed validation ("options must be a non-empty array of target options")
--- at first client connect. The zone APIs (addBoxZone/addSphereZone/
--- addPolyZone) DO take a single opts object with an `options` key -- those
--- are correct and unaffected here.
+-- unwrapped by qbtarget's qb-target compat identity. The concrete native
+-- calls live in Police.target's shared wrappers, so every police interaction
+-- gets the correct shape and restart-safe ownership behaviour. The zone APIs
+-- (addBoxZone/addSphereZone/addPolyZone) DO take a single opts object with
+-- an `options` key -- those are correct and unaffected here.
 local h = dofile('test/harness.lua')
 
 local function source(path)
@@ -51,7 +50,7 @@ h.test('no addGlobalType/addModel/addEntity call passes a { options = ... } enve
     end
 end)
 
-h.test('addGlobalType call sites still exist (guard is exercising real code)', function()
+h.test('the shared target wrapper owns the native addGlobalType call', function()
     local hits = 0
     for _, path in ipairs(lfs_files) do
         local ok, src = pcall(source, path)
@@ -59,7 +58,18 @@ h.test('addGlobalType call sites still exist (guard is exercising real code)', f
             for _ in src:gmatch(':addGlobalType%(') do hits = hits + 1 end
         end
     end
-    h.assertTrue(hits >= 13, ('expected at least 13 addGlobalType call sites, found %d'):format(hits))
+    h.assertEqual(hits, 1, ('expected one shared addGlobalType call site, found %d'):format(hits))
+end)
+
+h.test('every police blip caller uses qblib canonical category/name fields', function()
+    local duty = source('config.lua')
+    local evidence = source('client/evidence.lua')
+    local tracker = source('client/tracker.lua')
+    h.assertTrue(duty:find("category = 'Police'", 1, true) ~= nil, 'stations use Police')
+    h.assertTrue(evidence:find("category = 'Evidence'", 1, true) ~= nil, 'evidence uses Evidence')
+    h.assertTrue(evidence:find('name = evType', 1, true) ~= nil, 'evidence type is the marker name')
+    h.assertTrue(tracker:find("category = 'Vehicle Tracking'", 1, true) ~= nil, 'trackers use Vehicle Tracking')
+    h.assertTrue(tracker:find('name = tostring(targetServerId)', 1, true) ~= nil, 'tracker id is the marker name')
 end)
 
 h.report('target_call_shape')

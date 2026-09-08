@@ -8,8 +8,9 @@ RegisterNetEvent('qbpolice:client:openArmory', function(shopId)
 end)
 
 local function registerArmoryTargets()
+    Police.target.reset('armory')
     for _, shop in ipairs(Config.armory.shops) do
-        exports.qbtarget:addBoxZone({
+        Police.target.box('armory', {
             coords = shop.coords,
             size = { x = 1.5, y = 1.5, z = 2.0 },
             heading = shop.coords.w,

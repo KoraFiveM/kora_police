@@ -14,6 +14,30 @@ local h = dofile('test/harness.lua')
 -- mocking.
 local eventHandlers = {}
 local qbtargetCalls = 0
+local activeTargetIds, nextTargetId = {}, 0
+
+local function addTarget()
+    qbtargetCalls = qbtargetCalls + 1
+    nextTargetId = nextTargetId + 1
+    activeTargetIds[nextTargetId] = true
+    return nextTargetId
+end
+
+local function removeZoneTarget(_, id)
+    activeTargetIds[id] = nil
+    return true
+end
+
+local function removeGlobalTarget(_, _, id)
+    activeTargetIds[id] = nil
+    return true
+end
+
+local function activeTargetCount()
+    local count = 0
+    for _ in pairs(activeTargetIds) do count = count + 1 end
+    return count
+end
 
 function _G.RegisterNetEvent(_, _) end
 function _G.RegisterCommand(_, _) end
@@ -66,9 +90,11 @@ _G.exports = setmetatable({}, {
     __index = function(_, resourceName)
         if resourceName == 'qbtarget' then
             return {
-                addGlobalType = function(_, ...) qbtargetCalls = qbtargetCalls + 1 end,
-                addBoxZone = function(_, ...) qbtargetCalls = qbtargetCalls + 1 end,
-                addSphereZone = function(_, ...) qbtargetCalls = qbtargetCalls + 1 end,
+                addGlobalType = addTarget,
+                addBoxZone = addTarget,
+                addSphereZone = addTarget,
+                removeGlobalType = removeGlobalTarget,
+                removeZone = removeZoneTarget,
             }
         end
         return setmetatable({}, {
@@ -105,6 +131,7 @@ end)
 -- point -- see the test at the bottom of this file.
 local blipsAfterInitialLoad = blipCalls
 local afterInitialLoad = qbtargetCalls
+local activeAfterInitialLoad = activeTargetCount()
 
 h.test('firing onClientResourceStart for qbtarget re-registers every zone/type from every file', function()
     TriggerEvent('onClientResourceStart', 'qbtarget')
@@ -117,6 +144,8 @@ h.test('firing onClientResourceStart for qbtarget re-registers every zone/type f
     h.assertEqual(qbtargetCalls, afterInitialLoad * 2,
         ('expected qbtarget call count to exactly double after a simulated qbtarget restart (was %d, expected %d, got %d)')
             :format(afterInitialLoad, afterInitialLoad * 2, qbtargetCalls))
+    h.assertEqual(activeTargetCount(), activeAfterInitialLoad,
+        're-registration replaces every police target instead of duplicating menu options')
 end)
 
 h.test('firing onClientResourceStart for an unrelated resource does not re-register anything', function()
@@ -138,8 +167,10 @@ h.test('station blips are created once at load, not per qbtarget restart', funct
     h.assertTrue(blipsAfterInitialLoad > 0, 'the station blip is created on initial load')
     h.assertEqual(blipCalls, blipsAfterInitialLoad,
         'a qbtarget restart must not stack another station blip')
-    h.assertEqual(stationBlips[1].category, stationBlips[1].label,
-        'station blips group beneath their named legend heading')
+    h.assertEqual(stationBlips[1].category, 'Police',
+        'station blips group beneath the canonical Police heading')
+    h.assertEqual(stationBlips[1].name, nil, 'a generic station does not repeat its category as a name')
+    h.assertEqual(stationBlips[1].label, nil, 'qblib composes the station label')
 end)
 
 h.report('target_restart')
