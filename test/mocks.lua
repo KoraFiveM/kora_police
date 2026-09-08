@@ -101,6 +101,7 @@ function M.install()
                 return #blips
             end,
             remove = function() return true end,
+            setInfo = function() return true end,
         },
         callback = {
             registry = {},

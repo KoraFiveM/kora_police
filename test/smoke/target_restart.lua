@@ -57,6 +57,7 @@ _G.QB = {
             return blipCalls
         end,
         remove = function() return true end,
+        setInfo = function() return true end,
     },
 }
 

@@ -12,7 +12,15 @@
 local function registerStationBlips()
     for _, point in ipairs(Config.duty.points) do
         if point.blip and point.blip.enabled then
-            QB.blips.create(point.coords, point.blip)
+            local blip = QB.blips.create(point.coords, point.blip)
+            if blip and not point.blip.info then
+                QB.blips.setInfo(blip, {
+                    title = point.blip.label or point.label,
+                    rows = {
+                        { kind = 'wrappedText', value = 'Clock in here to access police duty facilities.' },
+                    },
+                })
+            end
         end
     end
 end

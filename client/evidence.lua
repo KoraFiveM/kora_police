@@ -35,7 +35,19 @@ local markers = {}
 
 RegisterNetEvent('qbpolice:client:worldEvidenceCreated', function(id, evType, coords)
     local sprite = evType == 'blood' and 616 or (evType == 'casing' and 141 or 499)
-    local blip = QB.blips.create(coords, { sprite = sprite, color = 1, scale = 0.7, label = ('Evidence: %s'):format(evType) })
+    local blip = QB.blips.create(coords, {
+        sprite = sprite,
+        color = 1,
+        scale = 0.7,
+        label = ('Evidence: %s'):format(evType),
+        info = {
+            title = 'Evidence marker',
+            rows = {
+                { kind = 'name', label = 'Type', value = evType },
+                { kind = 'wrappedText', value = 'On-duty officers can collect this evidence at the scene.' },
+            },
+        },
+    })
     if blip then markers[id] = blip end
 
     exports.qbtarget:addSphereZone({

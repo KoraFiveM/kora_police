@@ -13,7 +13,19 @@ local function upsertTrackerBlip(targetServerId, coords)
         SetBlipCoords(blip, coords.x, coords.y, coords.z)
         return
     end
-    blip = QB.blips.create(coords, { sprite = 8, color = 1, scale = 0.9, label = ('Tracker %d'):format(targetServerId) })
+    blip = QB.blips.create(coords, {
+        sprite = 8,
+        color = 1,
+        scale = 0.9,
+        label = ('Tracker %d'):format(targetServerId),
+        info = {
+            title = 'Active tracker',
+            rows = {
+                { kind = 'name', label = 'Target ID', value = targetServerId },
+                { kind = 'wrappedText', value = 'Location updates as the tracked target moves.' },
+            },
+        },
+    })
     if blip then Police.trackerBlips[targetServerId] = blip end
 end
 
