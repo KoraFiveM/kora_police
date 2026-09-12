@@ -16,11 +16,9 @@ CreateThread(function()
         print('^1[qbpolice:ballistics]^7 qbsql was unavailable; ballistic evidence is disabled until restart.')
         return
     end
-    local resource, file = GetCurrentResourceName(), 'sql/001_ballistics.sql'
-    local sql = LoadResourceFile(resource, file)
-    if not sql then print('^1[qbpolice:ballistics]^7 missing migration ' .. file); return end
-    local _, err = QB.sql.migrate(resource, {
-        { version = 1, name = 'ballistics', sql = sql, checksum = checksum(sql) },
-    })
+    local resource = GetCurrentResourceName()
+    local _, err = QB.sql.migrateFiles(resource, {
+        { version = 1, name = 'ballistics', file = 'sql/001_ballistics.sql' },
+    }, checksum)
     if err then print(('^1[qbpolice:ballistics]^7 migration failed: %s'):format(tostring(err))) end
 end)
