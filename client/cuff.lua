@@ -5,6 +5,7 @@
 local CUFF_DICT, CUFF_CLIP = 'mp_arresting', 'idle'
 local CUFF_PROP_MODEL, CUFF_PROP_BONE = 'p_cs_cuffs_01', 'SKEL_L_Hand'
 local attachedProp = nil
+local playerId = QB.cache.playerId()
 
 local function applyCuffedVisuals(cuffed)
     local ped = QB.cache.ped()
@@ -33,7 +34,7 @@ local function startCuffedControlThread()
             DisableControlAction(0, 58, true)  -- weapon select
             DisableControlAction(0, 21, true)  -- sprint
             DisableControlAction(0, 22, true)  -- jump
-            DisablePlayerFiring(QB.cache.playerId(), true)
+            DisablePlayerFiring(playerId, true)
             Wait(0)
         end
     end)
