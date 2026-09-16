@@ -88,7 +88,7 @@ RegisterNetEvent('qbpolice:client:cuffed', function(cuffed, soft, otherSrc)
 end)
 
 ---Legacy client export.
-function IsHandcuffed()
+function isHandcuffed()
     return Police.cuffed
 end
-exports('IsHandcuffed', IsHandcuffed)
+exports('isHandcuffed', isHandcuffed)

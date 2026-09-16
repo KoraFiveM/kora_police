@@ -253,12 +253,12 @@ QB.callback.trigger('police:IsPlateFlagged', plate)
 
 ### Legacy `police:*` compat
 `server/compat/police.lua` (loaded last) mirrors most of the above onto
-`qb-policejob`-style event and callback names — `police:server:CuffPlayer`,
+Legacy police-style event and callback names — `police:server:CuffPlayer`,
 `SearchPlayer`, `SeizeCash`, `EscortPlayer`, `KidnapPlayer`,
 `PutPlayerInVehicle`, `BillPlayer`, `JailPlayer`/`SendToJail`, `RobPlayer`,
 `SetTracker`, `Impound`/`TakeOutImpound`, `SyncSpikes`, and callbacks
 `police:GetCuffed`, `police:GetEscorted`, `police:GetKidnappedTarget`,
-`police:GetKidnappedDragger` — so existing `qb-policejob` scripts/UIs keep
+`police:GetKidnappedDragger` — so existing scripts/UIs keep
 working unmodified.
 
 ## Config highlights (`config.lua`)
