@@ -40,6 +40,7 @@ end
 function Police.seizeCash(officerSrc, targetSrc)
     if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
     if not Police.isCuffed(targetSrc) then return false, 'target is not restrained' end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
 
     local amount = exports.qbcore:getMoney(targetSrc, 'cash') or 0
     if amount <= 0 then return false, 'target has no cash' end
