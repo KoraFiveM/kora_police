@@ -4,7 +4,16 @@ local h = dofile('test/harness.lua')
 local mocks = dofile('test/mocks.lua'); local handle = mocks.install()
 dofile('config.lua')
 dofile('server/core.lua')
-dofile('server/cuff.lua')
+local useables = {}
+handle.exportImpls.qbcore.createUseable = function(name, callback) useables[name] = callback end
+handle.exportImpls.qbcore.hasItem = function(src, name)
+    for _, item in pairs(handle.players[src] and handle.players[src].data.items or {}) do
+        if item.name == name and item.amount >= 1 then return true end
+    end
+    return false
+end
+dofile(arg[1] or 'server/cuff.lua')
+dofile('server/compat/police.lua')
 
 local OFFICER, SUSPECT, CIVILIAN = 1, 2, 3
 local FAR = 9999.0
@@ -12,6 +21,7 @@ local FAR = 9999.0
 handle.addPlayer(OFFICER, { job = { name = 'police', onduty = true, grade = { level = 1 } } })
 handle.addPlayer(SUSPECT, { job = { name = 'unemployed', onduty = false, grade = { level = 1 } } })
 handle.addPlayer(CIVILIAN, { job = { name = 'unemployed', onduty = false, grade = { level = 1 } } })
+handle.players[OFFICER].data.items = { { name = 'handcuffs', amount = 1 } }
 
 -- Everyone starts far apart from each other; each test brings exactly the
 -- players it cares about into range so results are deterministic regardless
@@ -176,6 +186,62 @@ h.test('breakCuffs refuses once the attempt cap is reached', function()
     local ok, err = Police.breakCuffs(CIVILIAN, 'not-a-proof')
     h.assertFalse(ok)
     h.assertTrue(err ~= nil)
+end)
+
+h.test('soft cuffs require the actual item through direct, usable and legacy calls', function()
+    Police.uncuff(OFFICER, CIVILIAN)
+    handle.setCoords(OFFICER, FAR, FAR, 0)
+    handle.setCoords(SUSPECT, 0, 0, 0)
+    handle.setCoords(CIVILIAN, 0, 0, 0)
+    handle.players[CIVILIAN].data.items = {}
+    local before = #handle.clientEventsFor('qbpolice:client:cuffed')
+
+    local ok, err = Police.softCuffNearby(CIVILIAN)
+    h.assertFalse(ok)
+    h.assertEqual(err, 'handcuffs required')
+    h.assertFalse(useables.handcuffs(CIVILIAN))
+    handle.fireEvent('police:server:CuffPlayerSoft', CIVILIAN, 'handcuffs', true)
+    h.assertFalse(Police.isCuffed(SUSPECT))
+    h.assertEqual(Police.cuffState[SUSPECT], nil)
+    h.assertEqual(#handle.clientEventsFor('qbpolice:client:cuffed'), before)
+    h.assertEqual(handle.lastClient('QBCore:Notify').args[1], 'handcuffs required')
+end)
+
+h.test('a civilian carrying handcuffs can still use them without consuming the item', function()
+    Police.uncuff(SUSPECT, SUSPECT)
+    local items = { { name = 'handcuffs', amount = 1 } }
+    handle.players[CIVILIAN].data.items = items
+    h.assertTrue(useables.handcuffs(CIVILIAN))
+    h.assertTrue(Police.isCuffed(SUSPECT))
+    h.assertTrue(Police.cuffState[SUSPECT].soft)
+    h.assertEqual(items[1].amount, 1)
+    Police.uncuff(SUSPECT, SUSPECT)
+end)
+
+h.test('soft-cuff target selection ignores other routing instances', function()
+    GetPlayerRoutingBucket = function(src) return src == SUSPECT and 9 or 0 end
+    local before = #handle.clientEventsFor('qbpolice:client:cuffed')
+    local ok, err = Police.softCuffNearby(CIVILIAN)
+    handle.fireEvent('police:server:CuffPlayerSoft', CIVILIAN)
+    GetPlayerRoutingBucket = function() return 0 end
+
+    h.assertFalse(ok)
+    h.assertEqual(err, 'no one nearby to cuff')
+    h.assertFalse(Police.isCuffed(SUSPECT))
+    h.assertEqual(Police.cuffState[SUSPECT], nil)
+    h.assertEqual(#handle.clientEventsFor('qbpolice:client:cuffed'), before)
+end)
+
+h.test('one same-instance target is selected when an invisible target is also nearby', function()
+    Police.uncuff(SUSPECT, SUSPECT)
+    handle.setCoords(OFFICER, 0, 0, 0)
+    GetPlayerRoutingBucket = function(src) return src == SUSPECT and 9 or 0 end
+    local ok, err = Police.softCuffNearby(CIVILIAN)
+    GetPlayerRoutingBucket = function() return 0 end
+    h.assertTrue(ok, tostring(err))
+    h.assertTrue(Police.isCuffed(OFFICER))
+    h.assertFalse(Police.isCuffed(SUSPECT))
+    Police.uncuff(OFFICER, OFFICER)
 end)
 
 h.report('cuff')

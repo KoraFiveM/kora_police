@@ -46,17 +46,14 @@ end
 ---@param src integer
 ---@return boolean, string|nil
 function Police.softCuffNearby(src)
+    if not exports.qbcore:hasItem(src, 'handcuffs') then return false, 'handcuffs required' end
     local srcPed = GetPlayerPed(src)
     if not srcPed or srcPed == 0 then return false, 'no ped' end
-    local srcCoords = GetEntityCoords(srcPed)
 
     local candidates = {}
     for _, other in ipairs(exports.qbcore:getPlayers()) do
-        if other ~= src then
-            local ped = GetPlayerPed(other)
-            if ped and ped ~= 0 and #(GetEntityCoords(ped) - srcCoords) <= Config.cuff.distance and not Police.isCuffed(other) then
-                candidates[#candidates + 1] = other
-            end
+        if other ~= src and Police.distanceBetween(src, other) <= Config.cuff.distance and not Police.isCuffed(other) then
+            candidates[#candidates + 1] = other
         end
     end
 
