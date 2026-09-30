@@ -31,6 +31,9 @@ local function registerArmoryShops()
             inventory = shop.items,
             currency = 'money',
             groups = { [Config.police.job] = shop.minGrade },
+            coords = shop.coords,
+            distance = shop.distance,
+            access = function(src) return Police.canAccessArmory(src, shop.id) end,
         })
         Police.armoryShops[shop.id] = { config = shop, key = key }
     end
