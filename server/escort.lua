@@ -96,7 +96,9 @@ function Police.putInVehicle(officerSrc, targetSrc, netId, seat)
     if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
     if not Police.isCuffed(targetSrc) then return false, 'target is not cuffed' end
     if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
-    if not netId or not NetworkDoesNetworkIdExist(netId) then return false, 'vehicle not found' end
+    if type(netId) ~= 'number' or netId <= 0 or netId % 1 ~= 0 then return false, 'vehicle not found' end
+    local vehicle = NetworkGetEntityFromNetworkId(netId)
+    if vehicle == 0 or not DoesEntityExist(vehicle) then return false, 'vehicle not found' end
 
     Police.deEscort(officerSrc, targetSrc)
     Police.stopDrag(officerSrc, targetSrc)

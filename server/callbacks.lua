@@ -6,7 +6,7 @@ for _, name in ipairs({
     'COMPONENT_AT_PI_SUPP', 'COMPONENT_AT_PI_SUPP_02', 'COMPONENT_AT_AR_SUPP',
     'COMPONENT_AT_AR_SUPP_02', 'COMPONENT_AT_SR_SUPP',
 }) do
-    SUPPRESSOR_COMPONENTS[#SUPPRESSOR_COMPONENTS + 1] = joaat(name)
+    SUPPRESSOR_COMPONENTS[joaat(name) % 4294967296] = true
 end
 
 ---@return integer[]
@@ -46,8 +46,12 @@ QB.callback.register('police:IsSilencedWeapon', function(src, target)
     local ped = GetPlayerPed(target)
     if not ped or ped == 0 then return false end
     local weapon = GetSelectedPedWeapon(ped)
-    for _, component in ipairs(SUPPRESSOR_COMPONENTS) do
-        if HasPedGotWeaponComponent(ped, weapon, component) then return true end
+    local equipped = exports.qbinventory:GetEquippedWeapon(target)
+    if not equipped or type(equipped.name) ~= 'string'
+        or joaat(equipped.name) % 4294967296 ~= weapon % 4294967296 then return false end
+    for _, component in ipairs(equipped.components or {}) do
+        local hash = type(component) == 'string' and joaat(component) or component
+        if type(hash) == 'number' and SUPPRESSOR_COMPONENTS[hash % 4294967296] then return true end
     end
     return false
 end)

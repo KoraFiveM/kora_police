@@ -55,6 +55,18 @@ end
 
 RegisterNetEvent('qbpolice:client:spikeDeployed', function(netId, coords)
     activeStrips[netId] = coords
+    -- Only the current network owner grounds the server-created object.
+    CreateThread(function()
+        local deadline = GetGameTimer() + 5000
+        while activeStrips[netId] == coords and GetGameTimer() < deadline do
+            local object = NetworkGetEntityFromNetworkId(netId)
+            if object ~= 0 and DoesEntityExist(object) and NetworkHasControlOfEntity(object) then
+                PlaceObjectOnGroundProperly(object)
+                return
+            end
+            Wait(100)
+        end
+    end)
     startScan()
 end)
 RegisterNetEvent('qbpolice:client:spikeRemoved', function(netId)
