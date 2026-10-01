@@ -24,17 +24,41 @@ local function registerEvidenceLockerTargets()
 end
 registerEvidenceLockerTargets()
 
-AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerEvidenceLockerTargets() end
-end)
-
 -- World evidence markers (blood/casing/fingerprint) -- compat rendering for
 -- the legacy evidence:server:Create* events; deliberately simple blips, not
 -- a new CSI minigame.
 
 local markers = {}
 
+local function removeWorldEvidence(id)
+    local marker = markers[id]
+    if not marker then return end
+    if marker.blip then QB.blips.remove(marker.blip) end
+    if marker.zone then exports.qbtarget:removeZone(marker.zone) end
+    markers[id] = nil
+end
+
+local function registerWorldEvidenceTarget(id, marker)
+    if marker.zone or GetResourceState('qbtarget') ~= 'started' then return end
+    marker.zone = exports.qbtarget:addSphereZone({
+        coords = marker.coords,
+        radius = 1.0,
+        distance = 2.0,
+        options = {
+            {
+                label = ('Collect %s evidence'):format(marker.type),
+                icon = 'search',
+                canInteract = function() return Police.isOnDuty() end,
+                onSelect = function()
+                    TriggerServerEvent('evidence:server:AddToInventory', id)
+                end,
+            },
+        },
+    })
+end
+
 RegisterNetEvent('qbpolice:client:worldEvidenceCreated', function(id, evType, coords)
+    removeWorldEvidence(id)
     local sprite = evType == 'blood' and 616 or (evType == 'casing' and 141 or 499)
     local blip = QB.blips.create(coords, {
         sprite = sprite,
@@ -50,23 +74,21 @@ RegisterNetEvent('qbpolice:client:worldEvidenceCreated', function(id, evType, co
             },
         },
     })
-    if blip then markers[id] = blip end
+    local marker = { blip = blip, type = evType, coords = coords }
+    markers[id] = marker
+    registerWorldEvidenceTarget(id, marker)
+end)
 
-    exports.qbtarget:addSphereZone({
-        coords = coords,
-        radius = 1.0,
-        distance = 2.0,
-        options = {
-            {
-                label = ('Collect %s evidence'):format(evType),
-                icon = 'search',
-                canInteract = function() return Police.isOnDuty() end,
-                onSelect = function()
-                    TriggerServerEvent('evidence:server:AddToInventory', id)
-                    Police.notify('Evidence collected.', 'success')
-                    if markers[id] then QB.blips.remove(markers[id]); markers[id] = nil end
-                end,
-            },
-        },
-    })
+RegisterNetEvent('qbpolice:client:worldEvidenceRemoved', removeWorldEvidence)
+
+AddEventHandler('onClientResourceStop', function(resourceName)
+    if resourceName ~= 'qbtarget' then return end
+    -- Stopped providers discard zones and may reuse their IDs on restart.
+    for _, marker in pairs(markers) do marker.zone = nil end
+end)
+
+AddEventHandler('onClientResourceStart', function(resourceName)
+    if resourceName ~= 'qbtarget' then return end
+    registerEvidenceLockerTargets()
+    for id, marker in pairs(markers) do registerWorldEvidenceTarget(id, marker) end
 end)

@@ -55,6 +55,13 @@ end)
 ---@return integer id
 local evidenceCreatedAt = {}
 
+local function removeWorldEvidence(id)
+    if not Police.worldEvidence[id] then return end
+    Police.worldEvidence[id] = nil
+    -- Former observers may have gone off duty since the marker was created.
+    TriggerClientEvent('qbpolice:client:worldEvidenceRemoved', -1, id)
+end
+
 local function markerCount()
     local count = 0
     for _ in pairs(Police.worldEvidence) do count = count + 1 end
@@ -66,7 +73,7 @@ local function evictOldestMarker()
     for id, marker in pairs(Police.worldEvidence) do
         if not oldestAt or marker.createdAt < oldestAt then oldestId, oldestAt = id, marker.createdAt end
     end
-    if oldestId then Police.worldEvidence[oldestId] = nil end
+    if oldestId then removeWorldEvidence(oldestId) end
 end
 
 local function createWorldEvidence(src, evType, ballistic, suppliedCoords)
@@ -162,10 +169,11 @@ end)
 
 RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
     local src = source
+    evidenceId = tonumber(evidenceId)
     local cid = Police.citizenId(src)
-    local marker = Police.worldEvidence[tonumber(evidenceId)]
+    local marker = Police.worldEvidence[evidenceId]
     if not cid or not marker or not Police.isPolice(src) then return end
-    if marker.expiresAt <= GetGameTimer() then Police.worldEvidence[tonumber(evidenceId)] = nil; return end
+    if marker.expiresAt <= GetGameTimer() then removeWorldEvidence(evidenceId); return end
     if marker.bucket ~= GetPlayerRoutingBucket(src) then return end
     local ped = GetPlayerPed(src)
     if not ped or ped == 0 or #(GetEntityCoords(ped) - vector3(marker.coords.x, marker.coords.y, marker.coords.z)) > Config.evidence.collectDistance then return end
@@ -191,8 +199,9 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
         end)
     end
     Police.collectedEvidence[cid] = Police.collectedEvidence[cid] or {}
-    Police.collectedEvidence[cid][tonumber(evidenceId)] = true
-    Police.worldEvidence[tonumber(evidenceId)] = nil
+    Police.collectedEvidence[cid][evidenceId] = true
+    removeWorldEvidence(evidenceId)
+    QB.notify.send(src, { title = 'Evidence', message = 'Evidence collected.', type = 'success' })
 end)
 
 ---Server-only lookup for the authorised MDT. No client event exposes this
@@ -211,7 +220,7 @@ CreateThread(function()
         Wait(60000)
         local now = GetGameTimer()
         for id, marker in pairs(Police.worldEvidence) do
-            if marker.expiresAt <= now then Police.worldEvidence[id] = nil end
+            if marker.expiresAt <= now then removeWorldEvidence(id) end
         end
     end
 end)
