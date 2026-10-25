@@ -105,6 +105,7 @@ _G.exports = setmetatable({}, {
     end,
 })
 
+QB.compat = dofile('../qblib/compat/provider.lua')()
 dofile('config.lua')
 dofile('client/core.lua')
 

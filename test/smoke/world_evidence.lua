@@ -77,6 +77,7 @@ local function client(src)
             end,
         },
     }, { __call = function() end })
+    env.QB.compat = assert(loadfile(resource .. '/../qblib/compat/provider.lua', 't', env))()()
     assert(loadfile(resource .. '/config.lua', 't', env))()
     assert(loadfile(resource .. '/client/core.lua', 't', env))()
     assert(loadfile(resource .. '/client/evidence.lua', 't', env))()

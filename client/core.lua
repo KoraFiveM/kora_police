@@ -92,3 +92,7 @@ function isHandcuffed()
     return Police.cuffed
 end
 exports('isHandcuffed', isHandcuffed)
+
+-- Upstream consumers use a capital I and the qb-policejob resource identity.
+exports('IsHandcuffed', isHandcuffed)
+QB.compat.provideExport('qb-policejob', 'IsHandcuffed', isHandcuffed)

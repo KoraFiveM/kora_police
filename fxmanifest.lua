@@ -7,6 +7,8 @@ author 'qbcore2'
 version '0.1.0'
 description 'Police/LEO job -- cuff/escort/search/evidence/armory/jail/dispatch on top of qbcore+qblib+qbinventory+qbtarget'
 
+provide 'qb-policejob'
+
 dependency 'qblib'
 dependency 'qbsql'
 dependency 'qbcore'
