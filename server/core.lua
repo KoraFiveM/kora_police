@@ -1,5 +1,5 @@
 -- Shared server-side state for this resource. A bare global table, same
--- convention qbadmin's `Admin`/qbtarget's `ServerTarget`/qbinventory's
+-- convention kora_admin's `Admin`/qbtarget's `ServerTarget`/qbinventory's
 -- `QbInventory` use for cross-file organisation within one resource.
 
 Police = Police or {}
@@ -41,8 +41,8 @@ end
 ---@return boolean
 function Police.isIncapacitated(src)
     return Police.isCuffed(src)
-        or exports.qbcore:getMetaData(src, 'isdead') == true
-        or exports.qbcore:getMetaData(src, 'inlaststand') == true
+        or exports.kora_core:getMetaData(src, 'isdead') == true
+        or exports.kora_core:getMetaData(src, 'inlaststand') == true
 end
 
 ---@param src integer
@@ -71,7 +71,7 @@ end
 ---@param src integer
 ---@return table|nil job
 local function job(src)
-    return exports.qbcore:getJob(src)
+    return exports.kora_core:getJob(src)
 end
 Police.job = job
 
@@ -96,11 +96,11 @@ end
 ---@param src integer
 ---@return boolean
 function Police.isCuffed(src)
-    return exports.qbcore:getMetaData(src, 'ishandcuffed') == true
+    return exports.kora_core:getMetaData(src, 'ishandcuffed') == true
 end
 
 local function citizenId(src)
-    return exports.qbcore:getPlayerData(src, { 'citizenid' })
+    return exports.kora_core:getPlayerData(src, { 'citizenid' })
 end
 Police.citizenId = citizenId
 

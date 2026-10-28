@@ -1,7 +1,7 @@
--- qbpolice registers its own items via Core.registry.registerShared at boot,
--- rather than hand-editing qbcore/shared/items.lua's own catalog (the plan's
--- ??9 recommendation) -- keeps qbcore's seed file job-resource-agnostic.
--- registerShared is server-only (qbcore refuses a client-side call); the
+-- kora_police registers its own items via Core.registry.registerShared at boot,
+-- rather than hand-editing kora_core/shared/items.lua's own catalog (the plan's
+-- ??9 recommendation) -- keeps kora_core's seed file job-resource-agnostic.
+-- registerShared is server-only (kora_core refuses a client-side call); the
 -- registry replicates every record to clients automatically.
 
 local ITEMS = {
@@ -12,6 +12,6 @@ local ITEMS = {
 
 CreateThread(function()
     for _, item in ipairs(ITEMS) do
-        exports.qbcore:registerShared('items', item.name, item)
+        exports.kora_core:registerShared('items', item.name, item)
     end
 end)

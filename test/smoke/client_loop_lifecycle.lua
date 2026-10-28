@@ -25,7 +25,7 @@ h.test('ALPR scanning is lifecycle-bound to an on-duty driver', function()
     h.assertTrue(plates:find('local function canScan()', 1, true) ~= nil)
     h.assertTrue(plates:find('while canScan() do', 1, true) ~= nil)
     h.assertTrue(plates:find("QB.cache.onChange('vehicle'", 1, true) ~= nil)
-    h.assertTrue(plates:find("exports.qbcore:onPlayerDataChange({ 'job' }, startScan)", 1, true) ~= nil)
+    h.assertTrue(plates:find("exports.kora_core:onPlayerDataChange({ 'job' }, startScan)", 1, true) ~= nil)
     h.assertFalse(plates:find('while true do', 1, true) ~= nil,
         'ALPR must not retain a permanent idle polling loop')
 end)

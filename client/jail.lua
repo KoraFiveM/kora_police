@@ -25,5 +25,5 @@ end
 registerJailTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerJailTargets() end
+    if resourceName == 'kora_target' then registerJailTargets() end
 end)

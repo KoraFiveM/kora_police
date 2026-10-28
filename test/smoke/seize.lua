@@ -57,7 +57,7 @@ for _, case in ipairs({ 'distant', 'different instance' }) do
         handle.setCoords(SUSPECT, case == 'distant' and 10000 or 0, 0, 0)
         GetPlayerRoutingBucket = function(src) return case == 'different instance' and src == SUSPECT and 9 or 0 end
 
-        local money = handle.exportImpls.qbcore
+        local money = handle.exportImpls.kora_core
         local read, transfer = money.getMoney, money.transferMoney
         local reads, transfers = 0, 0
         money.getMoney = function(...) reads = reads + 1; return read(...) end

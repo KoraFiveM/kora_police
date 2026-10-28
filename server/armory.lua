@@ -1,5 +1,5 @@
--- Fresh armory build via qbinventory's existing shop primitive
--- (`exports.qbinventory:RegisterShop`) -- neither qb-policejob nor qbx_police
+-- Fresh armory build via kora_inventory's existing shop primitive
+-- (`exports.kora_inventory:RegisterShop`) -- neither qb-policejob nor qbx_police
 -- ships a maintained armory (qb-policejob's Config.ArmoryWhitelist is an
 -- empty stub; qbx_police punts to ox_inventory shops entirely), so this is
 -- genuine new work, not a port.
@@ -7,26 +7,26 @@
 -- Grade-gating choice: rather than a per-item price gate, each armory ROOM is
 -- its own shop registered with a `minGrade`, and access to open that shop at
 -- all is checked server-side against the requesting officer's
--- `job.grade.level` before the shop's qbtarget zone will even let the client
+-- `job.grade.level` before the shop's kora_target zone will even let the client
 -- try to open it (see client/duty.lua's armory zones). `price = 0` items are
 -- the patrol-tier free-issue kit; anything above 0 is a chargeable upgrade
 -- even for an officer who qualifies for that room.
 
 Police.armoryShops = Police.armoryShops or {}
 
--- Registers every armory-room shop against qbinventory. Called once at load
+-- Registers every armory-room shop against kora_inventory. Called once at load
 -- (via the dependency-ordering guarantee below) AND again on every
--- qbinventory onResourceStart -- a `dependency 'qbinventory'` declaration
+-- kora_inventory onResourceStart -- a `dependency 'kora_inventory'` declaration
 -- only guarantees START ORDER on a fresh boot, not survival of a later
--- qbinventory RESTART mid-session, which wipes qbinventory's own shop table
--- without touching qbpolice at all.
+-- kora_inventory RESTART mid-session, which wipes kora_inventory's own shop table
+-- without touching kora_police at all.
 local function registerArmoryShops()
     for _, shop in ipairs(Config.armory.shops) do
-        -- `groups` is qbinventory's own job/grade access check (see its
+        -- `groups` is kora_inventory's own job/grade access check (see its
         -- server.lua canAccess/groupAllowed) -- set here so the shop is
-        -- refused by qbinventory itself for a non-qualifying officer even if
+        -- refused by kora_inventory itself for a non-qualifying officer even if
         -- something bypasses this resource's own openArmory gate below.
-        local key = exports.qbinventory:RegisterShop(shop.id, {
+        local key = exports.kora_inventory:RegisterShop(shop.id, {
             slots = shop.slots,
             inventory = shop.items,
             currency = 'money',
@@ -42,7 +42,7 @@ end
 CreateThread(registerArmoryShops)
 
 AddEventHandler('onResourceStart', function(resourceName)
-    if resourceName == 'qbinventory' then CreateThread(registerArmoryShops) end
+    if resourceName == 'kora_inventory' then CreateThread(registerArmoryShops) end
 end)
 
 ---@param src integer

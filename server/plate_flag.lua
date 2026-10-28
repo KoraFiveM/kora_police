@@ -42,7 +42,7 @@ end
 function Police.triggerFlaggedPlate(spotterSrc, plate)
     local flagged, entry = Police.isPlateFlagged(plate)
     if not flagged then return end
-    for _, src in ipairs(exports.qbcore:getPlayersByJob(Config.police.job, true)) do
+    for _, src in ipairs(exports.kora_core:getPlayersByJob(Config.police.job, true)) do
         TriggerClientEvent('qbpolice:client:flaggedPlateTriggered', src, plate, entry.reason)
         TriggerClientEvent('police:client:FlaggedPlateTriggered', src, plate, entry.reason)
     end

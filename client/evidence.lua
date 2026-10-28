@@ -1,4 +1,4 @@
--- Evidence locker UI wiring -- opens the qbinventory stash registered in
+-- Evidence locker UI wiring -- opens the kora_inventory stash registered in
 -- server/evidence.lua. No inventory logic lives here at all.
 
 local function registerEvidenceLockerTargets()
@@ -16,7 +16,7 @@ local function registerEvidenceLockerTargets()
                     return Police.isOnDuty()
                 end,
                 onSelect = function()
-                    exports.qbinventory:openInventory('stash', Config.evidence.lockerStashId)
+                    exports.kora_inventory:openInventory('stash', Config.evidence.lockerStashId)
                 end,
             },
         },
@@ -34,13 +34,13 @@ local function removeWorldEvidence(id)
     local marker = markers[id]
     if not marker then return end
     if marker.blip then QB.blips.remove(marker.blip) end
-    if marker.zone then exports.qbtarget:removeZone(marker.zone) end
+    if marker.zone then exports.kora_target:removeZone(marker.zone) end
     markers[id] = nil
 end
 
 local function registerWorldEvidenceTarget(id, marker)
-    if marker.zone or GetResourceState('qbtarget') ~= 'started' then return end
-    marker.zone = exports.qbtarget:addSphereZone({
+    if marker.zone or GetResourceState('kora_target') ~= 'started' then return end
+    marker.zone = exports.kora_target:addSphereZone({
         coords = marker.coords,
         radius = 1.0,
         distance = 2.0,
@@ -82,13 +82,13 @@ end)
 RegisterNetEvent('qbpolice:client:worldEvidenceRemoved', removeWorldEvidence)
 
 AddEventHandler('onClientResourceStop', function(resourceName)
-    if resourceName ~= 'qbtarget' then return end
+    if resourceName ~= 'kora_target' then return end
     -- Stopped providers discard zones and may reuse their IDs on restart.
     for _, marker in pairs(markers) do marker.zone = nil end
 end)
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName ~= 'qbtarget' then return end
+    if resourceName ~= 'kora_target' then return end
     registerEvidenceLockerTargets()
     for id, marker in pairs(markers) do registerWorldEvidenceTarget(id, marker) end
 end)

@@ -4,7 +4,7 @@ AddEventHandler = function(name, fn) events[name] = fn end
 RegisterNetEvent = function(name, fn) events[name] = fn end
 exports = function(name, fn) native[name] = fn end
 TriggerEvent = function() end
-QB = { compat = dofile('../qblib/compat/provider.lua')() }
+QB = { compat = dofile('../kora_lib/compat/provider.lua')() }
 dofile('client/core.lua')
 
 h.test('stock IsHandcuffed export uses the native cuff state and retains lowercase callers', function()

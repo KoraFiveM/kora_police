@@ -25,5 +25,5 @@ end
 registerBillTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerBillTargets() end
+    if resourceName == 'kora_target' then registerBillTargets() end
 end)

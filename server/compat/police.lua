@@ -1,12 +1,12 @@
 -- Every `police:server:*`/`police:client:*`/`evidence:server:*` legacy event
 -- name from the plan's backwards-compat checklist, forwarding onto the
 -- Police.* functions defined in the sibling server/*.lua files. Kept as one
--- file (matches qbinventory's own server/compat/qb.lua convention) so the
+-- file (matches kora_inventory's own server/compat/qb.lua convention) so the
 -- full legacy surface is auditable in one place against that checklist.
 --
 -- Deliberately NOT preserved (per the plan): `qb-policejob:server:stash/
--- trash/evidence` -- replaced by calling qbinventory's stash/evidence
--- functions directly, since this framework's qbinventory is the real
+-- trash/evidence` -- replaced by calling kora_inventory's stash/evidence
+-- functions directly, since this framework's kora_inventory is the real
 -- authority already. Deliberately deferred: `heli:server/client:spotlight`.
 
 local function notify(src, err)
@@ -120,7 +120,7 @@ RegisterNetEvent('police:server:TrackerMessage', function(target, message)
     if not target or Police.tracked[target] ~= true then return end
     if type(message) ~= 'string' then return end
     message = message:sub(1, 160)
-    for _, officer in ipairs(exports.qbcore:getPlayersByJob(Config.police.job, true)) do
+    for _, officer in ipairs(exports.kora_core:getPlayersByJob(Config.police.job, true)) do
         TriggerClientEvent('police:client:TrackerMessage', officer, target, message)
     end
 end)

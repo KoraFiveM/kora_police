@@ -9,10 +9,10 @@ function Police.bill(officerSrc, targetSrc, amount, reason)
     if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
     amount = tonumber(amount)
     if not amount or amount ~= math.floor(amount) or amount <= 0 or amount > 100000 then return false, 'invalid fine amount' end
-    if not exports.qbcore:getPlayerData(targetSrc) then return false, 'target not found' end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
     if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
 
-    local removed, err = exports.qbcore:removeMoney(targetSrc, Config.fine.account, amount, reason or 'citation')
+    local removed, err = exports.kora_core:removeMoney(targetSrc, Config.fine.account, amount, reason or 'citation')
     if not removed then
         -- Config.money.allowNegative decides whether this ever actually fails;
         -- surface the underlying reason (e.g. account floor) either way.
@@ -27,15 +27,15 @@ RegisterNetEvent('qbpolice:server:bill', function(target, amount, reason)
     if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
 end)
 
-exports.qbcore:createUseable('moneybag', function(src, item)
+exports.kora_core:createUseable('moneybag', function(src, item)
     local amount = tonumber(item and item.info and item.info.amount) or 0
     local slot = tonumber(item and item.slot)
     if amount ~= math.floor(amount) or amount <= 0 or not slot then return false end
-    local removed, removeErr = exports.qbcore:removeItem(src, 'moneybag', 1, slot, 'moneybag-payout')
+    local removed, removeErr = exports.kora_core:removeItem(src, 'moneybag', 1, slot, 'moneybag-payout')
     if not removed then return false, removeErr end
-    local paid, payErr = exports.qbcore:addMoney(src, 'cash', amount, 'moneybag-payout')
+    local paid, payErr = exports.kora_core:addMoney(src, 'cash', amount, 'moneybag-payout')
     if not paid then
-        exports.qbcore:addItem(src, 'moneybag', 1, slot, item.info or {}, 'moneybag-payout-rollback')
+        exports.kora_core:addItem(src, 'moneybag', 1, slot, item.info or {}, 'moneybag-payout-rollback')
         return false, payErr
     end
     TriggerClientEvent('QBCore:Notify', src, ('You deposited $%d in cash.'):format(amount), 'success')

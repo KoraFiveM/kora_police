@@ -1,5 +1,5 @@
 -- Shared client-side state. Bare global table, same cross-file convention as
--- the server realm's Police table (and qbadmin's own Admin table).
+-- the server realm's Police table (and kora_admin's own Admin table).
 
 Police = Police or {}
 Police.cuffed = false
@@ -25,7 +25,7 @@ local function trackTarget(group, id, remove)
     return id
 end
 
----Replaces one feature's qbtarget registrations without stacking options.
+---Replaces one feature's kora_target registrations without stacking options.
 ---@param group string
 function Police.target.reset(group)
     removeTargetGroup(group)
@@ -37,8 +37,8 @@ end
 ---@param distance? number
 ---@return integer id
 function Police.target.global(group, entityType, options, distance)
-    return trackTarget(group, exports.qbtarget:addGlobalType(entityType, options, distance), function(id)
-        exports.qbtarget:removeGlobalType(entityType, id)
+    return trackTarget(group, exports.kora_target:addGlobalType(entityType, options, distance), function(id)
+        exports.kora_target:removeGlobalType(entityType, id)
     end)
 end
 
@@ -46,8 +46,8 @@ end
 ---@param options QBTargetBoxZoneOptions
 ---@return integer id
 function Police.target.box(group, options)
-    return trackTarget(group, exports.qbtarget:addBoxZone(options), function(id)
-        exports.qbtarget:removeZone(id)
+    return trackTarget(group, exports.kora_target:addBoxZone(options), function(id)
+        exports.kora_target:removeZone(id)
     end)
 end
 
@@ -55,24 +55,24 @@ end
 ---@param options QBTargetSphereZoneOptions
 ---@return integer id
 function Police.target.sphere(group, options)
-    return trackTarget(group, exports.qbtarget:addSphereZone(options), function(id)
-        exports.qbtarget:removeZone(id)
+    return trackTarget(group, exports.kora_target:addSphereZone(options), function(id)
+        exports.kora_target:removeZone(id)
     end)
 end
 
 AddEventHandler('onClientResourceStop', function(resourceName)
-    -- qbtarget has already discarded its registrations. Retaining its old IDs
+    -- kora_target has already discarded its registrations. Retaining its old IDs
     -- would let a fresh instance remove unrelated targets if it reuses an ID.
-    if resourceName == 'qbtarget' then Police.targetGroups = {} end
+    if resourceName == 'kora_target' then Police.targetGroups = {} end
 end)
 
 function Police.isOnDuty()
-    local job = exports.qbcore:getPlayerData({ 'job' })
+    local job = exports.kora_core:getPlayerData({ 'job' })
     return job ~= nil and job.name == Config.police.job and job.onduty == true
 end
 
 function Police.myGradeLevel()
-    local job = exports.qbcore:getPlayerData({ 'job' })
+    local job = exports.kora_core:getPlayerData({ 'job' })
     if not job or job.name ~= Config.police.job then return -1 end
     return tonumber(job.grade and job.grade.level) or 0
 end

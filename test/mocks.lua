@@ -1,8 +1,8 @@
--- Mocks for smoke-testing qbpolice's server logic under plain lua5.4 (no
+-- Mocks for smoke-testing kora_police's server logic under plain lua5.4 (no
 -- FiveM, no other resource's real VM). Installs the FiveM natives these
--- server files touch, plus a small controllable `exports.qbcore`/
--- `exports.qbinventory` surface backed by an in-memory `players` table --
--- qbpolice is a CONSUMER resource (everything it calls crosses a real
+-- server files touch, plus a small controllable `exports.kora_core`/
+-- `exports.kora_inventory` surface backed by an in-memory `players` table --
+-- kora_police is a CONSUMER resource (everything it calls crosses a real
 -- exports() boundary in production), so this mock stands in for those two
 -- dependencies rather than loading their real server.lua files.
 
@@ -55,7 +55,7 @@ function M.install()
     function _G.SetTimeout(_, fn) table.insert(timeouts, fn) end
     function _G.GetGameTimer() clock = clock + 16; return clock end
     function _G.GetInvokingResource() return nil end
-    function _G.GetCurrentResourceName() return 'qbpolice' end
+    function _G.GetCurrentResourceName() return 'kora_police' end
     function _G.GetResourceState(name) return resourceStates[name] or 'missing' end
     function _G.GetHashKey(s) return s end
     function _G.joaat(s) return s end
@@ -85,7 +85,7 @@ function M.install()
     function _G.GetVehicleNumberPlateText(_) return '' end
 
     local notifications = {}
-    -- Every blip client code asks qblib for, in creation order. Recorded rather
+    -- Every blip client code asks kora_lib for, in creation order. Recorded rather
     -- than discarded so a restart test can assert a station blip is created
     -- once per registration pass and not duplicated on the next one.
     local blips = {}
@@ -140,7 +140,7 @@ function M.install()
         timers = {
             setInterval = function() return 1 end,
             clearInterval = function() return true end,
-            -- Shaped like the real handles, NOT a bare function. qblib returns a
+            -- Shaped like the real handles, NOT a bare function. kora_lib returns a
             -- table whose __call metamethod does not survive the export
             -- boundary, so consumers must use `.run(...)`; a mock that hands
             -- back a plain function makes `handle()` look fine here and crash in
@@ -163,10 +163,10 @@ function M.install()
         },
     }
 
-    -- Controllable exports.qbcore / exports.qbinventory. Any resource name /
+    -- Controllable exports.kora_core / exports.kora_inventory. Any resource name /
     -- function name not registered below resolves to a harmless no-op
-    -- returning nil, same fallback convention qbcore's own test mocks use.
-    local exportImpls = { qbcore = {}, qbinventory = {} }
+    -- returning nil, same fallback convention kora_core's own test mocks use.
+    local exportImpls = { kora_core = {}, kora_inventory = {} }
     _G.exports = setmetatable({}, {
         -- FiveM exposes the `exports` registrar as a callable table in a
         -- resource entry file. Evidence now publishes its ballistics API, so
@@ -185,13 +185,13 @@ function M.install()
         end,
     })
 
-    local qbcore = exportImpls.qbcore
+    local qbcore = exportImpls.kora_core
 
-    -- Job types mirror qbcore/shared/jobs.lua. Dispatch alerts target the TYPE,
+    -- Job types mirror kora_core/shared/jobs.lua. Dispatch alerts target the TYPE,
     -- so 'police' and a hypothetical 'sheriff' both answer to 'leo'.
     local JOB_TYPES = { police = 'leo', sheriff = 'leo', ambulance = 'ems', tow = 'recovery' }
 
-    -- `type` is present on the returned job because real qbcore puts it on
+    -- `type` is present on the returned job because real kora_core puts it on
     -- PlayerData.job (CoreInternal.player.buildJob copies it from the registry).
     -- A mock that omitted it would let a job.type check pass here and fail in
     -- game -- the exact mock-drift trap this codebase has been bitten by before.
@@ -336,14 +336,14 @@ function M.install()
     function qbcore.storeVehicle() return true end
     function qbcore.spawnVehicle() return 1 end
 
-    -- qbdispatch owns the call lifecycle now; qbpolice only raises calls through
+    -- kora_dispatch owns the call lifecycle now; kora_police only raises calls through
     -- it. Recorded rather than simulated: what these tests care about is the
-    -- payload qbpolice builds, not qbdispatch's own storage (which has its own
+    -- payload kora_police builds, not kora_dispatch's own storage (which has its own
     -- suite).
     local dispatchCalls = {}
     local playerAlertDefinitions = {}
-    exportImpls.qbdispatch = {}
-    local qbdispatch = exportImpls.qbdispatch
+    exportImpls.kora_dispatch = {}
+    local qbdispatch = exportImpls.kora_dispatch
     function qbdispatch.createCall(payload)
         dispatchCalls[#dispatchCalls + 1] = payload
         local recipients = {}
@@ -373,7 +373,7 @@ function M.install()
     end
     function qbdispatch.setTheme() return true end
 
-    local qbinventory = exportImpls.qbinventory
+    local qbinventory = exportImpls.kora_inventory
     function qbinventory.registerInspectionAccess() return 1 end
     function qbinventory.RegisterStash() return 'stash:mock' end
     function qbinventory.RegisterShop() return 'shop:mock' end

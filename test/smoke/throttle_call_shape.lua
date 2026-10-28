@@ -1,9 +1,9 @@
 -- Source-level guardrail for QB.timers.throttle/debounce handles.
 --
--- qblib returns a callable TABLE whose `__call` metamethod does not survive the
--- export boundary: qbpolice reaches QB.timers through the qblib export proxy, so
+-- kora_lib returns a callable TABLE whose `__call` metamethod does not survive the
+-- export boundary: kora_police reaches QB.timers through the kora_lib export proxy, so
 -- the handle arrives here as a plain table and calling it directly raised
---   @qbpolice/client/detectors.lua:117: attempt to call a table value (upvalue 'reportMelee')
+--   @kora_police/client/detectors.lua:117: attempt to call a table value (upvalue 'reportMelee')
 -- which killed the whole detector thread on the first melee fight. Every handle
 -- must therefore be invoked as `handle.run(...)`.
 --

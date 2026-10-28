@@ -12,11 +12,11 @@ Police.cuffState = Police.cuffState or {}
 function Police.cuff(officerSrc, targetSrc)
     if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
     if officerSrc == targetSrc then return false, 'cannot cuff yourself' end
-    if not exports.qbcore:getPlayerData(targetSrc) then return false, 'target not found' end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
     if Police.isCuffed(targetSrc) then return false, 'already cuffed' end
     if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
 
-    exports.qbcore:setMetaData(targetSrc, 'ishandcuffed', true)
+    exports.kora_core:setMetaData(targetSrc, 'ishandcuffed', true)
     Police.cuffState[targetSrc] = { soft = false, officer = officerSrc, attemptsUsed = 0, cooldownUntil = 0 }
     TriggerClientEvent('qbpolice:client:cuffed', targetSrc, true, false)
     return true
@@ -33,7 +33,7 @@ function Police.uncuff(requesterSrc, targetSrc)
     if requesterSrc == targetSrc and not (state and state.soft) then return false, 'cannot self-release a hard cuff' end
     if isOfficer and Police.distanceBetween(requesterSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
 
-    exports.qbcore:setMetaData(targetSrc, 'ishandcuffed', false)
+    exports.kora_core:setMetaData(targetSrc, 'ishandcuffed', false)
     Police.cuffState[targetSrc] = nil
     TriggerClientEvent('qbpolice:client:cuffed', targetSrc, false)
     if requesterSrc ~= targetSrc then TriggerClientEvent('qbpolice:client:cuffed', requesterSrc, false, false, targetSrc) end
@@ -46,12 +46,12 @@ end
 ---@param src integer
 ---@return boolean, string|nil
 function Police.softCuffNearby(src)
-    if not exports.qbcore:hasItem(src, 'handcuffs') then return false, 'handcuffs required' end
+    if not exports.kora_core:hasItem(src, 'handcuffs') then return false, 'handcuffs required' end
     local srcPed = GetPlayerPed(src)
     if not srcPed or srcPed == 0 then return false, 'no ped' end
 
     local candidates = {}
-    for _, other in ipairs(exports.qbcore:getPlayers()) do
+    for _, other in ipairs(exports.kora_core:getPlayers()) do
         if other ~= src and Police.distanceBetween(src, other) <= Config.cuff.distance and not Police.isCuffed(other) then
             candidates[#candidates + 1] = other
         end
@@ -61,20 +61,20 @@ function Police.softCuffNearby(src)
     if #candidates > 1 then return false, 'too many people nearby -- move closer to just one target' end
 
     local target = candidates[1]
-    exports.qbcore:setMetaData(target, 'ishandcuffed', true)
+    exports.kora_core:setMetaData(target, 'ishandcuffed', true)
     Police.cuffState[target] = { soft = true, officer = nil, attemptsUsed = 0, cooldownUntil = 0 }
     TriggerClientEvent('qbpolice:client:cuffed', target, true, true)
     return true
 end
 
-exports.qbcore:createUseable('handcuffs', function(src)
+exports.kora_core:createUseable('handcuffs', function(src)
     local ok, err = Police.softCuffNearby(src)
     if not ok then TriggerClientEvent('QBCore:Notify', src, err, 'error') end
     return ok
 end)
 
 ---A soft-cuffed suspect's client won the QB.minigames escape skillcheck --
----revalidate both the cuff state and qblib's one-use server-issued proof
+---revalidate both the cuff state and kora_lib's one-use server-issued proof
 ---before actually releasing.
 ---@param src integer
 ---@param proof string

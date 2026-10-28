@@ -1,10 +1,10 @@
--- Proves that a qbtarget restart actually triggers RE-registration of every
--- client-side qbtarget zone/type qbpolice owns, not just that a wrapper
--- function exists. qbtarget cleans up per-owner registrations on its own
--- stop, but qbpolice's file-scope registration calls only ever ran once (at
--- qbpolice's own boot) -- without an onClientResourceStart('qbtarget')
--- listener calling the registration function again, a qbtarget restart
--- would permanently wipe qbpolice's targets until qbpolice itself restarts.
+-- Proves that a kora_target restart actually triggers RE-registration of every
+-- client-side kora_target zone/type kora_police owns, not just that a wrapper
+-- function exists. kora_target cleans up per-owner registrations on its own
+-- stop, but kora_police's file-scope registration calls only ever ran once (at
+-- kora_police's own boot) -- without an onClientResourceStart('kora_target')
+-- listener calling the registration function again, a kora_target restart
+-- would permanently wipe kora_police's targets until kora_police itself restarts.
 local h = dofile('test/harness.lua')
 
 -- Minimal client-side natives/exports these files touch AT LOAD TIME (i.e.
@@ -88,7 +88,7 @@ _G.QB = {
 _G.exports = setmetatable({}, {
     __call = function(_, _name, _fn) end,  -- exports('IsHandcuffed', fn)-style self-registration
     __index = function(_, resourceName)
-        if resourceName == 'qbtarget' then
+        if resourceName == 'kora_target' then
             return {
                 addGlobalType = addTarget,
                 addBoxZone = addTarget,
@@ -105,14 +105,14 @@ _G.exports = setmetatable({}, {
     end,
 })
 
-QB.compat = dofile('../qblib/compat/provider.lua')()
+QB.compat = dofile('../kora_lib/compat/provider.lua')()
 dofile('config.lua')
 dofile('client/core.lua')
 
--- Every client file that owns a file-scope qbtarget registration, per the
+-- Every client file that owns a file-scope kora_target registration, per the
 -- qbtarget-restart-safety refactor. All 16 register via
 -- AddEventHandler('onClientResourceStart', ...) so re-running the handler
--- with resourceName == 'qbtarget' re-registers.
+-- with resourceName == 'kora_target' re-registers.
 local targetFiles = {
     'client/plate_flag.lua', 'client/duty.lua', 'client/fingerprint.lua', 'client/seize.lua',
     'client/armory.lua', 'client/cuff.lua', 'client/search.lua', 'client/evidence.lua',
@@ -135,10 +135,10 @@ local afterInitialLoad = qbtargetCalls
 local activeAfterInitialLoad = activeTargetCount()
 
 h.test('firing onClientResourceStart for qbtarget re-registers every zone/type from every file', function()
-    TriggerEvent('onClientResourceStart', 'qbtarget')
+    TriggerEvent('onClientResourceStart', 'kora_target')
     -- Every one of the 16 files' registration functions is idempotent and
-    -- makes the exact same qbtarget calls it made on initial load, so a
-    -- single simulated qbtarget restart must exactly DOUBLE the running
+    -- makes the exact same kora_target calls it made on initial load, so a
+    -- single simulated kora_target restart must exactly DOUBLE the running
     -- total. A plain ">" check would still pass if even one file silently
     -- failed to re-register (as long as at least one of the other 15 did),
     -- so this asserts the precise count instead.
@@ -155,12 +155,12 @@ h.test('firing onClientResourceStart for an unrelated resource does not re-regis
     h.assertEqual(qbtargetCalls, before, 'onClientResourceStart for a non-qbtarget resource must be a no-op here')
 end)
 
--- Runs last, so it observes the qbtarget restarts the tests above already
+-- Runs last, so it observes the kora_target restarts the tests above already
 -- fired rather than firing its own (which would break their exact-count
 -- assertions).
 --
--- Blips are deliberately outside the re-registration contract: qbtarget drops
--- its own registrations when it stops, so those have to be re-made, but qblib's
+-- Blips are deliberately outside the re-registration contract: kora_target drops
+-- its own registrations when it stops, so those have to be re-made, but kora_lib's
 -- blip registry only clears when QBPOLICE stops -- so re-making a blip stacks a
 -- duplicate station marker on the map rather than replacing it. This is why
 -- client/duty.lua creates them in their own function, called once at load.

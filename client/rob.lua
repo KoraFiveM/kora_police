@@ -18,5 +18,5 @@ end
 registerRobTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerRobTargets() end
+    if resourceName == 'kora_target' then registerRobTargets() end
 end)

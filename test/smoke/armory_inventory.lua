@@ -1,15 +1,15 @@
--- Exercise qbpolice's registration through the sibling qbinventory authority,
+-- Exercise kora_police's registration through the sibling kora_inventory authority,
 -- rather than replacing its open, purchase or session validation with mocks.
--- Run from qbpolice; pass an alternate armory file for the pre-fix control.
+-- Run from kora_police; pass an alternate armory file for the pre-fix control.
 local h = dofile('test/harness.lua')
 local handle = dofile('test/mocks.lua').install()
 dofile('config.lua')
-dofile('../qbinventory/config.lua')
+dofile('../kora_inventory/config.lua')
 
-local core = handle.exportImpls.qbcore
+local core = handle.exportImpls.kora_core
 local definitions = { items = {}, weapons = {} }
-dofile('../qbcore/shared/items.lua')
-dofile('../qbcore/shared/weapons.lua')
+dofile('../kora_core/shared/items.lua')
+dofile('../kora_core/shared/weapons.lua')
 for kind, records in pairs({ items = QBCoreSeed.items, weapons = QBCoreSeed.weapons }) do
     for _, item in ipairs(records) do definitions[kind][item.name] = item end
 end
@@ -27,18 +27,18 @@ dofile('server/items.lua')
 
 QB.util.isInteger = function(value) return QB.util.isFiniteNumber(value) and value % 1 == 0 end
 QB.distance = {}
-dofile('../qblib/modules/distancecheck/server.lua')
+dofile('../kora_lib/modules/distancecheck/server.lua')
 -- The unused useable-item ownership registry needs no external resource here.
 QB.resources = { serverRegistry = function() return { track = function() end } end }
-dofile('../qbinventory/shared.lua')
-dofile('../qbinventory/server.lua')
+dofile('../kora_inventory/shared.lua')
+dofile('../kora_inventory/server.lua')
 local api, internal = QbInventory.api, QbInventory.internal
-for name, fn in pairs(api) do handle.exportImpls.qbinventory[name] = fn end
+for name, fn in pairs(api) do handle.exportImpls.kora_inventory[name] = fn end
 
 -- Model the callable table and fresh coroutine of a cross-resource function
 -- reference on re-registration, without changing the callback's player data.
 local transported, callbackCalls = false, 0
-function handle.exportImpls.qbinventory.RegisterShop(id, opts)
+function handle.exportImpls.kora_inventory.RegisterShop(id, opts)
     if transported and opts.access then
         local access = opts.access
         opts.access = setmetatable({}, { __call = function(_, ...)
@@ -89,7 +89,7 @@ end
 local function refuseDirect(src, shop, slot)
     local before = snapshot(src, shop, slot)
     h.assertFalse(open(src, 'shop', shop.id), 'direct inventory open must be denied')
-    h.assertFalse(exports.qbinventory:buyItem(src, shop.id, slot, 1), 'direct shop purchase must be denied')
+    h.assertFalse(exports.kora_inventory:buyItem(src, shop.id, slot, 1), 'direct shop purchase must be denied')
     unchanged(src, shop, slot, before)
 end
 local function openedRequest(src, shop, slot)
@@ -121,7 +121,7 @@ end)
 h.test('nearby on-duty purchase uses configured stock and cash price', function()
     local src = officer(sergeant, sergeant.minGrade)
     local before = snapshot(src, sergeant, 3)
-    h.assertTrue(exports.qbinventory:buyItem(src, sergeant.id, 3, 1))
+    h.assertTrue(exports.kora_inventory:buyItem(src, sergeant.id, 3, 1))
     h.assertEqual(api.getItemCount(src, 'shotgun_ammo'), before.count + 1)
     h.assertEqual(core.getMoney(src, 'cash'), before.cash - sergeant.items[3].price)
     h.assertEqual(shopInventory(sergeant).stock[3].amount, before.stock - 1)
@@ -130,7 +130,7 @@ end)
 h.test('patrol purchase remains free for its own minimum grade', function()
     local src = officer(patrol, patrol.minGrade)
     local before = snapshot(src, patrol, 3)
-    h.assertTrue(exports.qbinventory:buyItem(src, patrol.id, 3, 1))
+    h.assertTrue(exports.kora_inventory:buyItem(src, patrol.id, 3, 1))
     h.assertEqual(api.getItemCount(src, 'handcuffs'), before.count + 1)
     h.assertEqual(core.getMoney(src, 'cash'), before.cash)
     h.assertEqual(shopInventory(patrol).stock[3].amount, before.stock - 1)
@@ -182,7 +182,7 @@ h.test('inventory re-registration preserves stock and binds each room access cal
     end
     local paidStock = shopInventory(sergeant).stock[3].amount
     transported = true
-    handle.fireEvent('onResourceStart', nil, 'qbinventory')
+    handle.fireEvent('onResourceStart', nil, 'kora_inventory')
     for _, shop in ipairs(Config.armory.shops) do
         h.assertEqual(shopInventory(shop).stock[1].amount, stocks[shop.id])
         h.assertEqual(shopInventory(shop).currency, 'money')
@@ -191,7 +191,7 @@ h.test('inventory re-registration preserves stock and binds each room access cal
     end
     h.assertEqual(shopInventory(sergeant).stock[3].amount, paidStock, 'spent stock is not reset')
     local src = officer(swat, swat.minGrade)
-    h.assertTrue(exports.qbinventory:buyItem(src, swat.id, 2, 1))
+    h.assertTrue(exports.kora_inventory:buyItem(src, swat.id, 2, 1))
     h.assertEqual(api.getItemCount(src, 'rifle_ammo'), 1)
     h.assertTrue(callbackCalls > 0, 'callable cross-resource callbacks ran in fresh coroutines')
 end)

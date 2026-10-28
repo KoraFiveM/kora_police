@@ -1,9 +1,9 @@
--- Police calls are raised through qbdispatch, which owns the call lifecycle and
+-- Police calls are raised through kora_dispatch, which owns the call lifecycle and
 -- every bit of presentation. This file only supplies the police-specific parts:
 -- what counts as a police matter, and how each incident is worded.
 --
--- exports.qbcore:alert is deliberately still reachable for third-party scripts
--- written against the older fan-out -- qbdispatch mirrors it -- but nothing here
+-- exports.kora_core:alert is deliberately still reachable for third-party scripts
+-- written against the older fan-out -- kora_dispatch mirrors it -- but nothing here
 -- goes through it any more.
 
 -- src -> GetGameTimer() of that officer's last panic alarm. Server-side because
@@ -44,7 +44,7 @@ local playerAlerts = {
 }
 
 for key, definition in pairs(playerAlerts) do
-    local ok, err = exports.qbdispatch:registerPlayerAlert(key, definition)
+    local ok, err = exports.kora_dispatch:registerPlayerAlert(key, definition)
     if not ok then print(('^3[qbpolice]^7 could not register dispatch alert %s: %s'):format(key, err)) end
 end
 
@@ -60,12 +60,12 @@ function Police.dispatch(payload)
     end
     payload.radius = payload.radius or Config.dispatch.robberyRadius
 
-    return exports.qbdispatch:createCall(payload)
+    return exports.kora_dispatch:createCall(payload)
 end
 
 local function broadcastCopCount()
-    local count = exports.qbcore:getDutyCountByType(Config.police.jobType)
-    for _, src in ipairs(exports.qbcore:getPlayersByJobType(Config.police.jobType, true)) do
+    local count = exports.kora_core:getDutyCountByType(Config.police.jobType)
+    for _, src in ipairs(exports.kora_core:getPlayersByJobType(Config.police.jobType, true)) do
         TriggerClientEvent('qbpolice:client:updateCopCount', src, count)
         -- Legacy names, both fired so either style of listener keeps working.
         TriggerClientEvent('police:client:UpdateCurrentCops', src, count)
@@ -112,7 +112,7 @@ end
 ---@param src integer
 ---@return string
 local function officerName(src)
-    for _, unit in ipairs(exports.qbcore:getOnDutyRoster({ jobType = Config.police.jobType })) do
+    for _, unit in ipairs(exports.kora_core:getOnDutyRoster({ jobType = Config.police.jobType })) do
         if unit.src == src then
             return unit.callsign or unit.name or ('Unit %d'):format(src)
         end
@@ -122,11 +122,11 @@ end
 
 -- Officer-requested backup. Only for the calling PLAYER's own request; anything
 -- else wanting a police call (a robbery script, a drug lab) calls
--- exports.qbdispatch:createCall directly.
+-- exports.kora_dispatch:createCall directly.
 QB.events.register('qbpolice:server:requestBackup', function(src)
     if not Police.isLeo(src) then return end
 
-    local callId, reason, remaining = exports.qbdispatch:createPlayerCall(src, 'qbpolice:backup')
+    local callId, reason, remaining = exports.kora_dispatch:createPlayerCall(src, 'qbpolice:backup')
     if not callId then
         QB.notify.send(src, {
             message = remaining
@@ -143,7 +143,7 @@ end, { rateLimit = { max = 2, window = 5000 } })
 -- feeds, separate histories and separate wording -- an officer needs backup, a
 -- paramedic needs a patient location. Bundling them into one "emergency" call
 -- would give both services a shared feed neither could clear independently,
--- which is exactly why qbdispatch refuses a multi-service call.
+-- which is exactly why kora_dispatch refuses a multi-service call.
 ---@param src integer
 ---@return boolean elapsed
 ---@return integer remainingMs
@@ -201,7 +201,7 @@ RegisterNetEvent('qbpolice:server:panic', function()
         data = { officer = name },
     })
 
-    exports.qbdispatch:createCall({
+    exports.kora_dispatch:createCall({
         jobTypes = { Config.police.emsJobType },
         code = '10-52',
         title = 'Officer Down',
@@ -219,5 +219,5 @@ end)
 -- service, or anyone else's coordinates.
 QB.events.register('qbpolice:server:crimeDetected', function(src, incident)
     if playerAlerts[incident] == nil or incident == 'qbpolice:backup' then return end
-    exports.qbdispatch:createPlayerCall(src, incident)
+    exports.kora_dispatch:createPlayerCall(src, incident)
 end, { rateLimit = { max = 8, window = 5000 } })

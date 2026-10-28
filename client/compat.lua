@@ -6,7 +6,7 @@
 -- forwarding hop.
 
 RegisterNetEvent('police:client:SearchPlayer', function(targetServerId)
-    exports.qbinventory:openInventory('player', targetServerId)
+    exports.kora_inventory:openInventory('player', targetServerId)
 end)
 
 RegisterNetEvent('police:client:SyncSpikes', function(netId, active)

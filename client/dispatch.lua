@@ -53,6 +53,6 @@ end)
 -- paramedic on the same server see different accents at the same moment, so this
 -- can never be a server setting.
 CreateThread(function()
-    Wait(1500) -- let qbdispatch's own frame mount before pushing tokens at it
-    exports.qbdispatch:setTheme(Config.dispatch.accent)
+    Wait(1500) -- let kora_dispatch's own frame mount before pushing tokens at it
+    exports.kora_dispatch:setTheme(Config.dispatch.accent)
 end)

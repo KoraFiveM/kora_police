@@ -37,5 +37,5 @@ end
 registerVehicleTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerVehicleTargets() end
+    if resourceName == 'kora_target' then registerVehicleTargets() end
 end)

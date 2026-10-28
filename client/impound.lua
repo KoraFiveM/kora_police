@@ -45,5 +45,5 @@ end
 registerImpoundTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerImpoundTargets() end
+    if resourceName == 'kora_target' then registerImpoundTargets() end
 end)

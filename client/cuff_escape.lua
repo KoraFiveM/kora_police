@@ -3,7 +3,7 @@
 -- Config.cuff.breakCuffsDifficulty ('medium'/'hard'/'medium' in qbx_police);
 -- QB.minigames has no notion of named "difficulty" presets of its own, so
 -- each name is mapped onto concrete trusted options by the server before it
--- issues a qblib proof authorization.
+-- issues a kora_lib proof authorization.
 
 local attempting = false
 

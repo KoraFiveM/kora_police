@@ -1,35 +1,35 @@
--- Evidence storage. Two separate mechanisms, both reusing qbinventory as-is:
+-- Evidence storage. Two separate mechanisms, both reusing kora_inventory as-is:
 --
 -- 1. The dedicated `QbInventory.evidence`/`.confiscation` seize/open/release
 --    API (server/containers.lua) is a genuine "headless core" seam: it has no
 --    exports() registration and no net event, only bare Lua functions on a
---    table private to qbinventory's own resource VM (verified by grepping
---    qbinventory's own source -- nothing outside server/containers.lua itself
+--    table private to kora_inventory's own resource VM (verified by grepping
+--    kora_inventory's own source -- nothing outside server/containers.lua itself
 --    ever reaches QbInventory.evidence). It is therefore NOT callable from
---    this resource. Per the plan, qbpolice still supplies its access-policy
+--    this resource. Per the plan, kora_police still supplies its access-policy
 --    callback (Config.qbinventory.containers.evidence.access, additively
---    edited directly in qbinventory/config.lua -- Config is a resource-local
+--    edited directly in kora_inventory/config.lua -- Config is a resource-local
 --    global with no cross-resource setter export for this one field) so that
---    boundary is genuinely ready for whatever in-VM caller qbinventory itself
+--    boundary is genuinely ready for whatever in-VM caller kora_inventory itself
 --    gains in the future.
 --
--- 2. What qbpolice actually wires its own evidence-locker UI onto today is
---    qbinventory's ordinary, fully cross-resource-reachable STASH domain
+-- 2. What kora_police actually wires its own evidence-locker UI onto today is
+--    kora_inventory's ordinary, fully cross-resource-reachable STASH domain
 --    (`RegisterStash`, exported) -- a shared, job-gated container for
 --    processed evidence. This uses zero new inventory/storage code (slots,
---    weight, access, persistence are all qbinventory's existing stash
+--    weight, access, persistence are all kora_inventory's existing stash
 --    machinery); it's just registered with police-appropriate parameters.
 --    Seizing an item off a restrained suspect (see server/seize.lua) still
---    goes through qbinventory's real player-inspection + transfer protocol,
+--    goes through kora_inventory's real player-inspection + transfer protocol,
 --    not a bespoke mechanism.
 
--- Registers the evidence-locker stash against qbinventory. Called once at
--- load AND again on every qbinventory onResourceStart -- a qbinventory
--- restart mid-session wipes qbinventory's own stash table, and a
--- `dependency 'qbinventory'` declaration only guarantees start order on a
+-- Registers the evidence-locker stash against kora_inventory. Called once at
+-- load AND again on every kora_inventory onResourceStart -- a kora_inventory
+-- restart mid-session wipes kora_inventory's own stash table, and a
+-- `dependency 'kora_inventory'` declaration only guarantees start order on a
 -- fresh boot, not survival of that later restart.
 local function registerEvidenceLocker()
-    exports.qbinventory:RegisterStash(
+    exports.kora_inventory:RegisterStash(
         Config.evidence.lockerStashId, Config.evidence.lockerLabel,
         Config.evidence.lockerSlots, Config.evidence.lockerMaxWeight,
         nil, { [Config.police.job] = Config.evidence.minGradeToAccess },
@@ -40,7 +40,7 @@ end
 CreateThread(registerEvidenceLocker)
 
 AddEventHandler('onResourceStart', function(resourceName)
-    if resourceName == 'qbinventory' then CreateThread(registerEvidenceLocker) end
+    if resourceName == 'kora_inventory' then CreateThread(registerEvidenceLocker) end
 end)
 
 -- Legacy "world evidence" compat -- blood drops / casings / fingerprints left
@@ -98,7 +98,7 @@ local function createWorldEvidence(src, evType, ballistic, suppliedCoords)
         ballistic = ballistic,
     }
 
-    for _, src in ipairs(exports.qbcore:getPlayersByJob(Config.police.job, true)) do
+    for _, src in ipairs(exports.kora_core:getPlayersByJob(Config.police.job, true)) do
         TriggerClientEvent('qbpolice:client:worldEvidenceCreated', src, id, evType, coords)
     end
     return id
@@ -108,7 +108,7 @@ local function casingId()
     return ('CS-%d-%06d-%06d'):format(os.time(), math.random(0, 999999), math.random(0, 999999))
 end
 
----Create a casing from qbinventory's server-owned fired-round event. This is
+---Create a casing from kora_inventory's server-owned fired-round event. This is
 ---an export rather than a net event: neither clients nor legacy resources may
 ---supply a serial, round, or casing position.
 ---@param src integer
@@ -151,7 +151,7 @@ function Police.createBallisticCasing(src, round)
     return caseId
 end
 
--- qbinventory is the only producer and has already server-validated the
+-- kora_inventory is the only producer and has already server-validated the
 -- equipped weapon and consumed the exact round before it emits this event.
 AddEventHandler('qbinventory:server:weaponRoundFired', function(src, round)
     Police.createBallisticCasing(tonumber(src), round)
@@ -178,17 +178,17 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
     local ped = GetPlayerPed(src)
     if not ped or ped == 0 or #(GetEntityCoords(ped) - vector3(marker.coords.x, marker.coords.y, marker.coords.z)) > Config.evidence.collectDistance then return end
     if marker.ballistic then
-        local removed, removeErr = exports.qbinventory:RemoveItem(src, 'empty_evidence_bag', 1, false, 'ballistic-casing-collection')
+        local removed, removeErr = exports.kora_inventory:RemoveItem(src, 'empty_evidence_bag', 1, false, 'ballistic-casing-collection')
         if not removed then
             QB.notify.send(src, { title = 'Evidence', message = removeErr or 'An empty evidence bag is required.', type = 'error' })
             return
         end
-        local added, addErr = exports.qbinventory:AddItem(src, 'filled_evidence_bag', 1, false, {
+        local added, addErr = exports.kora_inventory:AddItem(src, 'filled_evidence_bag', 1, false, {
             label = 'Ballistic Casing ' .. marker.ballistic.caseId,
             type = 'ballistic_casing', caseId = marker.ballistic.caseId,
         }, 'ballistic-casing-collection')
         if not added then
-            exports.qbinventory:AddItem(src, 'empty_evidence_bag', 1, false, {}, 'ballistic-casing-rollback')
+            exports.kora_inventory:AddItem(src, 'empty_evidence_bag', 1, false, {}, 'ballistic-casing-rollback')
             QB.notify.send(src, { title = 'Evidence', message = addErr or 'Could not package casing.', type = 'error' })
             return
         end

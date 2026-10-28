@@ -1,12 +1,12 @@
 -- Single flat Config table, per-module sub-tables, a trailing comment on
--- every value -- matches qbcore/qblib's own config.lua convention.
+-- every value -- matches kora_core/qblib's own config.lua convention.
 
 Config = Config or {}
 
 Config.police = {
     job = 'police',                    -- job name gate for every server-side check in this resource
 
-    -- The qbcore job TYPE this resource dispatches to. Alerts target the type,
+    -- The kora_core job TYPE this resource dispatches to. Alerts target the type,
     -- not the job name, so a server that adds a `sheriff` or `statetrooper` job
     -- with `type = 'leo'` gets them on the same radio with no code change here.
     jobType = 'leo',
@@ -33,7 +33,7 @@ Config.jail = {
 }
 
 Config.evidence = {
-    lockerStashId = 'police-evidence', -- qbinventory stash id backing the shared evidence locker (RegisterStash)
+    lockerStashId = 'police-evidence', -- kora_inventory stash id backing the shared evidence locker (RegisterStash)
     lockerLabel = 'Evidence Locker',
     lockerSlots = 100,
     lockerMaxWeight = 200000,
@@ -50,7 +50,7 @@ Config.evidence = {
         databaseRetentionDays = 90,    -- retained case records; cleanup can be scheduled by the server owner
         analysis = {
             requiredStages = 3,        -- microscopy, comparison, and registry confirmation
-            games = { 'skillbar', 'circuit', 'pinpad' }, -- qblib server-validated stages in this order
+            games = { 'skillbar', 'circuit', 'pinpad' }, -- kora_lib server-validated stages in this order
         },
     },
 }
@@ -77,7 +77,7 @@ Config.armory = {
             label = 'Sergeant Armory',
             coords = vector4(443.8, -981.2, 30.7, 90.0),
             distance = 2.0,
-            minGrade = 3,               -- Sergeant and above (grades are 1-based: Cadet=1, Officer=2, Sergeant=3, Lieutenant=4, Chief=5 -- see qbcore/shared/jobs.lua)
+            minGrade = 3,               -- Sergeant and above (grades are 1-based: Cadet=1, Officer=2, Sergeant=3, Lieutenant=4, Chief=5 -- see kora_core/shared/jobs.lua)
             slots = 20,
             items = {
                 { name = 'weapon_combatpistol', price = 0, amount = 1 },
@@ -191,5 +191,5 @@ Config.fine = {
     account = 'bank',                  -- which money account BillPlayer/citations charge
 }
 
--- Registers this resource-owned configuration with qblib without changing its public Config table.
+-- Registers this resource-owned configuration with kora_lib without changing its public Config table.
 if QB and QB.config and QB.config.adopt then Config = QB.config.adopt(Config) end

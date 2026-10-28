@@ -1,8 +1,8 @@
--- Source-level guardrail for qbtarget call shapes. qbtarget's NATIVE
+-- Source-level guardrail for kora_target call shapes. kora_target's NATIVE
 -- entity/model/globalType API takes the options ARRAY positionally --
 -- addGlobalType(entityType, { {label=...}, ... }, distance) -- while the
 -- legacy qb-target envelope ({ options = {...}, distance = n }) is only
--- unwrapped by qbtarget's qb-target compat identity. The concrete native
+-- unwrapped by kora_target's qb-target compat identity. The concrete native
 -- calls live in Police.target's shared wrappers, so every police interaction
 -- gets the correct shape and restart-safe ownership behaviour. The zone APIs
 -- (addBoxZone/addSphereZone/addPolyZone) DO take a single opts object with

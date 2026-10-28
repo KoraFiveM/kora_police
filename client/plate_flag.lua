@@ -37,7 +37,7 @@ end
 registerPlateFlagTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerPlateFlagTargets() end
+    if resourceName == 'kora_target' then registerPlateFlagTargets() end
 end)
 
 local checked = {}
@@ -102,7 +102,7 @@ end)
 
 -- The replicated player-data mirror is push-driven. A duty transition can
 -- make an already-seated driver eligible without a vehicle cache change.
-exports.qbcore:onPlayerDataChange({ 'job' }, startScan)
+exports.kora_core:onPlayerDataChange({ 'job' }, startScan)
 
 CreateThread(function()
     Wait(0)

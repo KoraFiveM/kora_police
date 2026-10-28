@@ -28,5 +28,5 @@ end
 registerSeizeTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerSeizeTargets() end
+    if resourceName == 'kora_target' then registerSeizeTargets() end
 end)

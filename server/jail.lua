@@ -1,6 +1,6 @@
--- Thin wrapper over qbcore's Core.jail (exports.qbcore:jailPlayer). Adds
+-- Thin wrapper over kora_core's Core.jail (exports.kora_core:jailPlayer). Adds
 -- nothing to the jail mechanism itself -- teleport/timer/persistence and the
--- external-prison-resource deference all already live in qbcore -- this file
+-- external-prison-resource deference all already live in kora_core -- this file
 -- only adds the police-specific bookkeeping (officer authority, minutes
 -- default, and clearing cuff/escort/drag state on booking).
 
@@ -11,10 +11,10 @@
 ---@return boolean, string|nil
 function Police.jailPlayer(officerSrc, targetSrc, minutes, reason)
     if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if not exports.qbcore:getPlayerData(targetSrc) then return false, 'target not found' end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
 
     minutes = tonumber(minutes) or Config.jail.defaultMinutes
-    local ok, err = exports.qbcore:jailPlayer(targetSrc, minutes, reason)
+    local ok, err = exports.kora_core:jailPlayer(targetSrc, minutes, reason)
     if not ok then return false, err end
 
     Police.deEscort(officerSrc, targetSrc)

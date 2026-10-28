@@ -11,14 +11,14 @@ end
 
 ---@return integer[]
 local function dutySrcList()
-    return exports.qbcore:getPlayersByJob(Config.police.job, true)
+    return exports.kora_core:getPlayersByJob(Config.police.job, true)
 end
 
 QB.callback.register('police:GetDutyPlayers', function(src)
     if not Police.isPolice(src) then return {} end
     local out = {}
     for _, s in ipairs(dutySrcList()) do
-        local data = exports.qbcore:getPlayerData(s)
+        local data = exports.kora_core:getPlayerData(s)
         out[#out + 1] = { source = s, citizenid = data and data.citizenid, name = data and data.charinfo and (data.charinfo.firstname .. ' ' .. data.charinfo.lastname), grade = Police.gradeLevel(s) }
     end
     return out
@@ -32,8 +32,8 @@ end)
 QB.callback.register('police:isPlayerDead', function(src, target)
     target = target or src
     if target ~= src and not Police.isPolice(src) then return false end
-    local metaDead = exports.qbcore:getMetaData(target, 'isdead')
-    local metaLaststand = exports.qbcore:getMetaData(target, 'inlaststand')
+    local metaDead = exports.kora_core:getMetaData(target, 'isdead')
+    local metaLaststand = exports.kora_core:getMetaData(target, 'inlaststand')
     if metaDead ~= nil then return metaDead == true or metaLaststand == true end
     local ped = GetPlayerPed(target)
     if not ped or ped == 0 then return false end
@@ -46,7 +46,7 @@ QB.callback.register('police:IsSilencedWeapon', function(src, target)
     local ped = GetPlayerPed(target)
     if not ped or ped == 0 then return false end
     local weapon = GetSelectedPedWeapon(ped)
-    local equipped = exports.qbinventory:GetEquippedWeapon(target)
+    local equipped = exports.kora_inventory:GetEquippedWeapon(target)
     if not equipped or type(equipped.name) ~= 'string'
         or joaat(equipped.name) % 4294967296 ~= weapon % 4294967296 then return false end
     for _, component in ipairs(equipped.components or {}) do
@@ -73,7 +73,7 @@ end)
 QB.callback.register('police:GetPlayerStatus', function(src, target)
     if not Police.isPolice(src) then return nil end
     target = tonumber(target) or src
-    local data = exports.qbcore:getPlayerData(target)
+    local data = exports.kora_core:getPlayerData(target)
     if not data then return nil end
     return {
         citizenid = data.citizenid,

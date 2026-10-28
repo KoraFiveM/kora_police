@@ -6,7 +6,7 @@
 ---@return boolean, string|nil
 function Police.setTracker(officerSrc, targetSrc, active)
     if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if not exports.qbcore:getPlayerData(targetSrc) then return false, 'target not found' end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
     if active == false then
         Police.tracked[targetSrc] = nil
     else
@@ -34,7 +34,7 @@ RegisterNetEvent('qbpolice:server:sendTrackerLocation', function()
     local ped = GetPlayerPed(src)
     if not ped or ped == 0 then return end
     local coords = GetEntityCoords(ped)
-    for _, officer in ipairs(exports.qbcore:getPlayersByJob(Config.police.job, true)) do
+    for _, officer in ipairs(exports.kora_core:getPlayersByJob(Config.police.job, true)) do
         TriggerClientEvent('qbpolice:client:trackerLocation', officer, src, coords)
         TriggerClientEvent('police:client:SendTrackerLocation', officer, src, coords)
     end

@@ -20,7 +20,7 @@ end
 registerFingerprintTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerFingerprintTargets() end
+    if resourceName == 'kora_target' then registerFingerprintTargets() end
 end)
 
 RegisterNetEvent('police:client:showFingerprint', function(fingerprint)

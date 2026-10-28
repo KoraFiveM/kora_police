@@ -13,13 +13,13 @@ GetPlayerRoutingBucket = function(src) return buckets[src] or 0 end
 GetPlayerPed = function(src) return not missingPed[src] and mock.players[src] and src or 0 end
 CreateThread = function(fn) threads[#threads + 1] = coroutine.create(fn) end
 QB.sql = { execute = function() return 1 end }
-mock.exportImpls.qbinventory.RemoveItem = function(src, name)
+mock.exportImpls.kora_inventory.RemoveItem = function(src, name)
     h.assertEqual(name, 'empty_evidence_bag')
     if not allowRemove or (bags[src] or 0) == 0 then return false, 'Missing bag' end
     bags[src] = bags[src] - 1
     return true
 end
-mock.exportImpls.qbinventory.AddItem = function(src, name, _, _, info)
+mock.exportImpls.kora_inventory.AddItem = function(src, name, _, _, info)
     if name == 'empty_evidence_bag' then bags[src] = (bags[src] or 0) + 1; return true end
     h.assertEqual(name, 'filled_evidence_bag')
     if not allowAdd then return false, 'Inventory full' end
@@ -49,7 +49,7 @@ local function client(src)
         c.targets[c.nextTarget] = options
         return c.nextTarget
     end
-    env.GetResourceState = function(name) return name == 'qbtarget' and c.state or 'started' end
+    env.GetResourceState = function(name) return name == 'kora_target' and c.state or 'started' end
     env.AddEventHandler = function(name, fn)
         c.handlers[name] = c.handlers[name] or {}; table.insert(c.handlers[name], fn)
     end
@@ -68,16 +68,16 @@ local function client(src)
     }
     -- FiveM's export table must also accept exports(name, function).
     env.exports = setmetatable({
-        qbcore = { getPlayerData = function() return mock.players[src].job end },
-        qbinventory = { openInventory = function() end },
-        qbtarget = {
+        kora_core = { getPlayerData = function() return mock.players[src].job end },
+        kora_inventory = { openInventory = function() end },
+        kora_target = {
             addBoxZone = addTarget, addSphereZone = addTarget,
             removeZone = function(_, id)
                 h.assertEqual(c.state, 'started'); h.assertTrue(c.targets[id], 'stale zone ID'); c.targets[id] = nil; return true
             end,
         },
     }, { __call = function() end })
-    env.QB.compat = assert(loadfile(resource .. '/../qblib/compat/provider.lua', 't', env))()()
+    env.QB.compat = assert(loadfile(resource .. '/../kora_lib/compat/provider.lua', 't', env))()()
     assert(loadfile(resource .. '/config.lua', 't', env))()
     assert(loadfile(resource .. '/client/core.lua', 't', env))()
     assert(loadfile(resource .. '/client/evidence.lua', 't', env))()
@@ -85,7 +85,7 @@ local function client(src)
     c.stop = function()
         c.retiredTarget = c.nextTarget
         c.targets, c.nextTarget, c.state = {}, 0, 'stopped'
-        c.fire('onClientResourceStop', 'qbtarget')
+        c.fire('onClientResourceStop', 'kora_target')
     end
     c.start = function()
         c.state = 'started'
@@ -94,7 +94,7 @@ local function client(src)
         for _ = 1, c.retiredTarget do
             other = addTarget(nil, { options = { { label = 'unrelated' } } })
         end
-        c.fire('onClientResourceStart', 'qbtarget')
+        c.fire('onClientResourceStart', 'kora_target')
         return other
     end
     clients[src] = c
@@ -186,7 +186,7 @@ h.test('duplicate events and provider restart preserve current handles without t
     local id = create(); local marker = Police.worldEvidence[id]
     a.fire('qbpolice:client:worldEvidenceCreated', id, marker.type, marker.coords); assertView(1)
     a.stop(); local other = a.start(); assertView(1)
-    a.fire('onClientResourceStart', 'qbtarget'); assertView(1)
+    a.fire('onClientResourceStart', 'kora_target'); assertView(1)
     collect(1, id); assertView(0); h.assertTrue(a.targets[other])
     a.fire('qbpolice:client:worldEvidenceRemoved', id); h.assertTrue(a.targets[other])
 end)

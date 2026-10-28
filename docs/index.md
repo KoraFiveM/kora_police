@@ -1,6 +1,6 @@
 ---
 layout: default
-title: qbpolice
+title: kora_police
 ---
 
 Police/LEO job for FiveM. Cuffing (hard and soft, with a ported
@@ -16,28 +16,28 @@ modern `qbpolice:*` surface.
 
 ## Requirements
 
-- [qblib](https://qbcore2.github.io/qblib/)
-- [qbcore](https://qbcore2.github.io/qbcore/)
-- [qbinventory](https://qbcore2.github.io/qbinventory/)
-- [qbtarget](https://qbcore2.github.io/qbtarget/)
+- [qblib](https://qbcore2.github.io/kora_lib/)
+- [qbcore](https://qbcore2.github.io/kora_core/)
+- [qbinventory](https://qbcore2.github.io/kora_inventory/)
+- [qbtarget](https://qbcore2.github.io/kora_target/)
 
 ## Installation
 
 `server.cfg`, in this order:
 ```
-ensure qbsql
-ensure qblib
-ensure qbcore
-ensure qbinventory
-ensure qbtarget
-ensure qbpolice
+ensure kora_sql
+ensure kora_lib
+ensure kora_core
+ensure kora_inventory
+ensure kora_target
+ensure kora_police
 ```
 
 ## Usage examples
 
 ### Cuff a suspect, then search them
 ```lua
--- client, e.g. a qbtarget 'player' option
+-- client, e.g. a kora_target 'player' option
 local target = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
 TriggerServerEvent('qbpolice:server:cuff', target)
 ```
@@ -46,7 +46,7 @@ TriggerServerEvent('qbpolice:server:cuff', target)
 TriggerServerEvent('qbpolice:server:search', target)
 ```
 `qbpolice:server:search` tells the OFFICER's own client to open the target's
-inventory (`exports.qbinventory:openInventory('player', targetServerId)`),
+inventory (`exports.kora_inventory:openInventory('player', targetServerId)`),
 via `qbinventory:registerInspectionAccess`.
 
 ### Seize cash and a driver's licence
@@ -78,11 +78,11 @@ TriggerServerEvent('qbpolice:server:requestBackup', { message = 'Shots fired dow
 ```
 
 Anything else wanting a police call (a robbery script, a drug lab) calls
-**qbdispatch** directly rather than going through this resource:
+**kora_dispatch** directly rather than going through this resource:
 
 ```lua
 -- server
-exports.qbdispatch:createCall({
+exports.kora_dispatch:createCall({
     jobTypes = { 'leo' },   -- the whole law-enforcement service, not one job name
     code     = '10-90',
     title    = 'Bank Robbery',
@@ -94,8 +94,8 @@ exports.qbdispatch:createCall({
 ```
 
 Presentation — the feed, the map, history, the response state machine, the route
-blip — belongs entirely to qbdispatch. This resource no longer renders alerts;
-see `qbdispatch/docs/index.md`.
+blip — belongs entirely to kora_dispatch. This resource no longer renders alerts;
+see `kora_dispatch/docs/index.md`.
 
 ### Check restraint/armory access via a callback
 ```lua
@@ -157,7 +157,7 @@ RegisterNetEvent('evidence:server:RemoveFromInventory', evidenceId)
 RegisterNetEvent('evidence:server:ClearInventory')
 ```
 A processed-evidence stash (`Config.evidence.lockerStashId`,
-`'police-evidence'` by default) is registered on `exports.qbinventory:RegisterStash`
+`'police-evidence'` by default) is registered on `exports.kora_inventory:RegisterStash`
 at `Config.evidence.lockerCoords`, gated by `Config.evidence.minGradeToAccess`.
 Client: `RegisterNetEvent('qbpolice:client:worldEvidenceCreated', function(id, evType, coords) ... end)`.
 
@@ -166,7 +166,7 @@ Client: `RegisterNetEvent('qbpolice:client:worldEvidenceCreated', function(id, e
 TriggerServerEvent('qbpolice:server:openArmory', shopId)
 QB.callback.trigger('qbpolice:server:canAccessArmory', shopId)
 ```
-Each `Config.armory.shops` entry is its own `exports.qbinventory:RegisterShop`
+Each `Config.armory.shops` entry is its own `exports.kora_inventory:RegisterShop`
 room with `groups = { [Config.police.job] = shop.minGrade }` — grade 1
 (Cadet) and up sees Patrol, grade 3+ Sergeant, grade 4+ SWAT. Client:
 `RegisterNetEvent('qbpolice:client:openArmory', function(shopId) ... end)`.
@@ -175,7 +175,7 @@ room with `groups = { [Config.police.job] = shop.minGrade }` — grade 1
 ```lua
 TriggerServerEvent('qbpolice:server:jailPlayer', target, minutes, reason)
 ```
-Thin wrapper over `exports.qbcore:jailPlayer`; also clears the target's
+Thin wrapper over `exports.kora_core:jailPlayer`; also clears the target's
 escort/drag/cuff state on booking. `minutes` defaults to
 `Config.jail.defaultMinutes`.
 
@@ -187,7 +187,7 @@ TriggerServerEvent('qbpolice:server:spawnDutyVehicle', plate, coords, heading)
 TriggerServerEvent('qbpolice:server:storeDutyVehicle', plate)
 ```
 `Police.dispatch(payload)` (server Lua) raises a call through
-`exports.qbdispatch:createCall`, defaulting the target to the `Config.police.jobType`
+`exports.kora_dispatch:createCall`, defaulting the target to the `Config.police.jobType`
 **service** (`leo`) rather than a single job name — so a server that adds a
 sheriff or state-trooper job with `type = 'leo'` gets them on the same radio with
 no change here.
@@ -213,7 +213,7 @@ Backup and panic gate on `Police.isLeo` (the job **type**), not
 a sheriff's deputy already receives these calls and must be able to raise one
 too. `Police.isPolice` remains the gate for department-specific things — this
 force's armory and evidence lockers. They are separate incidents with separate wording
-and separate histories; qbdispatch refuses a single call targeting two services
+and separate histories; kora_dispatch refuses a single call targeting two services
 for exactly this reason. Coordinates are read server-side from the officer's own
 ped, never taken from the client.
 
@@ -276,10 +276,10 @@ cap), `Config.armory.shops` (per-room coords/`minGrade`/inventory),
 
 Part of the [qbcore2](https://github.com/qbcore2) resource set:
 
-- [qblib](https://qbcore2.github.io/qblib/) — shared helper library
-- [qbsql](https://qbcore2.github.io/qbsql/) — database driver
-- [qbcore](https://qbcore2.github.io/qbcore/) — framework core
-- [qbinventory](https://qbcore2.github.io/qbinventory/) — headless inventory
-- [qbtarget](https://qbcore2.github.io/qbtarget/) — targeting/interaction
-- [qbambulance](https://qbcore2.github.io/qbambulance/) — EMS/ambulance job
+- [qblib](https://qbcore2.github.io/kora_lib/) — shared helper library
+- [qbsql](https://qbcore2.github.io/kora_sql/) — database driver
+- [qbcore](https://qbcore2.github.io/kora_core/) — framework core
+- [qbinventory](https://qbcore2.github.io/kora_inventory/) — headless inventory
+- [qbtarget](https://qbcore2.github.io/kora_target/) — targeting/interaction
+- [qbambulance](https://qbcore2.github.io/kora_ambulance/) — EMS/ambulance job
 - [full resource list ↗](https://github.com/orgs/qbcore2/repositories)

@@ -53,5 +53,5 @@ end
 CreateThread(registerBreachDoorTargets)
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerBreachDoorTargets() end
+    if resourceName == 'kora_target' then registerBreachDoorTargets() end
 end)

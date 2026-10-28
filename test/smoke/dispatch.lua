@@ -1,6 +1,6 @@
--- Police calls: what qbpolice puts INTO a dispatch call, and the cop-count
+-- Police calls: what kora_police puts INTO a dispatch call, and the cop-count
 -- broadcast. The call lifecycle itself (storage, expiry, recipients) belongs to
--- qbdispatch and has its own suite -- this only asserts the payload qbpolice
+-- kora_dispatch and has its own suite -- this only asserts the payload kora_police
 -- builds and who it is addressed to.
 local h = dofile('test/harness.lua')
 local mocks = dofile('test/mocks.lua'); local handle = mocks.install()

@@ -22,7 +22,7 @@ local function applyCuffedVisuals(cuffed)
 end
 
 -- Lazily started/stopped as the player is cuffed/uncuffed -- mirrors
--- qbhud's client/vehicle.lua lazy tick-thread pattern -- rather than a bare
+-- kora_hud's client/vehicle.lua lazy tick-thread pattern -- rather than a bare
 -- always-running CreateThread, so this costs nothing while not cuffed.
 local function startCuffedControlThread()
     CreateThread(function()
@@ -77,5 +77,5 @@ end
 registerCuffTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerCuffTargets() end
+    if resourceName == 'kora_target' then registerCuffTargets() end
 end)

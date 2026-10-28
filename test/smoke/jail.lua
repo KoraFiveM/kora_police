@@ -1,7 +1,7 @@
--- Police.jailPlayer -- thin wrapper over exports.qbcore:jailPlayer: officer
+-- Police.jailPlayer -- thin wrapper over exports.kora_core:jailPlayer: officer
 -- authority check, default minutes, and clearing cuff/escort/drag state on
 -- booking. The jail mechanism itself (teleport/timer/persistence/external-
--- prison deference) is qbcore's own Core.jail and is not re-tested here.
+-- prison deference) is kora_core's own Core.jail and is not re-tested here.
 local h = dofile('test/harness.lua')
 local mocks = dofile('test/mocks.lua'); local handle = mocks.install()
 dofile('config.lua')

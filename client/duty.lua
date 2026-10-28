@@ -1,11 +1,11 @@
--- Duty toggle (QB.interact -- a lighter primitive than a full qbtarget zone
+-- Duty toggle (QB.interact -- a lighter primitive than a full kora_target zone
 -- for a simple point of interaction) and the patrol-fleet spawn/store loop.
 
 -- Station blips. Deliberately NOT inside registerDutyZones below: that function
--- re-runs on every qbtarget restart (qbtarget drops its own registrations when
--- it stops, so they have to be re-made), while qblib's blip registry only clears
+-- re-runs on every kora_target restart (kora_target drops its own registrations when
+-- it stops, so they have to be re-made), while kora_lib's blip registry only clears
 -- when QBPOLICE stops. Creating them there stacked a second station blip on the
--- map every time qbtarget was restarted.
+-- map every time kora_target was restarted.
 --
 -- Coordinates come from the same Config.duty.points a zone is built from, so a
 -- moved station cannot leave a stale blip behind.
@@ -38,7 +38,7 @@ local function registerDutyZones()
                     label = point.label,
                     icon = 'badge',
                     canInteract = function()
-                        local job = exports.qbcore:getPlayerData({ 'job' })
+                        local job = exports.kora_core:getPlayerData({ 'job' })
                         return job ~= nil and job.name == Config.police.job
                     end,
                     onSelect = function()
@@ -88,5 +88,5 @@ end
 registerDutyZones()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerDutyZones() end
+    if resourceName == 'kora_target' then registerDutyZones() end
 end)

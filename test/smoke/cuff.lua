@@ -5,8 +5,8 @@ local mocks = dofile('test/mocks.lua'); local handle = mocks.install()
 dofile('config.lua')
 dofile('server/core.lua')
 local useables = {}
-handle.exportImpls.qbcore.createUseable = function(name, callback) useables[name] = callback end
-handle.exportImpls.qbcore.hasItem = function(src, name)
+handle.exportImpls.kora_core.createUseable = function(name, callback) useables[name] = callback end
+handle.exportImpls.kora_core.hasItem = function(src, name)
     for _, item in pairs(handle.players[src] and handle.players[src].data.items or {}) do
         if item.name == name and item.amount >= 1 then return true end
     end

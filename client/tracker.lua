@@ -58,5 +58,5 @@ end
 registerTrackerTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerTrackerTargets() end
+    if resourceName == 'kora_target' then registerTrackerTargets() end
 end)

@@ -2,23 +2,25 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-name 'qbpolice'
+name 'kora_police'
+-- Keep the legacy resource name resolvable for exports['qbpolice'] callers.
+provide 'qbpolice'
 author 'qbcore2'
 version '0.1.0'
-description 'Police/LEO job -- cuff/escort/search/evidence/armory/jail/dispatch on top of qbcore+qblib+qbinventory+qbtarget'
+description 'Police/LEO job -- cuff/escort/search/evidence/armory/jail/dispatch on top of kora_core+kora_lib+kora_inventory+kora_target'
 
 provide 'qb-policejob'
 
-dependency 'qblib'
-dependency 'qbsql'
-dependency 'qbcore'
-dependency 'qbdispatch'
-dependency 'qbinventory'
-dependency 'qbtarget'
+dependency 'kora_lib'
+dependency 'kora_sql'
+dependency 'kora_core'
+dependency 'kora_dispatch'
+dependency 'kora_inventory'
+dependency 'kora_target'
 
 shared_scripts {
-    '@qblib/init.lua',
-    '@qbsql/init.lua',
+    '@kora_lib/init.lua',
+    '@kora_sql/init.lua',
 }
 
 shared_scripts {
@@ -26,7 +28,7 @@ shared_scripts {
 }
 
 -- Explicit, non-globbed list -- matches every sibling resource's own
--- rationale (qbcore/qbadmin/qbinventory): alphabetic glob order would not
+-- rationale (kora_core/kora_admin/qbinventory): alphabetic glob order would not
 -- respect the real load-order dependencies between these files. core.lua
 -- defines the shared `Police` table and its distance/duty helpers and must
 -- load first; compat/police.lua calls into nearly every other file's

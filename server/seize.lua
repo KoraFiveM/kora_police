@@ -1,13 +1,13 @@
 -- Search a cuffed suspect and seize cash/items. Wired directly onto
--- qbinventory's existing player-inspection seam (`RegisterInspectionAccess`)
+-- kora_inventory's existing player-inspection seam (`RegisterInspectionAccess`)
 -- rather than any new inventory code: granting inspection makes the target's
 -- own inventory the officer's session secondary, so the officer's existing
 -- client inventory UI can drag items out (into their own pockets, or -- via
 -- the evidence locker stash registered in server/evidence.lua -- into
--- evidence) using qbinventory's normal, already-tested transfer protocol.
+-- evidence) using kora_inventory's normal, already-tested transfer protocol.
 
 CreateThread(function()
-    exports.qbinventory:registerInspectionAccess(function(src, target)
+    exports.kora_inventory:registerInspectionAccess(function(src, target)
         if not Police.isPolice(src) then return false, 'not an on-duty officer' end
         if not Police.isCuffed(target) then return false, 'target is not restrained' end
         return true
@@ -15,9 +15,9 @@ CreateThread(function()
 end)
 
 ---Validates the search request, then tells the OFFICER's own client to open
----the target's inventory -- `exports.qbinventory:openInventory` is a
+---the target's inventory -- `exports.kora_inventory:openInventory` is a
 ---client-realm export (it just fires the `qbinventory:server:open` net
----event), so this can't be called from here; qbinventory's own
+---event), so this can't be called from here; kora_inventory's own
 ---`registerInspectionAccess` policy above re-checks the same conditions
 ---server-side regardless of what the client requests.
 ---@param officerSrc integer
@@ -42,10 +42,10 @@ function Police.seizeCash(officerSrc, targetSrc)
     if not Police.isCuffed(targetSrc) then return false, 'target is not restrained' end
     if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
 
-    local amount = exports.qbcore:getMoney(targetSrc, 'cash') or 0
+    local amount = exports.kora_core:getMoney(targetSrc, 'cash') or 0
     if amount <= 0 then return false, 'target has no cash' end
 
-    local transferred, transferErr = exports.qbcore:transferMoney(targetSrc, officerSrc, 'cash', amount, 'evidence-cash-seizure')
+    local transferred, transferErr = exports.kora_core:transferMoney(targetSrc, officerSrc, 'cash', amount, 'evidence-cash-seizure')
     if not transferred then return false, transferErr or 'could not seize cash' end
     return true, nil, amount
 end
@@ -60,10 +60,10 @@ function Police.seizeDriverLicense(officerSrc, targetSrc)
     if not Police.isCuffed(targetSrc) then return false, 'target is not restrained' end
     if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
 
-    local licences = exports.qbcore:getMetaData(targetSrc, 'licences') or {}
+    local licences = exports.kora_core:getMetaData(targetSrc, 'licences') or {}
     licences = type(licences) == 'table' and licences or {}
     licences.driver = false
-    exports.qbcore:setMetaData(targetSrc, 'licences', licences)
+    exports.kora_core:setMetaData(targetSrc, 'licences', licences)
     return true
 end
 

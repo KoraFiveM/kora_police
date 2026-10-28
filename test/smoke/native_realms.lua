@@ -11,7 +11,7 @@ local hashes = { WEAPON_PISTOL = 100, WEAPON_BAT = 200, COMPONENT_AT_PI_SUPP = 3
 joaat = function(value) return hashes[value:upper()] or 999 end
 local selected, equipped = 100, nil
 GetSelectedPedWeapon = function() return selected end
-handle.exportImpls.qbinventory.GetEquippedWeapon = function() return equipped end
+handle.exportImpls.kora_inventory.GetEquippedWeapon = function() return equipped end
 HasPedGotWeaponComponent, NetworkDoesNetworkIdExist, PlaceObjectOnGroundProperly = nil, nil, nil
 dofile('server/callbacks.lua')
 dofile('server/escort.lua')

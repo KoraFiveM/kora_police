@@ -1,6 +1,6 @@
 -- Automatic crime detection.
 --
--- These live in qbpolice, not in qbdispatch: dispatch has no idea what a crime
+-- These live in kora_police, not in qbdispatch: dispatch has no idea what a crime
 -- is, and should not. It transports and presents calls; deciding that a gunshot
 -- in a public street is a police matter is police-resource business. The same
 -- rule puts a bank robbery's alert inside the robbery script.
@@ -36,9 +36,9 @@ end, Config.dispatch.meleeCooldown)
 --
 -- Each throttle is invoked through `.run(...)` rather than by calling the handle:
 -- QB.timers.throttle returns a table made callable by a __call metamethod, and
--- metatables do not survive the qblib export boundary, so from here the handle
+-- metatables do not survive the kora_lib export boundary, so from here the handle
 -- arrives as a plain table and `reportMelee()` raised "attempt to call a table
--- value". See qblib modules/timers/docs.md.
+-- value". See kora_lib modules/timers/docs.md.
 local function tick()
     local ped = QB.cache.ped()
 

@@ -1,6 +1,6 @@
 -- Tests the actual policy function this build added to
--- qbinventory/config.lua's Config.qbinventory.containers.evidence.access --
--- the one qbinventory file this resource is allowed to touch. Loads that
+-- kora_inventory/config.lua's Config.qbinventory.containers.evidence.access --
+-- the one kora_inventory file this resource is allowed to touch. Loads that
 -- real config.lua (not a copy) so a future edit to the policy is caught by
 -- this test too.
 local h = dofile('test/harness.lua')
@@ -12,7 +12,7 @@ _G.exports = setmetatable({}, {
         return setmetatable({}, {
             __index = function(_, fnName)
                 return function(_, ...)
-                    if resourceName == 'qbcore' and fnName == 'getJob' then
+                    if resourceName == 'kora_core' and fnName == 'getJob' then
                         return _G.__TEST_JOBS[...]
                     end
                     return nil
@@ -22,8 +22,8 @@ _G.exports = setmetatable({}, {
     end,
 })
 
-local ok, err = pcall(dofile, '../qbinventory/config.lua')
-h.assertTrue(ok, 'expected ../qbinventory/config.lua to load: ' .. tostring(err))
+local ok, err = pcall(dofile, '../kora_inventory/config.lua')
+h.assertTrue(ok, 'expected ../kora_inventory/config.lua to load: ' .. tostring(err))
 
 local access = Config.qbinventory.containers.evidence.access
 h.assertTrue(type(access) == 'function', "evidence.access must be a function after this build's edit")

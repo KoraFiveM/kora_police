@@ -48,7 +48,7 @@ end
 ---@return boolean, string|nil
 function Police.startDrag(draggerSrc, targetSrc)
     if draggerSrc == targetSrc then return false, 'cannot drag yourself' end
-    if not exports.qbcore:getPlayerData(targetSrc) then return false, 'target not found' end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
     if Police.kidnapped[targetSrc] then return false, 'already being dragged' end
     if Police.escorted[targetSrc] then return false, 'target is being escorted' end
     if Police.distanceBetween(draggerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end

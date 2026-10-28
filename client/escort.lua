@@ -2,7 +2,7 @@
 -- for an unconscious/uncooperative target). Not solvable with
 -- QB.anim.attachProp -- the other player owns their own networked ped, so
 -- each side's OWN client issues AttachEntityToEntity on itself, driven by a
--- server relay rather than qbpolice trying to move another player's entity
+-- server relay rather than kora_police trying to move another player's entity
 -- remotely. The officer's client only renders local UI state; it never
 -- attaches anything on the suspect's behalf.
 
@@ -153,5 +153,5 @@ end
 registerEscortTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'qbtarget' then registerEscortTargets() end
+    if resourceName == 'kora_target' then registerEscortTargets() end
 end)

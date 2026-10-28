@@ -1,6 +1,6 @@
 -- Police.canAccessArmory -- job/on-duty, grade, and distance gating for the
--- fresh armory build (qbinventory's RegisterShop is mocked; this only tests
--- qbpolice's own access decision, not qbinventory's shop mechanics).
+-- fresh armory build (kora_inventory's RegisterShop is mocked; this only tests
+-- kora_police's own access decision, not kora_inventory's shop mechanics).
 local h = dofile('test/harness.lua')
 local mocks = dofile('test/mocks.lua'); local handle = mocks.install()
 dofile('config.lua')
