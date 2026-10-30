@@ -61,7 +61,7 @@ h.test('the shared target wrapper owns the native addGlobalType call', function(
     h.assertEqual(hits, 1, ('expected one shared addGlobalType call site, found %d'):format(hits))
 end)
 
-h.test('every police blip caller uses qblib canonical category/name fields', function()
+h.test('every police blip caller uses kora_lib canonical category/name fields', function()
     local duty = source('config.lua')
     local evidence = source('client/evidence.lua')
     local tracker = source('client/tracker.lua')

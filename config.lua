@@ -1,5 +1,5 @@
 -- Single flat Config table, per-module sub-tables, a trailing comment on
--- every value -- matches kora_core/qblib's own config.lua convention.
+-- every value -- matches kora_core/kora_lib's own config.lua convention.
 
 Config = Config or {}
 

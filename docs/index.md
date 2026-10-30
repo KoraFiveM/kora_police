@@ -16,7 +16,7 @@ modern `qbpolice:*` surface.
 
 ## Requirements
 
-- [qblib](https://qbcore2.github.io/kora_lib/)
+- [kora_lib](https://qbcore2.github.io/kora_lib/)
 - [qbcore](https://qbcore2.github.io/kora_core/)
 - [qbinventory](https://qbcore2.github.io/kora_inventory/)
 - [qbtarget](https://qbcore2.github.io/kora_target/)
@@ -276,7 +276,7 @@ cap), `Config.armory.shops` (per-room coords/`minGrade`/inventory),
 
 Part of the [qbcore2](https://github.com/qbcore2) resource set:
 
-- [qblib](https://qbcore2.github.io/kora_lib/) — shared helper library
+- [kora_lib](https://qbcore2.github.io/kora_lib/) — shared helper library
 - [qbsql](https://qbcore2.github.io/kora_sql/) — database driver
 - [qbcore](https://qbcore2.github.io/kora_core/) — framework core
 - [qbinventory](https://qbcore2.github.io/kora_inventory/) — headless inventory

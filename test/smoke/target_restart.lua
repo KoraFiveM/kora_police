@@ -171,7 +171,7 @@ h.test('station blips are created once at load, not per qbtarget restart', funct
     h.assertEqual(stationBlips[1].category, 'Police',
         'station blips group beneath the canonical Police heading')
     h.assertEqual(stationBlips[1].name, nil, 'a generic station does not repeat its category as a name')
-    h.assertEqual(stationBlips[1].label, nil, 'qblib composes the station label')
+    h.assertEqual(stationBlips[1].label, nil, 'kora_lib composes the station label')
 end)
 
 h.report('target_restart')
