@@ -28,6 +28,13 @@ Config.cuff = {
     breakCuffsCooldown = 60000,        -- ms a suspect must wait after a failed break-cuffs try before another
 }
 
+Config.incapacitated = {
+    downed = true,                     -- a last-stand/dead target can be robbed and dragged
+    cuffed = true,                     -- a handcuffed target can be robbed and dragged
+    ambulance = true,                  -- read kora_ambulance live state (emsDown statebag / getPatientStatus) when it is running
+    pedHealthFallback = false,         -- also treat a ped at or below 100 health as downed (for medical resources that set no flag)
+}
+
 Config.jail = {
     defaultMinutes = 10,               -- fallback sentence length when a cuff-and-book flow doesn't specify one
 }

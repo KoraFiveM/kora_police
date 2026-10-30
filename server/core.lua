@@ -37,12 +37,49 @@ function Police.distanceBetween(a, b)
     return #(GetEntityCoords(pedA) - GetEntityCoords(pedB))
 end
 
+-- Legacy metadata flags are written as booleans by kora_ambulance but other
+-- medical resources use 1/0 or "true"; accept all of them.
+local function truthy(value)
+    return value == true or value == 1 or value == 'true'
+end
+
+---Whether a player is last-stand or dead. Order: kora_ambulance live state
+---(statebag, then export), legacy isdead/inlaststand metadata, and -- only when
+---Config.incapacitated.pedHealthFallback is on -- the server-side ped health.
+---@param src integer
+---@return boolean
+function Police.isDowned(src)
+    local cfg = Config.incapacitated or {}
+    if cfg.ambulance ~= false and GetResourceState('kora_ambulance') == 'started' then
+        local okBag, bag = pcall(function() return Player(src).state.emsDown end)
+        if okBag and bag and bag ~= 'alive' then return true end
+        local okStatus, status = pcall(function() return exports.kora_ambulance:getPatientStatus(src) end)
+        if okStatus and type(status) == 'table' and (status.state == 'laststand' or status.state == 'dead') then
+            return true
+        end
+    end
+    if truthy(exports.kora_core:getMetaData(src, 'isdead')) or truthy(exports.kora_core:getMetaData(src, 'inlaststand')) then
+        return true
+    end
+    if cfg.pedHealthFallback == true then
+        local ped = GetPlayerPed(src)
+        if ped and ped ~= 0 and DoesEntityExist(ped) then
+            local health = GetEntityHealth(ped)
+            -- GTA treats a player ped at or below 100 health as fatally injured.
+            if health and health <= 100 then return true end
+        end
+    end
+    return false
+end
+
+---Whether a target may be robbed/dragged: downed and/or cuffed, each gated by Config.incapacitated.
 ---@param src integer
 ---@return boolean
 function Police.isIncapacitated(src)
-    return Police.isCuffed(src)
-        or exports.kora_core:getMetaData(src, 'isdead') == true
-        or exports.kora_core:getMetaData(src, 'inlaststand') == true
+    local cfg = Config.incapacitated or {}
+    if cfg.cuffed ~= false and Police.isCuffed(src) then return true end
+    if cfg.downed ~= false and Police.isDowned(src) then return true end
+    return false
 end
 
 ---@param src integer

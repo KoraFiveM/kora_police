@@ -32,9 +32,8 @@ end)
 QB.callback.register('police:isPlayerDead', function(src, target)
     target = target or src
     if target ~= src and not Police.isPolice(src) then return false end
-    local metaDead = exports.kora_core:getMetaData(target, 'isdead')
-    local metaLaststand = exports.kora_core:getMetaData(target, 'inlaststand')
-    if metaDead ~= nil then return metaDead == true or metaLaststand == true end
+    if Police.isDowned(target) then return true end
+    if exports.kora_core:getMetaData(target, 'isdead') ~= nil then return false end
     local ped = GetPlayerPed(target)
     if not ped or ped == 0 then return false end
     return GetEntityHealth(ped) <= 0
