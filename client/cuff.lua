@@ -5,18 +5,18 @@
 local CUFF_DICT, CUFF_CLIP = 'mp_arresting', 'idle'
 local CUFF_PROP_MODEL, CUFF_PROP_BONE = 'p_cs_cuffs_01', 'SKEL_L_Hand'
 local attachedProp = nil
-local playerId = QB.cache.playerId()
+local playerId = Kora.cache.playerId()
 
 local function applyCuffedVisuals(cuffed)
-    local ped = QB.cache.ped()
+    local ped = Kora.cache.ped()
     if cuffed then
-        QB.anim.play(ped, CUFF_DICT, CUFF_CLIP, { flag = 49 })
-        local prop = QB.anim.attachProp(ped, CUFF_PROP_MODEL, CUFF_PROP_BONE, { x = 0.0, y = 0.0, z = 0.0 })
+        Kora.anim.play(ped, CUFF_DICT, CUFF_CLIP, { flag = 49 })
+        local prop = Kora.anim.attachProp(ped, CUFF_PROP_MODEL, CUFF_PROP_BONE, { x = 0.0, y = 0.0, z = 0.0 })
         if prop then attachedProp = prop end
         SetEnableHandcuffs(ped, true)
     else
-        QB.anim.stop(ped)
-        if attachedProp then QB.anim.detachProp(attachedProp); attachedProp = nil end
+        Kora.anim.stop(ped)
+        if attachedProp then Kora.anim.detachProp(attachedProp); attachedProp = nil end
         SetEnableHandcuffs(ped, false)
     end
 end

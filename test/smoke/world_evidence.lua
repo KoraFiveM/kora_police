@@ -12,7 +12,7 @@ GetGameTimer = function() return now end
 GetPlayerRoutingBucket = function(src) return buckets[src] or 0 end
 GetPlayerPed = function(src) return not missingPed[src] and mock.players[src] and src or 0 end
 CreateThread = function(fn) threads[#threads + 1] = coroutine.create(fn) end
-QB.sql = { execute = function() return 1 end }
+Kora.sql = { execute = function() return 1 end }
 mock.exportImpls.kora_inventory.RemoveItem = function(src, name)
     h.assertEqual(name, 'empty_evidence_bag')
     if not allowRemove or (bags[src] or 0) == 0 then return false, 'Missing bag' end
@@ -55,7 +55,7 @@ local function client(src)
     end
     env.RegisterNetEvent = env.AddEventHandler
     env.TriggerServerEvent = function(name, ...) requests[#requests + 1] = { src = src, name = name, args = table.pack(...) } end
-    env.QB = {
+    env.Kora = {
         notify = { send = function(payload) c.notices[#c.notices + 1] = payload end },
         blips = {
             create = function()
@@ -77,7 +77,7 @@ local function client(src)
             end,
         },
     }, { __call = function() end })
-    env.QB.compat = assert(loadfile(resource .. '/../kora_lib/compat/provider.lua', 't', env))()()
+    env.Kora.compat = assert(loadfile(resource .. '/../kora_lib/compat/provider.lua', 't', env))()()
     assert(loadfile(resource .. '/config.lua', 't', env))()
     assert(loadfile(resource .. '/client/core.lua', 't', env))()
     assert(loadfile(resource .. '/client/evidence.lua', 't', env))()
@@ -106,7 +106,7 @@ TriggerClientEvent = function(name, target, ...)
     oldClientEvent(name, target, ...)
     for src, c in pairs(clients) do if target == -1 or target == src then c.fire(name, ...) end end
 end
-QB.notify.send = function(src, payload) clients[src].notices[#clients[src].notices + 1] = payload end
+Kora.notify.send = function(src, payload) clients[src].notices[#clients[src].notices + 1] = payload end
 local function count(values) local n = 0; for _ in pairs(values) do n = n + 1 end; return n end
 local function zones(c)
     local n = 0; for _, opts in pairs(c.targets) do if opts.options[1].label:find('Collect ', 1, true) then n = n + 1 end end; return n

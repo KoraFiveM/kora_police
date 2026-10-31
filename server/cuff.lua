@@ -73,7 +73,7 @@ exports.kora_core:createUseable('handcuffs', function(src)
     return ok
 end)
 
----A soft-cuffed suspect's client won the QB.minigames escape skillcheck --
+---A soft-cuffed suspect's client won the Kora.minigames escape skillcheck --
 ---revalidate both the cuff state and kora_lib's one-use server-issued proof
 ---before actually releasing.
 ---@param src integer
@@ -86,7 +86,7 @@ function Police.breakCuffs(src, proof)
     if state.attemptsUsed >= Config.cuff.breakCuffsAttempts then return false, 'no attempts remaining' end
     local authorization = state.breakAuthorization
     state.breakAuthorization = nil
-    if not authorization or not QB.minigames.consumeProof(src, proof,
+    if not authorization or not Kora.minigames.consumeProof(src, proof,
         Config.minigames.breakCuffs.type, authorization) then
         return false, 'invalid minigame proof'
     end
@@ -118,7 +118,7 @@ function Police.beginBreakCuffs(src)
     local attempt = state.attemptsUsed + 1
     local difficulty = Config.cuff.breakCuffsDifficulty[math.min(attempt, #Config.cuff.breakCuffsDifficulty)]
     local opts = Config.minigames.breakCuffs.opts[difficulty] or Config.minigames.breakCuffs.opts.medium
-    local authorization = QB.minigames.authorizeProof(src, Config.minigames.breakCuffs.type, opts)
+    local authorization = Kora.minigames.authorizeProof(src, Config.minigames.breakCuffs.type, opts)
     if not authorization then return nil, 'could not authorize escape attempt' end
     state.breakAuthorization = authorization
     return authorization
@@ -141,10 +141,10 @@ RegisterNetEvent('qbpolice:server:breakCuffsResult', function(proof)
     end
 end)
 
-QB.callback.register('qbpolice:server:beginBreakCuffs', function(src)
+Kora.callback.register('qbpolice:server:beginBreakCuffs', function(src)
     return Police.beginBreakCuffs(src)
 end)
 
-QB.callback.register('qbpolice:server:getCuffed', function(src, target)
+Kora.callback.register('qbpolice:server:getCuffed', function(src, target)
     return Police.isCuffed(target or src)
 end)

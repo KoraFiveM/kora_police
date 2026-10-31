@@ -29,7 +29,7 @@ local function registerImpoundTargets()
                     label = ('Retrieve From %s ($%d)'):format(lot.label, Config.impound.fee),
                     icon = 'car',
                     onSelect = function()
-                        local result = QB.nui.openInputDialog(
+                        local result = Kora.nui.openInputDialog(
                             { { id = 'plate', label = 'Plate', type = 'text', required = true } },
                             'Retrieve Vehicle'
                         )

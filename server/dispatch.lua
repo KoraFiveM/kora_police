@@ -123,12 +123,12 @@ end
 -- Officer-requested backup. Only for the calling PLAYER's own request; anything
 -- else wanting a police call (a robbery script, a drug lab) calls
 -- exports.kora_dispatch:createCall directly.
-QB.events.register('qbpolice:server:requestBackup', function(src)
+Kora.events.register('qbpolice:server:requestBackup', function(src)
     if not Police.isLeo(src) then return end
 
     local callId, reason, remaining = exports.kora_dispatch:createPlayerCall(src, 'qbpolice:backup')
     if not callId then
-        QB.notify.send(src, {
+        Kora.notify.send(src, {
             message = remaining
                 and ('A backup request is already active (%ds).'):format(math.ceil(remaining / 1000))
                 or ('Dispatch could not create the call: %s.'):format(reason or 'unknown error'),
@@ -172,7 +172,7 @@ RegisterNetEvent('qbpolice:server:panic', function()
     -- their shift and needs to know it was heard.
     local elapsed, remaining = Police.panicCooldownElapsed(src)
     if not elapsed then
-        QB.notify.send(src, {
+        Kora.notify.send(src, {
             message = ('Your panic alarm is already active (%ds).'):format(math.ceil(remaining / 1000)),
             type = 'error',
         })
@@ -217,7 +217,7 @@ end)
 -- decides WHEN, the server decides whether that player is allowed to generate a
 -- call and what it may contain -- a client cannot hand over a priority, a
 -- service, or anyone else's coordinates.
-QB.events.register('qbpolice:server:crimeDetected', function(src, incident)
+Kora.events.register('qbpolice:server:crimeDetected', function(src, incident)
     if playerAlerts[incident] == nil or incident == 'qbpolice:backup' then return end
     exports.kora_dispatch:createPlayerCall(src, incident)
 end, { rateLimit = { max = 8, window = 5000 } })

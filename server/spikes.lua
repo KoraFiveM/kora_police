@@ -1,4 +1,4 @@
--- Spike strips -- raw CreateObject, never QB.entities (that spawner is
+-- Spike strips -- raw CreateObject, never Kora.entities (that spawner is
 -- explicitly local/non-networked; a deployed strip must be visible to every
 -- player on the road, not just the deploying officer). Server-side
 -- CreateObject already creates a real networked entity, same precedent as
@@ -13,8 +13,8 @@ Police.spikesByOfficer = Police.spikesByOfficer or {}  -- officerSrc -> count
 ---@return string|nil error
 function Police.deploySpike(officerSrc, coords)
     if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if type(coords) ~= 'table' or not QB.util.isFiniteNumber(coords.x)
-        or not QB.util.isFiniteNumber(coords.y) or not QB.util.isFiniteNumber(coords.z) then
+    if type(coords) ~= 'table' or not Kora.util.isFiniteNumber(coords.x)
+        or not Kora.util.isFiniteNumber(coords.y) or not Kora.util.isFiniteNumber(coords.z) then
         return false, 'invalid coords'
     end
     if (Police.spikesByOfficer[officerSrc] or 0) >= Config.spikes.maxDeployed then

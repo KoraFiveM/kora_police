@@ -31,6 +31,6 @@ function Police.getFingerprintForOfficer(officerSrc, targetSrc)
     return Police.getFingerprint(cid)
 end
 
-QB.callback.register('qbpolice:server:getFingerprint', function(src, target)
+Kora.callback.register('qbpolice:server:getFingerprint', function(src, target)
     return Police.getFingerprintForOfficer(src, target)
 end)

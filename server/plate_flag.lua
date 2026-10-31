@@ -60,6 +60,6 @@ RegisterNetEvent('qbpolice:server:plateSpotted', function(plate)
     Police.triggerFlaggedPlate(source, plate)
 end)
 
-QB.callback.register('qbpolice:server:isPlateFlagged', function(src, plate)
+Kora.callback.register('qbpolice:server:isPlateFlagged', function(src, plate)
     return Police.isPlateFlagged(plate)
 end)

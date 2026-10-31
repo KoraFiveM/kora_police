@@ -42,7 +42,7 @@ h.test('the configured robbery radius rides along on the call', function()
 end)
 
 h.test('backup uses its registered fixed presentation', function()
-    handle.QB.events.registry['qbpolice:server:requestBackup'](COP1)
+    handle.Kora.events.registry['qbpolice:server:requestBackup'](COP1)
 
     local call = handle.lastDispatchCall()
     h.assertEqual(call.code, '10-78', 'a backup request has its own code')
@@ -55,7 +55,7 @@ h.test('a civilian cannot request police backup', function()
     handle.addPlayer(9, { job = { name = 'unemployed', onduty = true, grade = { level = 1 } } })
     local before = #handle.dispatchCalls
 
-    handle.QB.events.registry['qbpolice:server:requestBackup'](9)
+    handle.Kora.events.registry['qbpolice:server:requestBackup'](9)
 
     h.assertEqual(#handle.dispatchCalls, before, 'no call should have been raised')
 end)
@@ -182,7 +182,7 @@ end)
 
 h.test('a client-reported crime selects only a registered fixed incident', function()
     handle.setCoords(9, 500.0, 600.0, 20.0)
-    handle.QB.events.registry['qbpolice:server:crimeDetected'](9, 'qbpolice:gunfire')
+    handle.Kora.events.registry['qbpolice:server:crimeDetected'](9, 'qbpolice:gunfire')
 
     local call = handle.lastDispatchCall()
     h.assertEqual(call.coords.x, 500.0, 'coordinates are derived from the reporter')
@@ -191,7 +191,7 @@ end)
 
 h.test('an unknown crime key is dropped rather than raising a call', function()
     local before = #handle.dispatchCalls
-    handle.QB.events.registry['qbpolice:server:crimeDetected'](9, 'qbpolice:not-registered')
+    handle.Kora.events.registry['qbpolice:server:crimeDetected'](9, 'qbpolice:not-registered')
     h.assertEqual(#handle.dispatchCalls, before, 'nothing raised')
 end)
 

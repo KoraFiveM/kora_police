@@ -1,4 +1,4 @@
--- Duty toggle (QB.interact -- a lighter primitive than a full kora_target zone
+-- Duty toggle (Kora.interact -- a lighter primitive than a full kora_target zone
 -- for a simple point of interaction) and the patrol-fleet spawn/store loop.
 
 -- Station blips. Deliberately NOT inside registerDutyZones below: that function
@@ -12,9 +12,9 @@
 local function registerStationBlips()
     for _, point in ipairs(Config.duty.points) do
         if point.blip and point.blip.enabled then
-            local blip = QB.blips.create(point.coords, point.blip)
+            local blip = Kora.blips.create(point.coords, point.blip)
             if blip and not point.blip.info then
-                QB.blips.setInfo(blip, {
+                Kora.blips.setInfo(blip, {
                     title = point.blip.name or point.blip.category or point.label,
                     rows = {
                         { kind = 'wrappedText', value = 'Clock in here to access police duty facilities.' },
@@ -42,7 +42,7 @@ local function registerDutyZones()
                         return job ~= nil and job.name == Config.police.job
                     end,
                     onSelect = function()
-                        QB.events.trigger('qbpolice:server:toggleDuty')
+                        Kora.events.trigger('qbpolice:server:toggleDuty')
                     end,
                 },
             },
@@ -75,7 +75,7 @@ local function registerDutyZones()
             label = 'Store Patrol Vehicle',
             icon = 'car',
             canInteract = function(entity)
-                return Police.isOnDuty() and GetPedInVehicleSeat(entity, -1) == QB.cache.ped()
+                return Police.isOnDuty() and GetPedInVehicleSeat(entity, -1) == Kora.cache.ped()
             end,
             onSelect = function(entity)
                 local plate = GetVehicleNumberPlateText(entity)

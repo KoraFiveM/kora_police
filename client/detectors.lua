@@ -12,20 +12,20 @@
 local function alert(incident)
     -- The incident key is the entire client payload. Wording, service,
     -- priority and coordinates all come from the server-owned registration.
-    QB.events.trigger('qbpolice:server:crimeDetected', incident)
+    Kora.events.trigger('qbpolice:server:crimeDetected', incident)
 end
 
-local reportShots = QB.timers.throttle(function(silenced)
+local reportShots = Kora.timers.throttle(function(silenced)
     -- A suppressed weapon is quieter, not silent: fewer witnesses would place
     -- it precisely, so it is a distinct lower-priority allowlisted incident.
     alert(silenced and 'qbpolice:gunfire:suppressed' or 'qbpolice:gunfire')
 end, Config.dispatch.shotsFiredCooldown)
 
-local reportTheft = QB.timers.throttle(function()
+local reportTheft = Kora.timers.throttle(function()
     alert('qbpolice:vehicle-theft')
 end, Config.dispatch.vehicleTheftCooldown)
 
-local reportMelee = QB.timers.throttle(function()
+local reportMelee = Kora.timers.throttle(function()
     alert('qbpolice:melee')
 end, Config.dispatch.meleeCooldown)
 
@@ -35,12 +35,12 @@ end, Config.dispatch.meleeCooldown)
 -- twice-a-second check misses.
 --
 -- Each throttle is invoked through `.run(...)` rather than by calling the handle:
--- QB.timers.throttle returns a table made callable by a __call metamethod, and
+-- Kora.timers.throttle returns a table made callable by a __call metamethod, and
 -- metatables do not survive the kora_lib export boundary, so from here the handle
 -- arrives as a plain table and `reportMelee()` raised "attempt to call a table
 -- value". See kora_lib modules/timers/docs.md.
 local function tick()
-    local ped = QB.cache.ped()
+    local ped = Kora.cache.ped()
 
     -- On-duty officers are excluded from every detector. A firearms unit
     -- returning fire must not spawn a "shots fired" call about itself, and
@@ -71,6 +71,6 @@ CreateThread(function()
         -- is the worst failure mode for a reporting system, so the error is
         -- surfaced instead of ending the thread.
         local ok, err = pcall(tick)
-        if not ok then QB.print.error('qbpolice detector tick failed:', err) end
+        if not ok then Kora.print.error('qbpolice detector tick failed:', err) end
     end
 end)

@@ -2,7 +2,7 @@ local h = dofile('test/harness.lua')
 local events, threads, clock, owner, grounded = {}, {}, 0, true, 0
 Config = { spikes = {}, performance = {} }
 Police = {}
-QB = { cache = { onChange = function() end } }
+Kora = { cache = { onChange = function() end } }
 RegisterCommand = function() end
 RegisterNetEvent = function(name, fn) events[name] = fn end
 CreateThread = function(fn) threads[#threads + 1] = fn end

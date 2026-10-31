@@ -21,7 +21,7 @@ handle.setCoords(TARGET, 0.0, 0.0, 0.0)
 handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0)
 
 h.test('fingerprint callback requires an on-duty officer and a cuffed nearby target', function()
-    local callback = handle.QB.callback.registry['qbpolice:server:getFingerprint']
+    local callback = handle.Kora.callback.registry['qbpolice:server:getFingerprint']
     h.assertTrue(callback ~= nil)
     h.assertEqual(callback(CIVILIAN, TARGET), nil)
     h.assertEqual(callback(OFFICER, TARGET), nil)

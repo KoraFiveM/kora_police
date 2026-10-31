@@ -14,7 +14,7 @@ local function requestBackup()
         return Police.notify('You must be on duty to request backup.', 'error')
     end
 
-    QB.events.trigger('qbpolice:server:requestBackup')
+    Kora.events.trigger('qbpolice:server:requestBackup')
 end
 
 RegisterCommand('backup', requestBackup, false)
@@ -26,7 +26,7 @@ RegisterCommand('backup', requestBackup, false)
 -- separate incidents with different wording, different priorities from each
 -- service's point of view, and separate histories to clear -- which is exactly
 -- why dispatch refuses to bundle services into a single call.
-QB.keybind.add({
+Kora.keybind.add({
     name = 'qbpolice_panic',
     description = 'Police: panic button (officer down)',
     defaultKey = Config.dispatch.panicKey,

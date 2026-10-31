@@ -14,7 +14,7 @@ local function registerPlateFlagTargets()
             end,
             onSelect = function(entity)
                 local plate = GetVehicleNumberPlateText(entity)
-                local result = QB.nui.openInputDialog(
+                local result = Kora.nui.openInputDialog(
                     { { id = 'reason', label = 'Reason', type = 'text', default = 'BOLO' } },
                     ('Flag %s'):format(plate)
                 )
@@ -45,7 +45,7 @@ local lastReset = GetGameTimer()
 local scanRunning = false
 
 local function canScan()
-    return Police.isOnDuty() and QB.cache.vehicle() and QB.cache.seat() == -1
+    return Police.isOnDuty() and Kora.cache.vehicle() and Kora.cache.seat() == -1
 end
 
 local function startScan()
@@ -58,7 +58,7 @@ local function startScan()
             Wait(3000)
             if not canScan() then break end
 
-            local vehicle = QB.cache.vehicle()
+            local vehicle = Kora.cache.vehicle()
             local coords = GetEntityCoords(vehicle)
             local maxDistanceSq = 20.0 * 20.0
             if Config.performance.diagnostics then scans = scans + 1 end
@@ -93,10 +93,10 @@ local function startScan()
     end)
 end
 
-QB.cache.onChange('vehicle', function(vehicle)
+Kora.cache.onChange('vehicle', function(vehicle)
     if vehicle then startScan() end
 end)
-QB.cache.onChange('seat', function(seat)
+Kora.cache.onChange('seat', function(seat)
     if seat == -1 then startScan() end
 end)
 

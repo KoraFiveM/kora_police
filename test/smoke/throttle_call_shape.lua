@@ -1,7 +1,7 @@
--- Source-level guardrail for QB.timers.throttle/debounce handles.
+-- Source-level guardrail for Kora.timers.throttle/debounce handles.
 --
 -- kora_lib returns a callable TABLE whose `__call` metamethod does not survive the
--- export boundary: kora_police reaches QB.timers through the kora_lib export proxy, so
+-- export boundary: kora_police reaches Kora.timers through the kora_lib export proxy, so
 -- the handle arrives here as a plain table and calling it directly raised
 --   @kora_police/client/detectors.lua:117: attempt to call a table value (upvalue 'reportMelee')
 -- which killed the whole detector thread on the first melee fight. Every handle
@@ -34,7 +34,7 @@ local files = {
     'server/dispatch.lua',
 }
 
-h.test('every QB.timers.throttle/debounce handle is invoked through .run', function()
+h.test('every Kora.timers.throttle/debounce handle is invoked through .run', function()
     local checked = 0
 
     for _, path in ipairs(files) do
@@ -42,14 +42,14 @@ h.test('every QB.timers.throttle/debounce handle is invoked through .run', funct
         if ok then
             -- Collect the local name each throttle/debounce handle is bound to,
             -- then assert no bare `name(` call exists anywhere in the file.
-            for name in src:gmatch('local%s+([%w_]+)%s*=%s*QB%.timers%.throttle') do
+            for name in src:gmatch('local%s+([%w_]+)%s*=%s*Kora%.timers%.throttle') do
                 checked = checked + 1
                 h.assertTrue(src:find(name .. '%s*%(') == nil,
                     ('%s: %s is a throttle handle -- call %s.run(...), not %s(...)')
                         :format(path, name, name, name))
             end
 
-            for name in src:gmatch('local%s+([%w_]+)%s*=%s*QB%.timers%.debounce') do
+            for name in src:gmatch('local%s+([%w_]+)%s*=%s*Kora%.timers%.debounce') do
                 checked = checked + 1
                 h.assertTrue(src:find(name .. '%s*%(') == nil,
                     ('%s: %s is a debounce handle -- call %s.run(...), not %s(...)')

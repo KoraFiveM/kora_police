@@ -4,8 +4,8 @@
 
 RegisterCommand('spikestrip', function()
     if not Police.isOnDuty() then return end
-    local ped = QB.cache.ped()
-    local coords = QB.cache.coords()
+    local ped = Kora.cache.ped()
+    local coords = Kora.cache.coords()
     local forward = GetEntityForwardVector(ped)
     local deployAt = coords + forward * 2.0
     TriggerServerEvent('qbpolice:server:deploySpike', { x = deployAt.x, y = deployAt.y, z = deployAt.z })
@@ -21,7 +21,7 @@ local function startScan()
     CreateThread(function()
         local scans = 0
         while next(activeStrips) do
-            local vehicle = QB.cache.vehicle()
+            local vehicle = Kora.cache.vehicle()
 
             if vehicle then
                 if Config.performance.diagnostics then scans = scans + 1 end
@@ -73,6 +73,6 @@ RegisterNetEvent('qbpolice:client:spikeRemoved', function(netId)
     activeStrips[netId] = nil
 end)
 
-QB.cache.onChange('vehicle', function(vehicle)
+Kora.cache.onChange('vehicle', function(vehicle)
     if vehicle then startScan() end
 end)

@@ -12,7 +12,7 @@ local function registerJailTargets()
             end,
             onSelect = function(entity)
                 local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
-                local result = QB.nui.openInputDialog({
+                local result = Kora.nui.openInputDialog({
                     { id = 'minutes', label = 'Minutes', type = 'number', default = Config.jail.defaultMinutes, min = 1, required = true },
                     { id = 'reason', label = 'Reason', type = 'text' },
                 }, 'Book Suspect')

@@ -2,7 +2,7 @@
 -- and put-in/out-of-vehicle. All three are validated server-side and then
 -- relayed to the AFFECTED player's own client, which is the one that
 -- actually attaches its own networked ped -- see client/escort.lua's header
--- for why this can't be done with QB.anim.attachProp (that's for props the
+-- for why this can't be done with Kora.anim.attachProp (that's for props the
 -- caller owns, not another player's networked ped).
 
 ---@param officerSrc integer

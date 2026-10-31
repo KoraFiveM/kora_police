@@ -1,4 +1,4 @@
--- Citations. Officer enters an amount/reason via QB.nui.openInputDialog; the
+-- Citations. Officer enters an amount/reason via Kora.nui.openInputDialog; the
 -- server is authoritative on whether the target can actually be charged.
 
 local function registerBillTargets()
@@ -12,7 +12,7 @@ local function registerBillTargets()
             end,
             onSelect = function(entity)
                 local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
-                local result = QB.nui.openInputDialog({
+                local result = Kora.nui.openInputDialog({
                     { id = 'amount', label = 'Fine Amount', type = 'number', default = Config.fine.tiers[1][1], min = 1, required = true },
                     { id = 'reason', label = 'Reason', type = 'text' },
                 }, 'Issue Citation')

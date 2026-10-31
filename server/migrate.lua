@@ -12,12 +12,12 @@ local function checksum(value)
 end
 
 CreateThread(function()
-    if not QB.sql.ready(60000) then
+    if not Kora.sql.ready(60000) then
         print('^1[qbpolice:ballistics]^7 qbsql was unavailable; ballistic evidence is disabled until restart.')
         return
     end
     local resource = GetCurrentResourceName()
-    local _, err = QB.sql.migrateFiles(resource, {
+    local _, err = Kora.sql.migrateFiles(resource, {
         { version = 1, name = 'ballistics', file = 'sql/001_ballistics.sql' },
     }, checksum)
     if err then print(('^1[qbpolice:ballistics]^7 migration failed: %s'):format(tostring(err))) end

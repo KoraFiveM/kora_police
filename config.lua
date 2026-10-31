@@ -23,7 +23,7 @@ Config.performance = {
 Config.cuff = {
     cuffTime = 5000,                   -- ms the hard-cuff animation/progressbar takes
     distance = 2.5,                    -- max distance to cuff/uncuff/escort/drag/put-in-vehicle a target
-    breakCuffsDifficulty = { 'medium', 'hard', 'medium' },  -- per-attempt QB.minigames difficulty for a soft-cuffed suspect's escape attempt (ported qbx_police mechanic)
+    breakCuffsDifficulty = { 'medium', 'hard', 'medium' },  -- per-attempt Kora.minigames difficulty for a soft-cuffed suspect's escape attempt (ported qbx_police mechanic)
     breakCuffsAttempts = 3,            -- total escape attempts before the item gives up until the next use
     breakCuffsCooldown = 60000,        -- ms a suspect must wait after a failed break-cuffs try before another
 }
@@ -189,7 +189,7 @@ Config.duty = {
 }
 
 Config.fine = {
-    -- Tiered fines picked via QB.util.weightedChoice-style {value, weight} lists
+    -- Tiered fines picked via Kora.util.weightedChoice-style {value, weight} lists
     -- when a job resource wants a randomised default; the officer-entered
     -- amount from the citation UI is authoritative when supplied.
     tiers = {
@@ -199,4 +199,4 @@ Config.fine = {
 }
 
 -- Registers this resource-owned configuration with kora_lib without changing its public Config table.
-if QB and QB.config and QB.config.adopt then Config = QB.config.adopt(Config) end
+if Kora and Kora.config and Kora.config.adopt then Config = Kora.config.adopt(Config) end

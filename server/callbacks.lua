@@ -14,7 +14,7 @@ local function dutySrcList()
     return exports.kora_core:getPlayersByJob(Config.police.job, true)
 end
 
-QB.callback.register('police:GetDutyPlayers', function(src)
+Kora.callback.register('police:GetDutyPlayers', function(src)
     if not Police.isPolice(src) then return {} end
     local out = {}
     for _, s in ipairs(dutySrcList()) do
@@ -24,12 +24,12 @@ QB.callback.register('police:GetDutyPlayers', function(src)
     return out
 end)
 
-QB.callback.register('police:GetCops', function(src)
+Kora.callback.register('police:GetCops', function(src)
     if not Police.isPolice(src) then return {} end
     return dutySrcList()
 end)
 
-QB.callback.register('police:isPlayerDead', function(src, target)
+Kora.callback.register('police:isPlayerDead', function(src, target)
     target = target or src
     if target ~= src and not Police.isPolice(src) then return false end
     if Police.isDowned(target) then return true end
@@ -39,7 +39,7 @@ QB.callback.register('police:isPlayerDead', function(src, target)
     return GetEntityHealth(ped) <= 0
 end)
 
-QB.callback.register('police:IsSilencedWeapon', function(src, target)
+Kora.callback.register('police:IsSilencedWeapon', function(src, target)
     target = target or src
     if target ~= src and not Police.isPolice(src) then return false end
     local ped = GetPlayerPed(target)
@@ -55,7 +55,7 @@ QB.callback.register('police:IsSilencedWeapon', function(src, target)
     return false
 end)
 
-QB.callback.register('police:IsPoliceForcePresent', function(src, coords, radius)
+Kora.callback.register('police:IsPoliceForcePresent', function(src, coords, radius)
     if not Police.isPolice(src) then return false end
     coords = coords or (GetPlayerPed(src) ~= 0 and GetEntityCoords(GetPlayerPed(src)))
     if not coords then return false end
@@ -69,7 +69,7 @@ QB.callback.register('police:IsPoliceForcePresent', function(src, coords, radius
     return false
 end)
 
-QB.callback.register('police:GetPlayerStatus', function(src, target)
+Kora.callback.register('police:GetPlayerStatus', function(src, target)
     if not Police.isPolice(src) then return nil end
     target = tonumber(target) or src
     local data = exports.kora_core:getPlayerData(target)
@@ -84,12 +84,12 @@ QB.callback.register('police:GetPlayerStatus', function(src, target)
     }
 end)
 
-QB.callback.register('police:GetImpoundedVehicles', function(src)
+Kora.callback.register('police:GetImpoundedVehicles', function(src)
     if not Police.isPolice(src) then return {} end
     return Police.getImpoundedVehicles()
 end)
 
-QB.callback.register('police:IsPlateFlagged', function(src, plate)
+Kora.callback.register('police:IsPlateFlagged', function(src, plate)
     if not Police.isPolice(src) then return false end
     return Police.isPlateFlagged(plate)
 end)

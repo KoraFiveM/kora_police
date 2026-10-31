@@ -89,7 +89,7 @@ function M.install()
     -- than discarded so a restart test can assert a station blip is created
     -- once per registration pass and not duplicated on the next one.
     local blips = {}
-    _G.QB = {
+    _G.Kora = {
         util = {
             isFiniteNumber = function(value)
                 return type(value) == 'number' and value == value and value > -math.huge and value < math.huge
@@ -105,12 +105,12 @@ function M.install()
         },
         callback = {
             registry = {},
-            register = function(name, handler) QB.callback.registry[name] = handler end,
+            register = function(name, handler) Kora.callback.registry[name] = handler end,
             trigger = function() end,
         },
         events = {
             registry = {},
-            register = function(name, handler) QB.events.registry[name] = handler end,
+            register = function(name, handler) Kora.events.registry[name] = handler end,
             trigger = function() end,
         },
         minigames = {
@@ -133,8 +133,8 @@ function M.install()
         end },
         commands = {
             registry = {},
-            add = function(name, _, _, _, handler) QB.commands.registry[name] = handler end,
-            remove = function(name) QB.commands.registry[name] = nil end,
+            add = function(name, _, _, _, handler) Kora.commands.registry[name] = handler end,
+            remove = function(name) Kora.commands.registry[name] = nil end,
         },
         keybind = { add = function() end },
         timers = {
@@ -385,7 +385,7 @@ function M.install()
         netHandlers = netHandlers,
         exportImpls = exportImpls,
         resourceStates = resourceStates,
-        QB = QB,
+        Kora = Kora,
         vec3 = vec3,
         dispatchCalls = dispatchCalls,
         playerAlertDefinitions = playerAlertDefinitions,

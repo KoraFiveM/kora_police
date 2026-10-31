@@ -34,7 +34,7 @@ local function toggleDuty(src)
     local job = exports.kora_core:getJob(src)
     local onDuty = job ~= nil and not job.onduty
     local changed, err = setDuty(src, onDuty)
-    QB.notify.send(src, {
+    Kora.notify.send(src, {
         message = changed and (onDuty and 'You are now on duty.' or 'You are now off duty.')
             or (err or 'Duty status could not be changed.'),
         type = changed and 'success' or 'error',
@@ -42,11 +42,11 @@ local function toggleDuty(src)
     return changed
 end
 
-QB.commands.add('police-duty', 'Toggle police duty at a police station', {}, false, function(source)
+Kora.commands.add('police-duty', 'Toggle police duty at a police station', {}, false, function(source)
     toggleDuty(source)
 end)
 
-QB.events.register('qbpolice:server:toggleDuty', function(src)
+Kora.events.register('qbpolice:server:toggleDuty', function(src)
     toggleDuty(src)
 end, { rateLimit = { max = 2, window = 3000 } })
 

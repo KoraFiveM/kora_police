@@ -11,7 +11,7 @@ local function registerFingerprintTargets()
             end,
             onSelect = function(entity)
                 local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
-                local fingerprint = QB.callback.trigger('qbpolice:server:getFingerprint', targetServerId)
+                local fingerprint = Kora.callback.trigger('qbpolice:server:getFingerprint', targetServerId)
                 if fingerprint then Police.notify(('Fingerprint: %s'):format(fingerprint), 'info') end
             end,
         },

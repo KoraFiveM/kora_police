@@ -33,7 +33,7 @@ local markers = {}
 local function removeWorldEvidence(id)
     local marker = markers[id]
     if not marker then return end
-    if marker.blip then QB.blips.remove(marker.blip) end
+    if marker.blip then Kora.blips.remove(marker.blip) end
     if marker.zone then exports.kora_target:removeZone(marker.zone) end
     markers[id] = nil
 end
@@ -60,7 +60,7 @@ end
 RegisterNetEvent('qbpolice:client:worldEvidenceCreated', function(id, evType, coords)
     removeWorldEvidence(id)
     local sprite = evType == 'blood' and 616 or (evType == 'casing' and 141 or 499)
-    local blip = QB.blips.create(coords, {
+    local blip = Kora.blips.create(coords, {
         sprite = sprite,
         color = 1,
         scale = 0.7,

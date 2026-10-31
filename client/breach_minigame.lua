@@ -1,7 +1,7 @@
 -- Door-breach minigame (new differentiator -- neither qb-policejob nor
 -- qbx_police has one). Doors are registered with FiveM's own door system,
 -- which self-replicates lock state across clients with no server round
--- trip; QB.minigames.play('lockpick', ...) gates whether THIS client is
+-- trip; Kora.minigames.play('lockpick', ...) gates whether THIS client is
 -- allowed to flip that state right now.
 
 CreateThread(function()
@@ -14,7 +14,7 @@ CreateThread(function()
 end)
 
 local function attemptBreach(door)
-    local result = QB.minigames.play(Config.minigames.breach.type, Config.minigames.breach.opts)
+    local result = Kora.minigames.play(Config.minigames.breach.type, Config.minigames.breach.opts)
     if not (result and result.success) then
         Police.notify('Breach failed.', 'error')
         return

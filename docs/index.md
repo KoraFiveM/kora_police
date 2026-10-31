@@ -99,10 +99,10 @@ see `kora_dispatch/docs/index.md`.
 
 ### Check restraint/armory access via a callback
 ```lua
--- client -- QB.callback.trigger blocks and returns the server's result
-local isCuffed = QB.callback.trigger('qbpolice:server:getCuffed', target)
+-- client -- Kora.callback.trigger blocks and returns the server's result
+local isCuffed = Kora.callback.trigger('qbpolice:server:getCuffed', target)
 
-local canOpen = QB.callback.trigger('qbpolice:server:canAccessArmory', 'pd-armory-sergeant')
+local canOpen = Kora.callback.trigger('qbpolice:server:canAccessArmory', 'pd-armory-sergeant')
 if canOpen then TriggerServerEvent('qbpolice:server:openArmory', 'pd-armory-sergeant') end
 ```
 
@@ -118,7 +118,7 @@ every net event below.
 TriggerServerEvent('qbpolice:server:cuff', target)
 TriggerServerEvent('qbpolice:server:uncuff', target)
 TriggerServerEvent('qbpolice:server:breakCuffsResult', success)   -- client reports a soft-cuff escape attempt's outcome
-QB.callback.trigger('qbpolice:server:getCuffed', target)
+Kora.callback.trigger('qbpolice:server:getCuffed', target)
 ```
 Client: `RegisterNetEvent('qbpolice:client:cuffed', function(cuffed, soft, otherSrc) ... end)`,
 `exports('IsHandcuffed')` (legacy, client-realm). The `handcuffs` useable item
@@ -164,7 +164,7 @@ Client: `RegisterNetEvent('qbpolice:client:worldEvidenceCreated', function(id, e
 ### Armory
 ```lua
 TriggerServerEvent('qbpolice:server:openArmory', shopId)
-QB.callback.trigger('qbpolice:server:canAccessArmory', shopId)
+Kora.callback.trigger('qbpolice:server:canAccessArmory', shopId)
 ```
 Each `Config.armory.shops` entry is its own `exports.kora_inventory:RegisterShop`
 room with `groups = { [Config.police.job] = shop.minGrade }` — grade 1
@@ -230,10 +230,10 @@ TriggerServerEvent('qbpolice:server:removeSpike', netId)
 TriggerServerEvent('qbpolice:server:flagPlate', plate, reason)
 TriggerServerEvent('qbpolice:server:unflagPlate', plate)
 TriggerServerEvent('qbpolice:server:plateSpotted', plate)
-QB.callback.trigger('qbpolice:server:isPlateFlagged', plate)
+Kora.callback.trigger('qbpolice:server:isPlateFlagged', plate)
 TriggerServerEvent('qbpolice:server:setTracker', target, active)
 TriggerServerEvent('qbpolice:server:sendTrackerLocation')
-QB.callback.trigger('qbpolice:server:getFingerprint', target)
+Kora.callback.trigger('qbpolice:server:getFingerprint', target)
 TriggerServerEvent('qbpolice:server:impound', plate, lotId)
 TriggerServerEvent('qbpolice:server:retrieveImpound', plate)
 ```
@@ -241,14 +241,14 @@ TriggerServerEvent('qbpolice:server:retrieveImpound', plate)
 ### MDT-ready callbacks (`server/callbacks.lua`)
 No UI ships; these exist for a future MDT resource to consume directly:
 ```lua
-QB.callback.trigger('police:GetDutyPlayers')
-QB.callback.trigger('police:GetCops')
-QB.callback.trigger('police:isPlayerDead', target)
-QB.callback.trigger('police:IsSilencedWeapon', target)
-QB.callback.trigger('police:IsPoliceForcePresent', coords, radius)
-QB.callback.trigger('police:GetPlayerStatus', target)
-QB.callback.trigger('police:GetImpoundedVehicles')
-QB.callback.trigger('police:IsPlateFlagged', plate)
+Kora.callback.trigger('police:GetDutyPlayers')
+Kora.callback.trigger('police:GetCops')
+Kora.callback.trigger('police:isPlayerDead', target)
+Kora.callback.trigger('police:IsSilencedWeapon', target)
+Kora.callback.trigger('police:IsPoliceForcePresent', coords, radius)
+Kora.callback.trigger('police:GetPlayerStatus', target)
+Kora.callback.trigger('police:GetImpoundedVehicles')
+Kora.callback.trigger('police:IsPlateFlagged', plate)
 ```
 
 ### Legacy `police:*` compat

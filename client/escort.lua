@@ -1,6 +1,6 @@
 -- Escort (suspect walks alongside/behind the officer) and drag (kidnap-style,
 -- for an unconscious/uncooperative target). Not solvable with
--- QB.anim.attachProp -- the other player owns their own networked ped, so
+-- Kora.anim.attachProp -- the other player owns their own networked ped, so
 -- each side's OWN client issues AttachEntityToEntity on itself, driven by a
 -- server relay rather than kora_police trying to move another player's entity
 -- remotely. The officer's client only renders local UI state; it never

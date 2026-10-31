@@ -70,6 +70,6 @@ RegisterNetEvent('qbpolice:server:openArmory', function(shopId)
     TriggerClientEvent('qbpolice:client:openArmory', src, shopId)
 end)
 
-QB.callback.register('qbpolice:server:canAccessArmory', function(src, shopId)
+Kora.callback.register('qbpolice:server:canAccessArmory', function(src, shopId)
     return Police.canAccessArmory(src, shopId)
 end)

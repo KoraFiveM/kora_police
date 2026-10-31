@@ -140,7 +140,7 @@ function Police.createBallisticCasing(src, round)
     if not id then return nil end
 
     CreateThread(function()
-        local _, err = QB.sql.execute([[INSERT INTO `qbpolice_ballistic_casings`
+        local _, err = Kora.sql.execute([[INSERT INTO `qbpolice_ballistic_casings`
             (`case_id`,`round_id`,`weapon_serial`,`weapon_name`,`ammo_type`,`lot`,`x`,`y`,`z`,`bucket`)
             VALUES (?,?,?,?,?,?,?,?,?,?)]], {
             caseId, round.id, round.weaponSerial, round.weapon, round.ammoType, round.lot,
@@ -180,7 +180,7 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
     if marker.ballistic then
         local removed, removeErr = exports.kora_inventory:RemoveItem(src, 'empty_evidence_bag', 1, false, 'ballistic-casing-collection')
         if not removed then
-            QB.notify.send(src, { title = 'Evidence', message = removeErr or 'An empty evidence bag is required.', type = 'error' })
+            Kora.notify.send(src, { title = 'Evidence', message = removeErr or 'An empty evidence bag is required.', type = 'error' })
             return
         end
         local added, addErr = exports.kora_inventory:AddItem(src, 'filled_evidence_bag', 1, false, {
@@ -189,11 +189,11 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
         }, 'ballistic-casing-collection')
         if not added then
             exports.kora_inventory:AddItem(src, 'empty_evidence_bag', 1, false, {}, 'ballistic-casing-rollback')
-            QB.notify.send(src, { title = 'Evidence', message = addErr or 'Could not package casing.', type = 'error' })
+            Kora.notify.send(src, { title = 'Evidence', message = addErr or 'Could not package casing.', type = 'error' })
             return
         end
         CreateThread(function()
-            local _, err = QB.sql.execute('UPDATE `qbpolice_ballistic_casings` SET `collected_by` = ?, `collected_at` = CURRENT_TIMESTAMP WHERE `case_id` = ?',
+            local _, err = Kora.sql.execute('UPDATE `qbpolice_ballistic_casings` SET `collected_by` = ?, `collected_at` = CURRENT_TIMESTAMP WHERE `case_id` = ?',
                 { cid, marker.ballistic.caseId })
             if err then print(('^1[qbpolice:ballistics]^7 could not mark collected casing: %s'):format(tostring(err))) end
         end)
@@ -201,7 +201,7 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
     Police.collectedEvidence[cid] = Police.collectedEvidence[cid] or {}
     Police.collectedEvidence[cid][evidenceId] = true
     removeWorldEvidence(evidenceId)
-    QB.notify.send(src, { title = 'Evidence', message = 'Evidence collected.', type = 'success' })
+    Kora.notify.send(src, { title = 'Evidence', message = 'Evidence collected.', type = 'success' })
 end)
 
 ---Server-only lookup for the authorised MDT. No client event exposes this
@@ -209,7 +209,7 @@ end)
 ---may be shown to an officer.
 function Police.getBallisticCasing(caseId)
     if type(caseId) ~= 'string' or #caseId > 64 then return nil, 'invalid case id' end
-    return QB.sql.single('SELECT * FROM `qbpolice_ballistic_casings` WHERE `case_id` = ?', { caseId })
+    return Kora.sql.single('SELECT * FROM `qbpolice_ballistic_casings` WHERE `case_id` = ?', { caseId })
 end
 
 exports('CreateBallisticCasing', Police.createBallisticCasing)

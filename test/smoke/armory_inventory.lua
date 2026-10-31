@@ -25,11 +25,11 @@ function core.setPath(src, path, value)
 end
 dofile('server/items.lua')
 
-QB.util.isInteger = function(value) return QB.util.isFiniteNumber(value) and value % 1 == 0 end
-QB.distance = {}
+Kora.util.isInteger = function(value) return Kora.util.isFiniteNumber(value) and value % 1 == 0 end
+Kora.distance = {}
 dofile('../kora_lib/modules/distancecheck/server.lua')
 -- The unused useable-item ownership registry needs no external resource here.
-QB.resources = { serverRegistry = function() return { track = function() end } end }
+Kora.resources = { serverRegistry = function() return { track = function() end } end }
 dofile('../kora_inventory/shared.lua')
 dofile('../kora_inventory/server.lua')
 local api, internal = QbInventory.api, QbInventory.internal
@@ -56,8 +56,8 @@ dofile('server/core.lua')
 dofile(arg[1] or 'server/armory.lua')
 
 local patrol, sergeant, swat = table.unpack(Config.armory.shops)
-local open = QB.callback.registry['qbinventory:server:open']
-local intent = QB.callback.registry['qbinventory:server:intent']
+local open = Kora.callback.registry['qbinventory:server:open']
+local intent = Kora.callback.registry['qbinventory:server:intent']
 local nextSource = 0
 local function officer(shop, grade, onDuty, job)
     nextSource = nextSource + 1

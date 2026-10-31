@@ -1,7 +1,7 @@
 -- Ported qbx_police-style cuff-escape skillcheck: a soft-cuffed suspect can
 -- attempt to break free. Per-attempt difficulty comes from
 -- Config.cuff.breakCuffsDifficulty ('medium'/'hard'/'medium' in qbx_police);
--- QB.minigames has no notion of named "difficulty" presets of its own, so
+-- Kora.minigames has no notion of named "difficulty" presets of its own, so
 -- each name is mapped onto concrete trusted options by the server before it
 -- issues a kora_lib proof authorization.
 
@@ -11,14 +11,14 @@ local function attemptBreak()
     if attempting or not Police.cuffed or not Police.soft then return end
     attempting = true
 
-    local authorization, beginErr = QB.callback.trigger('qbpolice:server:beginBreakCuffs')
+    local authorization, beginErr = Kora.callback.trigger('qbpolice:server:beginBreakCuffs')
     if not authorization then
         attempting = false
         Police.notify(beginErr or 'You cannot try to escape yet.', 'error')
         return
     end
 
-    local result = QB.minigames.play(Config.minigames.breakCuffs.type, nil, authorization)
+    local result = Kora.minigames.play(Config.minigames.breakCuffs.type, nil, authorization)
     attempting = false
 
     if result and result.success then

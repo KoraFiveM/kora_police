@@ -18,7 +18,7 @@ dofile('server/escort.lua')
 dofile('server/spikes.lua')
 
 h.test('suppressor detection uses the selected inventory weapon and trusted mapped components', function()
-    local callback = QB.callback.registry['police:IsSilencedWeapon']
+    local callback = Kora.callback.registry['police:IsSilencedWeapon']
     h.assertFalse(callback(2))
     equipped = { slot = 1, name = 'weapon_pistol', components = { 'COMPONENT_AT_PI_SUPP' } }
     h.assertTrue(callback(2))

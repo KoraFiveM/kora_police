@@ -78,7 +78,7 @@ function Police.myGradeLevel()
 end
 
 function Police.notify(message, type_)
-    QB.notify.send({ message = message, type = type_ or 'info' })
+    Kora.notify.send({ message = message, type = type_ or 'info' })
 end
 
 RegisterNetEvent('qbpolice:client:cuffed', function(cuffed, soft, otherSrc)
@@ -95,4 +95,4 @@ exports('isHandcuffed', isHandcuffed)
 
 -- Upstream consumers use a capital I and the qb-policejob resource identity.
 exports('IsHandcuffed', isHandcuffed)
-QB.compat.provideExport('qb-policejob', 'IsHandcuffed', isHandcuffed)
+Kora.compat.provideExport('qb-policejob', 'IsHandcuffed', isHandcuffed)

@@ -66,7 +66,7 @@ function _G.vector4(x, y, z, w) return { x = x or 0.0, y = y or 0.0, z = z or 0.
 local blipCalls = 0
 local stationBlips = {}
 
-_G.QB = {
+_G.Kora = {
     cache = {
         vehicle = function() return false end,
         seat = function() return 0 end,
@@ -105,7 +105,7 @@ _G.exports = setmetatable({}, {
     end,
 })
 
-QB.compat = dofile('../kora_lib/compat/provider.lua')()
+Kora.compat = dofile('../kora_lib/compat/provider.lua')()
 dofile('config.lua')
 dofile('client/core.lua')
 

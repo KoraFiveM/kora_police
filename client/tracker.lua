@@ -13,7 +13,7 @@ local function upsertTrackerBlip(targetServerId, coords)
         SetBlipCoords(blip, coords.x, coords.y, coords.z)
         return
     end
-    blip = QB.blips.create(coords, {
+    blip = Kora.blips.create(coords, {
         sprite = 8,
         color = 1,
         scale = 0.9,
