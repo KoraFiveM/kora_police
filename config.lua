@@ -167,6 +167,9 @@ Config.dispatch = {
     vehicleTheftCooldown = 30000,
     meleeCooldown = 30000,
 
+    legacyAlertCooldown = 15000,       -- server-enforced interval between stock `police:server:policeAlert` calls from one player
+    legacyAlertMaxLength = 120,        -- characters of the stock alert text kept (control characters are stripped)
+    copCountThrottle = 2000,           -- minimum ms between stock `police:server:UpdateCurrentCops`-style cop-count broadcasts
     robberyRadius = 30.0,              -- metres, informational only -- passed through in the alert payload's `radius`
 }
 

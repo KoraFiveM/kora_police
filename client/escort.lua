@@ -46,10 +46,10 @@ end)
 -- The escorted player is attached just behind the officer, so relying only on
 -- a target option makes the stop action difficult to aim at. `/escort` is a
 -- toggle: use it again while escorting to release the current suspect.
-local function closestPlayerServerId()
+local function closestPlayerServerId(maxDistance)
     local myPed = PlayerPedId()
     local myCoords = GetEntityCoords(myPed)
-    local closest, closestDistance = nil, Config.cuff.distance
+    local closest, closestDistance = nil, maxDistance or Config.cuff.distance
 
     for _, player in ipairs(GetActivePlayers()) do
         if player ~= PlayerId() then
@@ -65,6 +65,8 @@ local function closestPlayerServerId()
 
     return closest
 end
+
+Police.closestPlayerServerId = closestPlayerServerId
 
 RegisterCommand('escort', function()
     if not Police.isOnDuty() then

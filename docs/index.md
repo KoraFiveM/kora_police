@@ -242,7 +242,8 @@ TriggerServerEvent('qbpolice:server:retrieveImpound', plate)
 No UI ships; these exist for a future MDT resource to consume directly:
 ```lua
 Kora.callback.trigger('police:GetDutyPlayers')
-Kora.callback.trigger('police:GetCops')
+Kora.callback.trigger('police:GetCops')                    -- stock: a NUMBER, any caller
+Kora.callback.trigger('qbpolice:server:getCops')           -- kora: list of on-duty officer sources (police callers only)
 Kora.callback.trigger('police:isPlayerDead', target)
 Kora.callback.trigger('police:IsSilencedWeapon', target)
 Kora.callback.trigger('police:IsPoliceForcePresent', coords, radius)
@@ -261,6 +262,50 @@ Legacy police-style event and callback names — `police:server:CuffPlayer`,
 `police:GetKidnappedDragger` — so existing scripts/UIs keep
 working unmodified.
 
+#### Stock qb-policejob parity
+
+*Callbacks.* `police:GetCops` returns the on-duty LEO **count** to any caller, as
+stock does; the old list lives at `qbpolice:server:getCops` (police only).
+`police:GetDutyPlayers` is open to any caller with the stock `{ source, label,
+job }` shape; `citizenid`/`name`/`grade` are added for police callers only.
+`police:server:isPlayerDead`, `police:server:IsPoliceForcePresent` and
+`police:server:IsPlateFlagged` are registered under their stock names (the old
+names stay). Deviations: a non-police caller may only ask `isPlayerDead` about
+themself or someone within `Config.cuff.distance`; `IsPoliceForcePresent`
+counts only **on-duty** grade-2+ officers; `IsPlateFlagged` stays
+officer-only. `police:IsSilencedWeapon` takes a weapon hash/name (stock) and
+checks the caller's own selected inventory weapon; a small number is still
+read as the old target player id (police only).
+
+*Events.* `police:server:policeAlert(text)` raises one `10-60 Police Alert`
+through kora_dispatch at the caller's **server-side** position; text is
+sanitised and capped (`Config.dispatch.legacyAlertMaxLength`), one per player per
+`Config.dispatch.legacyAlertCooldown`. kora_core's own local mirror of a dispatch
+alert (same event name) is recognised by its message (via `qbcore:server:dispatchAlert`,
+1 s window) and dropped, so it never creates a duplicate call. `police:server:FlaggedPlateTriggered(coords, plate)`
+follows the stock argument order; the sender must be an on-duty officer and the
+plate must really be flagged (`coords` is ignored). `police:server:SetHandcuffStatus(bool)`
+never changes cuff state — the server owns it and just re-syncs the caller.
+The cop count is broadcast to all clients as `police:SetCopCount(count)`
+(plus the older cop-only `police:client:*` events); `UpdateCurrentCops`,
+`SetCopCount` and `UpdateBlips` server events share one throttle per
+source (`Config.dispatch.copCountThrottle`). `police:server:CuffPlayer`'s `isSoftcuff`
+is ignored: an officer's cuff is always the unescapable kind.
+`police:server:PutPlayerInVehicle(target)` (stock sends no vehicle) uses the
+vehicle nearest the officer, within 5 m, with all the usual cuff/distance checks.
+
+*Client interaction events.* The 18 events in stock `client/interactions.lua`
+are registered. Initiators (`CuffPlayer`, `CuffPlayerSoft`, `EscortPlayer`,
+`KidnapPlayer`, `PutPlayerInVehicle`, `SetPlayerOutVehicle`, `SeizeCash`,
+`SeizeDriverLicense`, `RobPlayer`, `JailPlayer`, `BillPlayer`) pick the nearest
+player and forward to the stock `police:server:*` event, i.e. onto kora's own
+flows with kora's server checks (`EscortPlayer`/`KidnapPlayer` release the
+current target when fired again; `CuffPlayerSoft` is the handcuffs-item flow).
+The victim-side events (`GetCuffed`, `GetEscorted`, `DeEscort`,
+`GetKidnappedTarget`, `GetKidnappedDragger`, `PutInVehicle`, `SetOutVehicle`) have
+no kora equivalent — kora never lets a client set its own cuff/escort/seat state
+— so they only show a "not supported" notification.
+
 ## Config highlights (`config.lua`)
 
 `Config.police.job` (job name gate for every server check), `Config.cuff.*`
@@ -269,6 +314,7 @@ working unmodified.
 cap), `Config.armory.shops` (per-room coords/`minGrade`/inventory),
 `Config.jail.defaultMinutes`, `Config.dispatch.robberyRadius`,
 `Config.dispatch.jobType`/`emsJobType`/`accent`/`panicKey`/`*Cooldown`,
+`Config.dispatch.legacyAlertCooldown`/`legacyAlertMaxLength`/`copCountThrottle`,
 `Config.duty.points`/`.vehicles` (duty toggle zones and patrol fleet spawns),
 `Config.spikes.*`, `Config.impound.lots`, `Config.fine.tiers`/`.account`.
 

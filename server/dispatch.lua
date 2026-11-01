@@ -71,6 +71,9 @@ local function broadcastCopCount()
         TriggerClientEvent('police:client:UpdateCurrentCops', src, count)
         TriggerClientEvent('police:client:SetCopCount', src, count)
     end
+    -- Stock qb-policejob broadcasts the bare count to EVERY client as
+    -- `police:SetCopCount` (heist/robbery scripts read it); the count is not secret.
+    TriggerClientEvent('police:SetCopCount', -1, count)
 end
 Police.broadcastCopCount = broadcastCopCount
 
