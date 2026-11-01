@@ -48,6 +48,25 @@ function Police.triggerFlaggedPlate(spotterSrc, plate)
     end
 end
 
+---Stock `police:server:FlaggedPlateTriggered(coords, plate)`. Stock fans the
+---plate out to every officer unchecked; here the sender must be an on-duty
+---officer and the plate must really be flagged, so Police.triggerFlaggedPlate
+---(and its own flag lookup) stays the only path to an alert. `coords` is ignored:
+---it is client-supplied and no kora alert uses it. Also accepts the older kora
+---`(plate)` form.
+---@param spotterSrc integer
+---@param first any coords (stock) or plate (older kora form)
+---@param second any plate (stock)
+---@return boolean, string|nil
+function Police.legacyFlaggedPlate(spotterSrc, first, second)
+    local plate = second
+    if type(plate) ~= 'string' and type(first) == 'string' then plate = first end
+    if type(plate) ~= 'string' or #plate == 0 or #plate > 16 then return false, 'invalid plate' end
+    if not Police.isPolice(spotterSrc) then return false, 'not an on-duty officer' end
+    Police.triggerFlaggedPlate(spotterSrc, plate:upper())
+    return true
+end
+
 RegisterNetEvent('qbpolice:server:flagPlate', function(plate, reason)
     local ok, err = Police.flagPlate(source, plate, reason)
     if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end

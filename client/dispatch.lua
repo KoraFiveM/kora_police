@@ -45,6 +45,9 @@ end)
 RegisterNetEvent('police:client:UpdateCurrentCops', function(count)
     Police.copCount = count
 end)
+RegisterNetEvent('police:SetCopCount', function(count)
+    Police.copCount = count
+end)
 RegisterNetEvent('police:client:SetCopCount', function(count)
     Police.copCount = count
 end)
