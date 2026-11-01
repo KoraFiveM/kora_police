@@ -110,6 +110,14 @@ Config.armory = {
 
 Config.impound = {
     fee = 500,                         -- default civilian impound fee (Core.garage.impound's `fee` argument)
+    progress = {
+        enabled = true,                -- show a cancellable progress bar and only impound once it completes; false = instant
+        duration = 5000,               -- ms
+        label = 'Impounding vehicle...',
+        canCancel = true,
+        anim = { dict = 'missheistdockssetup1clipboard@base', clip = 'base', flag = 49 },  -- Kora.progressbar anim; nil = no animation
+        prop = { model = 'p_amb_clipboard_01', bone = 18905, offset = { x = 0.16, y = 0.08, z = 0.1 }, rotation = { x = -130.0, y = -50.0, z = 0.0 } },  -- hand-held clipboard; nil = no prop
+    },
     lots = {
         { id = 'mission-row', label = 'Mission Row Impound', coords = vector4(408.0, -1626.0, 29.3, 230.0) },
     },

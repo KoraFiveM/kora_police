@@ -318,7 +318,7 @@ cap), `Config.armory.shops` (per-room coords/`minGrade`/inventory),
 `Config.dispatch.jobType`/`emsJobType`/`accent`/`panicKey`/`*Cooldown`,
 `Config.dispatch.legacyAlertCooldown`/`legacyAlertMaxLength`/`copCountThrottle`,
 `Config.duty.points`/`.vehicles` (duty toggle zones and patrol fleet spawns),
-`Config.spikes.*`, `Config.impound.lots`, `Config.fine.tiers`/`.account`.
+`Config.spikes.*`, `Config.impound.lots`, `Config.impound.progress` (enabled/duration/label/canCancel/anim/prop for the impound progress bar), `Config.fine.tiers`/`.account`.
 
 ### Citations
 
