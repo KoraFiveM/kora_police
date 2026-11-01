@@ -136,4 +136,18 @@ h.test('client exposes a release command, key mapping and Release target while d
     h.assertTrue(rs:find("qbpolice:client:openRob", 1, true) ~= nil)
 end)
 
+h.test('stopDrag event falls back to the server-side target and resyncs a stale client', function()
+    reset(); Police.startDrag(ROBBER, TARGET)
+    handle.fireEvent('qbpolice:server:stopDrag', ROBBER, 999)
+    h.assertTrue(Police.kidnapped[TARGET] == nil, 'wrong client target still releases the real one')
+    handle.fireEvent('qbpolice:server:stopDrag', ROBBER, TARGET)
+    h.assertEqual(handle.lastClient('qbpolice:client:dragStopSelf').target, ROBBER)
+end)
+
+h.test('release is silent when not dragging and polled as a control', function()
+    local f = assert(io.open('client/escort.lua', 'r')); local src = f:read('*a'); f:close()
+    h.assertTrue(src:find("You are not dragging anyone", 1, true) == nil)
+    h.assertTrue(src:find("IsControlJustPressed", 1, true) ~= nil)
+end)
+
 h.report('rob_inventory_drag_release')

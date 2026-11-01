@@ -158,25 +158,37 @@ end
 
 RegisterNetEvent('qbpolice:server:escort', function(target)
     local ok, err = Police.escort(source, tonumber(target))
-    if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+    if not ok then Police.notify(source, err) end
 end)
 RegisterNetEvent('qbpolice:server:deEscort', function(target)
     local ok, err = Police.deEscort(source, tonumber(target))
-    if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+    if not ok then Police.notify(source, err) end
 end)
 RegisterNetEvent('qbpolice:server:startDrag', function(target)
     local ok, err = Police.startDrag(source, tonumber(target))
-    if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+    if not ok then Police.notify(source, err) end
 end)
 RegisterNetEvent('qbpolice:server:stopDrag', function(target)
-    local ok, err = Police.stopDrag(source, tonumber(target))
-    if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+    local src = source
+    target = tonumber(target)
+    -- The client's idea of who it drags can be stale (or the server already
+    -- released): fall back to whoever the server says this player drags, and
+    -- when nothing is dragged tell the client to drop its stale state instead
+    -- of leaving it stuck on a release that can never succeed.
+    if not (target and Police.kidnapped[target]) then target = Police.getKidnappedTarget(src) or target end
+    local ok, err = Police.stopDrag(src, target)
+    if ok then return end
+    if err == 'not being dragged' then
+        TriggerClientEvent('qbpolice:client:dragStopSelf', src, target)
+        return
+    end
+    Police.notify(src, err)
 end)
 RegisterNetEvent('qbpolice:server:putInVehicle', function(target, netId, seat)
     local ok, err = Police.putInVehicle(source, tonumber(target), tonumber(netId), seat and tonumber(seat) or nil)
-    if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+    if not ok then Police.notify(source, err) end
 end)
 RegisterNetEvent('qbpolice:server:takeOutVehicle', function(target)
     local ok, err = Police.takeOutVehicle(source, tonumber(target))
-    if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+    if not ok then Police.notify(source, err) end
 end)

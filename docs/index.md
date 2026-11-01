@@ -311,7 +311,7 @@ no kora equivalent — kora never lets a client set its own cuff/escort/seat sta
 `Config.police.job` (job name gate for every server check), `Config.cuff.*`
 (cuff time/distance, break-free difficulty/attempts/cooldown),
 `Config.rob.*` (takeCash/openInventory, inventory access seconds, close distance), `Config.drag.*`
-(release key/command, auto-release distance/vehicle/recovery, attach bone/offset/rotation),
+(release key/command/polled control/hint, auto-release distance/vehicle/recovery, attach bone/offset/rotation; release is silent when nothing is dragged and the Release option shows on any aimed player, ped or vehicle while dragging),
 `Config.evidence.*` (locker stash id/coords/grade gate, world-marker TTL and
 cap), `Config.armory.shops` (per-room coords/`minGrade`/inventory),
 `Config.jail.defaultMinutes`, `Config.dispatch.robberyRadius`,

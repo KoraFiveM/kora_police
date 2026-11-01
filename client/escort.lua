@@ -26,8 +26,7 @@ local function attachTo(otherServerId, offset, rotation, bone)
 end
 
 local function detach()
-    local myPed = PlayerPedId()
-    if IsEntityAttached(myPed) then DetachEntity(myPed, true, true) end
+    DetachEntity(PlayerPedId(), true, true)
 end
 
 RegisterNetEvent('qbpolice:client:escortStart', function(officerServerId)
@@ -95,17 +94,23 @@ RegisterCommand('escort', function()
     TriggerServerEvent('qbpolice:server:escort', target)
 end, false)
 
--- The dragger's ped may not be streamed in on this client yet when the server
--- relays dragStart, so retry the attach for a few seconds instead of silently
--- leaving the dragged player unattached.
 -- Release the player being dragged without having to aim the target eye at
--- them (they are attached right in front of the dragger). Command and default
--- key come from Config.drag; players can rebind the key in their settings.
+-- them (they are attached right in front of the dragger). Command, default
+-- key and the polled control come from Config.drag; players can rebind the key
+-- in their settings. Silent when nothing is being dragged, because E is also
+-- the target-select key and must not nag during unrelated interactions.
+local lastReleaseAt = 0
+
+local function targetingActive()
+    local ok, state = pcall(function() return exports.kora_target:getState() end)
+    return ok and type(state) == 'table' and state.active == true
+end
+
 local function releaseDrag()
-    if not Police.draggedTarget then
-        Police.notify('You are not dragging anyone.', 'error')
-        return
-    end
+    if not Police.draggedTarget then return end
+    local now = GetGameTimer()
+    if now - lastReleaseAt < 750 then return end
+    lastReleaseAt = now
     TriggerServerEvent('qbpolice:server:stopDrag', Police.draggedTarget)
 end
 
@@ -113,13 +118,37 @@ do
     local cfg = Config.drag or {}
     local command = cfg.releaseCommand
     if type(command) == 'string' and command ~= '' then
-        RegisterCommand(command, releaseDrag, false)
+        RegisterCommand(command, function()
+            if targetingActive() then return end
+            releaseDrag()
+        end, false)
         if type(cfg.releaseKey) == 'string' and cfg.releaseKey ~= '' then
             RegisterKeyMapping(command, 'Release dragged player', 'keyboard', cfg.releaseKey)
         end
     end
 end
 
+-- Key mappings are only applied the first time a player sees them and can be
+-- shadowed by another resource's mapping on the same key, so while dragging
+-- the release control is also polled directly (Config.drag.releaseControl).
+local releasePollRunning = false
+
+local function startReleasePoll()
+    local control = tonumber((Config.drag or {}).releaseControl)
+    if releasePollRunning or not control or control <= 0 then return end
+    releasePollRunning = true
+    CreateThread(function()
+        while Police.draggedTarget do
+            if IsControlJustPressed(0, control) and not targetingActive() then releaseDrag() end
+            Wait(0)
+        end
+        releasePollRunning = false
+    end)
+end
+
+-- The dragger's ped may not be streamed in on this client yet when the server
+-- relays dragStart, so retry the attach for a few seconds instead of silently
+-- leaving the dragged player unattached.
 RegisterNetEvent('qbpolice:client:dragStart', function(draggerServerId)
     Police.dragger = draggerServerId
     local offset, rotation, bone = dragSettings()
@@ -139,6 +168,10 @@ end)
 
 RegisterNetEvent('qbpolice:client:dragStartSelf', function(targetServerId)
     Police.draggedTarget = targetServerId
+    if (Config.drag or {}).releaseHint ~= false then
+        Police.notify('Dragging a player. Release with /' .. tostring((Config.drag or {}).releaseCommand or 'releasedrag') .. ' or the Release option.', 'info')
+    end
+    startReleasePoll()
 end)
 RegisterNetEvent('qbpolice:client:dragStopSelf', function()
     Police.draggedTarget = nil
@@ -177,20 +210,23 @@ local function registerEscortTargets()
                 TriggerServerEvent('qbpolice:server:startDrag', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
-        {
-            -- Shown on any nearby player while dragging: the dragged ped is
-            -- attached and hard to aim at, and the server only accepts the
-            -- stop from the dragger or the dragged player.
-            label = 'Release',
-            icon = 'hand',
-            canInteract = function()
-                return Police.draggedTarget ~= nil
-            end,
-            onSelect = function()
-                TriggerServerEvent('qbpolice:server:stopDrag', Police.draggedTarget)
-            end,
-        },
     }, Config.cuff.distance)
+
+    -- The dragged ped is attached to the dragger and the raycast ignores the
+    -- dragger's own ped, so offer Release on whatever is aimed at (players,
+    -- other peds, vehicles) rather than only on the attached ped.
+    for _, entityType in ipairs({ 'player', 'ped', 'vehicle' }) do
+        Police.target.global('escort', entityType, {
+            {
+                label = 'Release',
+                icon = 'hand',
+                canInteract = function()
+                    return Police.draggedTarget ~= nil
+                end,
+                onSelect = releaseDrag,
+            },
+        }, Config.cuff.distance)
+    end
 end
 registerEscortTargets()
 

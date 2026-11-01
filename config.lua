@@ -225,6 +225,8 @@ Config.rob = {
 Config.drag = {
     releaseKey = 'E',                -- default keyboard key (RegisterKeyMapping, rebindable in settings) that releases the player you drag; '' = no key mapping
     releaseCommand = 'releasedrag',  -- command that releases the player you drag; '' = no command
+    releaseControl = 38,             -- control polled directly while dragging so release works even when the key mapping is shadowed or already bound (38 = E); 0/false = off
+    releaseHint = true,              -- tell the dragger how to release when a drag starts
     autoReleaseDistance = 8.0,         -- metres between dragger and dragged before the drag is released server-side
     releaseInVehicle = true,           -- release when either player enters a vehicle
     releaseWhenRecovered = true,       -- release when the dragged player is no longer restrained or downed
