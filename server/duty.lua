@@ -70,8 +70,6 @@ CreateThread(ensureFleet)
 
 ---@param src integer
 ---@param plate string
----@param coords table
----@param heading number
 ---@return integer|false networkId
 ---@return string|nil error
 function Police.spawnDutyVehicle(src, plate)
