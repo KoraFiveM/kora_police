@@ -92,8 +92,6 @@ h.test('panic coordinates come from the server, never the client', function()
     h.assertEqual(call.coords.y, 222.0, 'so a modified client cannot pull every unit to a chosen spot')
 end)
 
--- --- panic cooldown ---------------------------------------------------------
-
 h.test('a mashed panic button raises one alarm, not one per press', function()
     Police.clearPanicCooldown(COP1)
     local before = #handle.dispatchCalls
@@ -194,8 +192,6 @@ h.test('an unknown crime key is dropped rather than raising a call', function()
     handle.Kora.events.registry['qbpolice:server:crimeDetected'](9, 'qbpolice:not-registered')
     h.assertEqual(#handle.dispatchCalls, before, 'nothing raised')
 end)
-
--- --- cop count --------------------------------------------------------------
 
 h.test('broadcastCopCount counts the whole LEO service and reaches only on-duty units', function()
     Police.broadcastCopCount()

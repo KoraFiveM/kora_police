@@ -13,8 +13,6 @@ local function notify(src, err)
     if err then TriggerClientEvent('QBCore:Notify', src, err, 'error') end
 end
 
--- Cuff / restrain -------------------------------------------------------
-
 -- Stock's second argument (isSoftcuff) only picks the cuffed animation; kora's
 -- "soft" cuff is the escapable handcuffs-item flow, so it is deliberately
 -- ignored and an officer's cuff is always the unescapable one.
@@ -45,8 +43,6 @@ Kora.callback.register('police:GetCuffed', function(src, target)
     return Police.isCuffed(target or src)
 end)
 
--- Search / seize ----------------------------------------------------------
-
 RegisterNetEvent('police:server:SearchPlayer', function(target)
     notify(source, select(2, Police.search(source, tonumber(target))))
 end)
@@ -58,8 +54,6 @@ end)
 RegisterNetEvent('police:server:SeizeDriverLicense', function(target)
     notify(source, select(2, Police.seizeDriverLicense(source, tonumber(target))))
 end)
-
--- Escort / drag / vehicle --------------------------------------------------
 
 RegisterNetEvent('police:server:EscortPlayer', function(target)
     notify(source, select(2, Police.escort(source, tonumber(target))))
@@ -111,8 +105,6 @@ RegisterNetEvent('police:server:SetOutVehicle', function(target)
     notify(source, select(2, Police.takeOutVehicle(source, tonumber(target))))
 end)
 
--- Billing / jail / robbery -------------------------------------------------
-
 RegisterNetEvent('police:server:BillPlayer', function(target, amount, reason)
     notify(source, select(2, Police.bill(source, tonumber(target), amount, reason)))
 end)
@@ -127,8 +119,6 @@ RegisterNetEvent('police:server:RobPlayer', function(target)
     if ok then TriggerClientEvent('QBCore:Notify', source, ('You took $%d.'):format(amount), 'success')
     else notify(source, err) end
 end)
-
--- Dispatch / cop count / fingerprint / tracker / plates --------------------
 
 -- Each of these fans out to every client, and any client can fire them, so they
 -- share one throttle PER SOURCE (stock has a re-entrancy guard for the same
@@ -240,12 +230,8 @@ RegisterNetEvent('police:server:FlaggedPlateTriggered', function(coords, plate)
 end)
 AddEventHandler('playerDropped', function() lastFlaggedPlateAt[source] = nil end)
 
--- Impound -------------------------------------------------------------------
-
 RegisterNetEvent('police:server:Impound', function(plate) Police.impound(source, plate) end)
 RegisterNetEvent('police:server:TakeOutImpound', function(plate) Police.retrieveImpound(source, plate) end)
-
--- Spikes ----------------------------------------------------------------
 
 RegisterNetEvent('police:server:spawnObject', function(coords)
     Police.deploySpike(source, coords)
