@@ -33,11 +33,46 @@ end
 RegisterNetEvent('qbpolice:client:trackerLocation', function(targetServerId, coords)
     upsertTrackerBlip(targetServerId, coords)
 end)
-RegisterNetEvent('police:client:SendTrackerLocation', function(targetServerId, coords)
-    upsertTrackerBlip(targetServerId, coords)
+-- Stock sends the tracked player a bare request id (they answer with
+-- police:server:SendTrackerLocation); kora's own fan-out sends officers
+-- (targetServerId, coords). The two are told apart by the second argument.
+RegisterNetEvent('police:client:SendTrackerLocation', function(first, coords)
+    if coords == nil then
+        local position = GetEntityCoords(PlayerPedId())
+        TriggerServerEvent('police:server:SendTrackerLocation', { x = position.x, y = position.y, z = position.z }, first)
+        return
+    end
+    upsertTrackerBlip(first, coords)
 end)
-RegisterNetEvent('police:client:TrackerMessage', function(_, message)
+
+local function flashTrackerBlip(coords, message)
     Police.notify(message, 'info')
+    if type(coords) ~= 'table' then return end
+    local blip = Kora.blips.create(coords, {
+        sprite = 458, color = 1, scale = 1.0, category = 'Vehicle Tracking', name = 'Anklet location',
+        info = { title = 'Anklet location', rows = { { kind = 'wrappedText', value = message } } },
+    })
+    if blip then SetTimeout(60000, function() Kora.blips.remove(blip) end) end
+end
+
+-- Stock payload is (message, coords); kora's own TrackerMessage is (targetId, message).
+RegisterNetEvent('police:client:TrackerMessage', function(first, second)
+    if type(first) == 'string' then
+        flashTrackerBlip(second, first)
+    else
+        Police.notify(second, 'info')
+    end
+end)
+
+RegisterNetEvent('police:client:CheckDistance', function()
+    local target = Police.closestPlayerServerId(Config.cuff.distance)
+    if target then TriggerServerEvent('police:server:SetTracker', target) else Police.notify('No player nearby.', 'error') end
+end)
+
+RegisterNetEvent('police:client:SetTracker', function(active)
+    TriggerEvent('qb-clothing:client:loadOutfit', {
+        outfitData = { accessory = { item = active and 13 or -1, texture = 0 } },
+    })
 end)
 
 local function registerTrackerTargets()

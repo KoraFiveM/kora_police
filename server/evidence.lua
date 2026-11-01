@@ -157,13 +157,16 @@ AddEventHandler('qbinventory:server:weaponRoundFired', function(src, round)
     Police.createBallisticCasing(tonumber(src), round)
 end)
 
-RegisterNetEvent('evidence:server:CreateBloodDrop', function(coords, citizenId)
+-- Stock argument orders are (citizenid, bloodtype, coords), (coords) and
+-- (weapon, coords). None of them is trusted: the marker is created at the
+-- caller's own position, owned by the caller.
+RegisterNetEvent('evidence:server:CreateBloodDrop', function()
     createWorldEvidence(source, 'blood')
 end)
-RegisterNetEvent('evidence:server:CreateFingerDrop', function(coords, citizenId)
+RegisterNetEvent('evidence:server:CreateFingerDrop', function()
     createWorldEvidence(source, 'fingerprint')
 end)
-RegisterNetEvent('evidence:server:CreateCasing', function(coords, citizenId)
+RegisterNetEvent('evidence:server:CreateCasing', function()
     createWorldEvidence(source, 'casing')
 end)
 
@@ -236,3 +239,108 @@ RegisterNetEvent('evidence:server:ClearInventory', function()
     local cid = Police.citizenId(source)
     if cid then Police.collectedEvidence[cid] = {} end
 end)
+
+-- Stock qb-policejob evidence events. Stock lets any client mint evidence-bag
+-- metadata, delete any marker and broadcast every sample to everyone; here the
+-- marker registry above stays the only authority: officer + duty + distance +
+-- bucket checked, the type must match, and item metadata is built server-side.
+local function sameBucketAndNear(src, marker, distance)
+    if marker.bucket ~= GetPlayerRoutingBucket(src) then return false end
+    local ped = GetPlayerPed(src)
+    if not ped or ped == 0 then return false end
+    return #(GetEntityCoords(ped) - vector3(marker.coords.x, marker.coords.y, marker.coords.z)) <= distance
+end
+
+local function hex(value)
+    return (tostring(value):gsub('.', function(c) return ('%02x'):format(c:byte()) end))
+end
+
+local function sampleInfo(marker)
+    if marker.ballistic then
+        return { label = 'Ballistic Casing ' .. marker.ballistic.caseId, type = 'ballistic_casing', caseId = marker.ballistic.caseId }
+    end
+    if marker.type == 'blood' then
+        return { label = 'Blood Sample', type = 'blood', dnalabel = marker.ownerId and hex(marker.ownerId) or nil }
+    end
+    if marker.type == 'fingerprint' then
+        return { label = 'Fingerprint', type = 'fingerprint', fingerprint = marker.ownerId and Police.getFingerprint(marker.ownerId) or nil }
+    end
+    return { label = 'Casing', type = 'casing' }
+end
+
+local function collectSample(src, evidenceId, wantedType)
+    evidenceId = tonumber(evidenceId)
+    local marker = evidenceId and Police.worldEvidence[evidenceId]
+    if not marker or marker.type ~= wantedType or not Police.isPolice(src) then return end
+    if marker.expiresAt <= GetGameTimer() then removeWorldEvidence(evidenceId); return end
+    if not sameBucketAndNear(src, marker, Config.evidence.collectDistance) then return end
+    local removed, removeErr = exports.kora_inventory:RemoveItem(src, 'empty_evidence_bag', 1, false, 'evidence-sample-collection')
+    if not removed then
+        Kora.notify.send(src, { title = 'Evidence', message = removeErr or 'An empty evidence bag is required.', type = 'error' })
+        return
+    end
+    local added, addErr = exports.kora_inventory:AddItem(src, 'filled_evidence_bag', 1, false, sampleInfo(marker), 'evidence-sample-collection')
+    if not added then
+        exports.kora_inventory:AddItem(src, 'empty_evidence_bag', 1, false, {}, 'evidence-sample-rollback')
+        Kora.notify.send(src, { title = 'Evidence', message = addErr or 'Could not package evidence.', type = 'error' })
+        return
+    end
+    local cid = Police.citizenId(src)
+    if cid then
+        Police.collectedEvidence[cid] = Police.collectedEvidence[cid] or {}
+        Police.collectedEvidence[cid][evidenceId] = true
+    end
+    removeWorldEvidence(evidenceId)
+end
+
+RegisterNetEvent('evidence:server:AddBlooddropToInventory', function(bloodId) collectSample(source, bloodId, 'blood') end)
+RegisterNetEvent('evidence:server:AddFingerprintToInventory', function(fingerId) collectSample(source, fingerId, 'fingerprint') end)
+RegisterNetEvent('evidence:server:AddCasingToInventory', function(casingId) collectSample(source, casingId, 'casing') end)
+
+local function clearMarkers(src, list, wantedType)
+    if type(list) ~= 'table' or not Police.isPolice(src) then return end
+    local cleared = 0
+    for _, rawId in ipairs(list) do
+        cleared = cleared + 1
+        if cleared > Config.evidence.clearMaxMarkers then return end
+        local id = tonumber(rawId)
+        local marker = id and Police.worldEvidence[id]
+        if marker and marker.type == wantedType and sameBucketAndNear(src, marker, Config.evidence.clearDistance) then
+            removeWorldEvidence(id)
+        end
+    end
+end
+
+RegisterNetEvent('evidence:server:ClearBlooddrops', function(list) clearMarkers(source, list, 'blood') end)
+RegisterNetEvent('evidence:server:ClearCasings', function(list) clearMarkers(source, list, 'casing') end)
+
+Police.playerStatus = Police.playerStatus or {}
+
+---Stock `evidence:server:UpdateStatus({ [id] = { text, time } })`: only known
+---status ids survive, with the server's own label and a bounded lifetime.
+RegisterNetEvent('evidence:server:UpdateStatus', function(data)
+    local src = source
+    if type(data) ~= 'table' then Police.playerStatus[src] = nil; return end
+    local clean, any = {}, false
+    for id in pairs(data) do
+        local label = type(id) == 'string' and Config.evidence.statuses[id]
+        if label then clean[id] = label; any = true end
+    end
+    Police.playerStatus[src] = any and { labels = clean, expiresAt = GetGameTimer() + Config.evidence.statusTtl } or nil
+end)
+
+---@param target integer
+---@return string[]
+function Police.getPlayerStatusList(target)
+    local entry = Police.playerStatus[target]
+    if not entry then return {} end
+    if entry.expiresAt <= GetGameTimer() then Police.playerStatus[target] = nil; return {} end
+    local ids = {}
+    for id in pairs(entry.labels) do ids[#ids + 1] = id end
+    table.sort(ids)
+    local out = {}
+    for _, id in ipairs(ids) do out[#out + 1] = entry.labels[id] end
+    return out
+end
+
+AddEventHandler('playerDropped', function() Police.playerStatus[source] = nil end)

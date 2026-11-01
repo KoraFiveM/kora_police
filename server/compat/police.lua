@@ -4,10 +4,9 @@
 -- file (matches kora_inventory's own server/compat/qb.lua convention) so the
 -- full legacy surface is auditable in one place against that checklist.
 --
--- Deliberately NOT preserved (per the plan): `qb-policejob:server:stash/
--- trash/evidence` -- replaced by calling kora_inventory's stash/evidence
--- functions directly, since this framework's kora_inventory is the real
--- authority already. Deliberately deferred: `heli:server/client:spotlight`.
+-- `qb-policejob:server:stash/trash/evidence` live in compat/stash.lua, the
+-- road props and `heli:server:spotlight` in server/objects.lua, and the
+-- `evidence:server:*` family in server/evidence.lua.
 
 local function notify(src, err)
     if err then TriggerClientEvent('QBCore:Notify', src, err, 'error') end
@@ -115,9 +114,13 @@ RegisterNetEvent('police:server:SendToJail', function(target, minutes, reason)
     notify(source, select(2, Police.jailPlayer(source, tonumber(target), minutes, reason)))
 end)
 RegisterNetEvent('police:server:RobPlayer', function(target)
-    local ok, err, amount = Police.rob(source, tonumber(target))
-    if ok then TriggerClientEvent('QBCore:Notify', source, ('You took $%d.'):format(amount), 'success')
-    else notify(source, err) end
+    local src, targetSrc = source, tonumber(target)
+    local ok, err, amount = Police.rob(src, targetSrc)
+    if not ok then return notify(src, err) end
+    if amount > 0 then
+        TriggerClientEvent('QBCore:Notify', src, ('You have stolen $%d'):format(amount), 'success')
+        TriggerClientEvent('QBCore:Notify', targetSrc, ('You have been robbed of $%d'):format(amount), 'error')
+    end
 end)
 
 -- Each of these fans out to every client, and any client can fire them, so they
@@ -206,7 +209,10 @@ RegisterNetEvent('police:server:showFingerprintId', function(target)
 end)
 
 RegisterNetEvent('police:server:SetTracker', function(target)
-    Police.setTracker(source, tonumber(target), true)
+    notify(source, select(2, Police.toggleTracker(source, tonumber(target))))
+end)
+RegisterNetEvent('police:server:SendTrackerLocation', function(_, requestId)
+    Police.replyTrackerLocation(source, requestId)
 end)
 RegisterNetEvent('police:server:TrackerMessage', function(target, message)
     if not Police.isPolice(source) then return end
@@ -230,12 +236,29 @@ RegisterNetEvent('police:server:FlaggedPlateTriggered', function(coords, plate)
 end)
 AddEventHandler('playerDropped', function() lastFlaggedPlateAt[source] = nil end)
 
-RegisterNetEvent('police:server:Impound', function(plate) Police.impound(source, plate) end)
-RegisterNetEvent('police:server:TakeOutImpound', function(plate) Police.retrieveImpound(source, plate) end)
-
-RegisterNetEvent('police:server:spawnObject', function(coords)
-    Police.deploySpike(source, coords)
+RegisterNetEvent('police:server:Impound', function(plate, fullImpound, price)
+    notify(source, select(2, Police.legacyImpound(source, plate, fullImpound, price)))
 end)
+RegisterNetEvent('police:server:TakeOutImpound', function(plate, garage)
+    notify(source, select(2, Police.legacyTakeOutImpound(source, plate, garage)))
+end)
+
+-- Stock sends an object type name; kora's own spike flow sends coordinates.
+RegisterNetEvent('police:server:spawnObject', function(arg)
+    if type(arg) == 'string' then
+        notify(source, select(2, Police.spawnObject(source, arg)))
+    else
+        Police.deploySpike(source, arg)
+    end
+end)
+RegisterNetEvent('police:server:deleteObject', function(objectId)
+    notify(source, select(2, Police.deleteObject(source, objectId)))
+end)
+RegisterNetEvent('heli:server:spotlight', function(state)
+    Police.setHeliSpotlight(source, state)
+end)
+-- Stock sends the client's whole spike table, which a server-owned strip
+-- registry cannot trust; only kora's `(netId, false)` removal is acted on.
 RegisterNetEvent('police:server:SyncSpikes', function(netId, active)
     local id = tonumber(netId)
     local entry = id and Police.spikes[id]

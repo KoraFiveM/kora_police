@@ -2,14 +2,17 @@
 -- entity, see server/spikes.lua) -- this file only requests deployment and
 -- runs the local tyre-deflate proximity check.
 
-RegisterCommand('spikestrip', function()
+function Police.requestSpikeStrip()
     if not Police.isOnDuty() then return end
     local ped = Kora.cache.ped()
     local coords = Kora.cache.coords()
     local forward = GetEntityForwardVector(ped)
     local deployAt = coords + forward * 2.0
     TriggerServerEvent('qbpolice:server:deploySpike', { x = deployAt.x, y = deployAt.y, z = deployAt.z })
-end, false)
+end
+
+RegisterCommand('spikestrip', Police.requestSpikeStrip, false)
+RegisterNetEvent('police:client:SpawnSpikeStrip', Police.requestSpikeStrip)
 
 local activeStrips = {}
 local scanRunning = false

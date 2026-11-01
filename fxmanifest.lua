@@ -52,7 +52,9 @@ server_scripts {
     'server/plate_flag.lua',
     'server/duty.lua',
     'server/spikes.lua',
+    'server/objects.lua',
     'server/callbacks.lua',
+    'server/compat/stash.lua',
     'server/compat/police.lua',
 }
 
@@ -73,6 +75,8 @@ client_scripts {
     'client/detectors.lua',
     'client/evidence.lua',
     'client/spikes.lua',
+    'client/objects.lua',
+    'client/camera.lua',
     'client/breach_minigame.lua',
     'client/armory.lua',
     'client/fingerprint.lua',
