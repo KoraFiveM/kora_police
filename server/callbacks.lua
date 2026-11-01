@@ -122,7 +122,17 @@ Kora.callback.register('police:server:IsPoliceForcePresent', function()
     return false
 end)
 
+-- Stock shape: the list of status texts a player reported (drunk, gunpowder, ...).
+-- Stock answers anyone about anyone; here only an on-duty officer within reach.
 Kora.callback.register('police:GetPlayerStatus', function(src, target)
+    if not Police.isPolice(src) then return {} end
+    target = tonumber(target) or src
+    if target ~= src and Police.distanceBetween(src, target) > Config.evidence.statusDistance then return {} end
+    return Police.getPlayerStatusList(target)
+end)
+
+-- Kora's own richer record, kept under a native name for kora callers.
+Kora.callback.register('qbpolice:server:getPlayerStatus', function(src, target)
     if not Police.isPolice(src) then return nil end
     target = tonumber(target) or src
     local data = exports.kora_core:getPlayerData(target)
@@ -134,6 +144,7 @@ Kora.callback.register('police:GetPlayerStatus', function(src, target)
         tracked = Police.tracked[target] == true,
         escortedBy = Police.escorted[target],
         draggedBy = Police.kidnapped[target],
+        status = Police.getPlayerStatusList(target),
     }
 end)
 

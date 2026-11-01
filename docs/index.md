@@ -306,6 +306,31 @@ The victim-side events (`GetCuffed`, `GetEscorted`, `DeEscort`,
 no kora equivalent — kora never lets a client set its own cuff/escort/seat state
 — so they only show a "not supported" notification.
 
+*Second pass (stash, props, evidence, tracker, impound, cameras).*
+- `qb-policejob:server:stash` / `trash` / `evidence`: on-duty police only. Stash ids keep the stock names
+  (`policestash_<citizenid>`, `policetrash`, `<room> | Drawer <n>`); the evidence id is parsed against
+  `Config.evidence.drawers` (rooms, max drawer, distance) and never used as sent. `Config.stash.locations`
+  (empty = no distance check, like stock) adds a distance gate; `Config.stash.clearTrashOnStart` wipes the trash stash on start.
+- Road props: `police:client:spawnCone/Barrier/RoadSign/Tent/Light` and `deleteObject` ask the server
+  (`police:server:spawnObject(type)` / `deleteObject(id)`), which creates and removes the prop at the officer's position
+  (`Config.objects`: types, per-officer cap, lifetime, delete distance). `police:server:spawnObject(coords)` still deploys a spike strip;
+  `police:client:SpawnSpikeStrip` = `/spikestrip`. Stock `SyncSpikes(table)` is a no-op (strips are server-owned).
+- `heli:server:spotlight(state)`: on-duty LEO seated in a helicopter, boolean state, rebroadcast as `heli:client:spotlight`.
+- `SetTracker` now toggles (and mirrors `metadata.tracker`); `SendTrackerLocation(coords, requestId)` replies to an on-duty requester
+  using the caller's own position. `police:client:TrackerMessage` accepts stock `(msg, coords)` and kora `(target, msg)`.
+- `evidence:server:Add{Blooddrop,Fingerprint,Casing}ToInventory` consume an empty bag and add a filled one with server-built metadata
+  (client `info` ignored); `ClearBlooddrops` / `ClearCasings` remove nearby markers of that type (officers only);
+  `UpdateStatus` keeps only ids in `Config.evidence.statuses`. `police:GetPlayerStatus` returns the stock list of texts (officer, in reach);
+  the old record is `qbpolice:server:getPlayerStatus`.
+- `police:server:Impound(plate, fullImpound, price, ...)`: price becomes the fee (capped by `Config.impound.maxFee`); body/engine come from the
+  vehicle, not the client. `TakeOutImpound(plate, lotIndex)` needs the caller at the lot and goes through the owner-only retrieval.
+- `police:server:RobPlayer` runs the same `Police.rob` flow as the kora rob key (`Config.rob`: cash, then the target's inventory through
+  the shared inspection grant; restrained or downed targets in reach only; the stock hands-up state is client-only and not honoured).
+- Cameras: `Config.cameras`, `police:client:ActiveCamera/DisableAllCameras/EnableAllCameras/SetCamera` (local view only).
+- Job events: `SendPoliceEmergencyAlert` (panic), `policeAlert` (both argument orders), `CheckStatus`, `ImpoundVehicle`, `TakeOutImpound`,
+  `EvidenceStashDrawer`, `CheckDistance`, `qb-police:client:scanFingerPrint`, `qb-policejob:ToggleDuty`.
+  `SendToJail`, `TakeOutVehicle`, `VehicleMenuHeader`, `ImpoundMenuHeader` and `qb-police:client:spawnHelicopter` only show "not supported".
+
 ## Config highlights (`config.lua`)
 
 `Config.police.job` (job name gate for every server check), `Config.cuff.*`

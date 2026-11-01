@@ -47,6 +47,27 @@ Config.evidence = {
     lockerCoords = vector4(441.9, -984.5, 30.7, 90.0),  -- MRPD evidence room, adjust per map
     lockerDistance = 2.0,
     minGradeToAccess = 1,              -- job.grade.level required to open the locker -- 1 = Cadet, everyone qualifies
+    clearDistance = 10.0,              -- metres around the officer a stock blood/casing clear may remove markers
+    clearMaxMarkers = 50,              -- markers one stock clear request may remove
+    statusTtl = 600000,                -- ms a stock evidence:server:UpdateStatus list is kept for a player
+    statuses = {                       -- stock evidence:client:SetStatus ids (the server never trusts client-supplied labels)
+        fight = 'Red hands', widepupils = 'Wide Pupils', redeyes = 'Red Eyes', weedsmell = 'Smells like weed',
+        gunpowder = 'Gunpowder in clothing', chemicals = 'smells chemical', heavybreath = 'Breathes heavily',
+        sweat = 'Sweats a lot', handbleed = 'Blood on hands', confused = 'Confused', alcohol = 'Smells like alcohol',
+        heavyalcohol = 'Smells very much like alcohol', agitated = 'Agitated - Signs of Meth Use',
+    },
+    statusDistance = 5.0,              -- max distance for a stock police:GetPlayerStatus lookup of another player
+    drawers = {                        -- stock qb-policejob:server:evidence drawers: one entry per evidence room; the stash id is the stock '<room> | Drawer <n>'
+        rooms = {
+            vector3(442.1722, -996.067, 30.689),
+            vector3(451.7031, -973.232, 30.689),
+            vector3(455.1456, -985.462, 30.689),
+        },
+        maxDrawer = 20,                -- highest drawer number a request may name
+        distance = 3.0,                -- metres from a room point
+        slots = 500,
+        maxWeight = 4000000,
+    },
     worldMarkerTtl = 1800000,          -- milliseconds before an uncollected world marker expires
     maxWorldMarkers = 500,             -- hard memory/broadcast cap across all world evidence
     createCooldown = 250,              -- minimum milliseconds between marker submissions from one player
@@ -108,8 +129,41 @@ Config.armory = {
     },
 }
 
+Config.stash = {
+    personal = { slots = 50, maxWeight = 400000 },     -- stock qb-policejob:server:stash ('policestash_<citizenid>')
+    trash = { slots = 300, maxWeight = 4000000 },      -- stock qb-policejob:server:trash (shared 'policetrash')
+    clearTrashOnStart = true,          -- stock wipes the trash stash whenever the resource starts
+    distance = 5.0,                    -- metres from a point in `locations` a stock stash/trash request must be made
+    locations = {},                    -- { vector3, ... }; empty = no distance check (stock has none)
+}
+
+Config.objects = {
+    types = {                          -- stock police:server:spawnObject(type) props
+        cone = { model = 'prop_roadcone02a', freeze = false },
+        barrier = { model = 'prop_barrier_work06a', freeze = true },
+        roadsign = { model = 'prop_snow_sign_road_06g', freeze = true },
+        tent = { model = 'prop_gazebo_03', freeze = true },
+        light = { model = 'prop_worklight_03b', freeze = true },
+    },
+    placeDistance = 0.5,               -- metres in front of the officer a prop is created
+    deleteDistance = 5.0,              -- max officer distance for police:server:deleteObject
+    maxPerOfficer = 20,                -- concurrent props per officer
+    lifetime = 1800000,                -- ms before an abandoned prop is removed
+    cooldown = 500,                    -- minimum ms between placements from one officer
+}
+
+Config.tracker = {
+    locationCooldown = 5000,           -- minimum ms between stock police:server:SendTrackerLocation replies from one player
+}
+
+Config.heli = {
+    spotlightCooldown = 500,           -- minimum ms between stock heli:server:spotlight toggles from one player
+}
+
 Config.impound = {
     fee = 500,                         -- default civilian impound fee (Core.garage.impound's `fee` argument)
+    maxFee = 10000,                    -- cap on the stock police:server:Impound `price` argument
+    takeOutDistance = 10.0,            -- metres from a lot a stock police:server:TakeOutImpound must be made
     progress = {
         enabled = true,                -- show a cancellable progress bar and only impound once it completes; false = instant
         duration = 5000,               -- ms
@@ -134,6 +188,33 @@ Config.spikes = {
     maxDeployed = 6,                   -- per-officer concurrent strip cap
     deployDistance = 5.0,              -- max server-observed distance from an officer to a requested strip position
     deflateDistance = 1.2,             -- metres from a strip's coords that pops a tyre
+}
+
+Config.cameras = {
+    hideRadar = false,                 -- hide the minimap while viewing a camera
+    list = {                           -- stock police:client:ActiveCamera(id) security cameras
+        [1] = { label = 'Pacific Bank CAM#1', coords = vector3(257.45, 210.07, 109.08), r = { x = -25.0, y = 0.0, z = 28.05 }, canRotate = false, isOnline = true },
+        [2] = { label = 'Pacific Bank CAM#2', coords = vector3(232.86, 221.46, 107.83), r = { x = -25.0, y = 0.0, z = -140.91 }, canRotate = false, isOnline = true },
+        [3] = { label = 'Pacific Bank CAM#3', coords = vector3(252.27, 225.52, 103.99), r = { x = -35.0, y = 0.0, z = -74.87 }, canRotate = false, isOnline = true },
+        [4] = { label = 'Limited Ltd Grove St. CAM#1', coords = vector3(-53.1433, -1746.714, 31.546), r = { x = -35.0, y = 0.0, z = -168.9182 }, canRotate = false, isOnline = true },
+        [5] = { label = "Rob's Liqour Prosperity St. CAM#1", coords = vector3(-1482.9, -380.463, 42.363), r = { x = -35.0, y = 0.0, z = 79.53281 }, canRotate = false, isOnline = true },
+        [6] = { label = "Rob's Liqour San Andreas Ave. CAM#1", coords = vector3(-1224.874, -911.094, 14.401), r = { x = -35.0, y = 0.0, z = -6.778894 }, canRotate = false, isOnline = true },
+        [7] = { label = 'Limited Ltd Ginger St. CAM#1', coords = vector3(-718.153, -909.211, 21.49), r = { x = -35.0, y = 0.0, z = -137.1431 }, canRotate = false, isOnline = true },
+        [8] = { label = '24/7 Supermarkt Innocence Blvd. CAM#1', coords = vector3(23.885, -1342.441, 31.672), r = { x = -35.0, y = 0.0, z = -142.9191 }, canRotate = false, isOnline = true },
+        [9] = { label = "Rob's Liqour El Rancho Blvd. CAM#1", coords = vector3(1133.024, -978.712, 48.515), r = { x = -35.0, y = 0.0, z = -137.302 }, canRotate = false, isOnline = true },
+        [10] = { label = 'Limited Ltd West Mirror Drive CAM#1', coords = vector3(1151.93, -320.389, 71.33), r = { x = -35.0, y = 0.0, z = -119.4468 }, canRotate = false, isOnline = true },
+        [11] = { label = '24/7 Supermarkt Clinton Ave CAM#1', coords = vector3(383.402, 328.915, 105.541), r = { x = -35.0, y = 0.0, z = 118.585 }, canRotate = false, isOnline = true },
+        [12] = { label = 'Limited Ltd Banham Canyon Dr CAM#1', coords = vector3(-1832.057, 789.389, 140.436), r = { x = -35.0, y = 0.0, z = -91.481 }, canRotate = false, isOnline = true },
+        [13] = { label = "Rob's Liqour Great Ocean Hwy CAM#1", coords = vector3(-2966.15, 387.067, 17.393), r = { x = -35.0, y = 0.0, z = 32.92229 }, canRotate = false, isOnline = true },
+        [14] = { label = '24/7 Supermarkt Ineseno Road CAM#1', coords = vector3(-3046.749, 592.491, 9.808), r = { x = -35.0, y = 0.0, z = -116.673 }, canRotate = false, isOnline = true },
+        [15] = { label = '24/7 Supermarkt Barbareno Rd. CAM#1', coords = vector3(-3246.489, 1010.408, 14.705), r = { x = -35.0, y = 0.0, z = -135.2151 }, canRotate = false, isOnline = true },
+        [16] = { label = '24/7 Supermarkt Route 68 CAM#1', coords = vector3(539.773, 2664.904, 44.056), r = { x = -35.0, y = 0.0, z = -42.947 }, canRotate = false, isOnline = true },
+        [17] = { label = "Rob's Liqour Route 68 CAM#1", coords = vector3(1169.855, 2711.493, 40.432), r = { x = -35.0, y = 0.0, z = 127.17 }, canRotate = false, isOnline = true },
+        [18] = { label = '24/7 Supermarkt Senora Fwy CAM#1', coords = vector3(2673.579, 3281.265, 57.541), r = { x = -35.0, y = 0.0, z = -80.242 }, canRotate = false, isOnline = true },
+        [19] = { label = '24/7 Supermarkt Alhambra Dr. CAM#1', coords = vector3(1966.24, 3749.545, 34.143), r = { x = -35.0, y = 0.0, z = 163.065 }, canRotate = false, isOnline = true },
+        [20] = { label = '24/7 Supermarkt Senora Fwy CAM#2', coords = vector3(1729.522, 6419.87, 37.262), r = { x = -35.0, y = 0.0, z = -160.089 }, canRotate = false, isOnline = true },
+        [21] = { label = 'Fleeca Bank Hawick Ave CAM#1', coords = vector3(309.341, -281.439, 55.88), r = { x = -35.0, y = 0.0, z = -146.1595 }, canRotate = false, isOnline = true },
+    },
 }
 
 Config.breach = {
