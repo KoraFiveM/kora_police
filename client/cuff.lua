@@ -59,7 +59,11 @@ local function registerCuffTargets()
                 return Police.isOnDuty() and not IsPedCuffed(entity)
             end,
             onSelect = function(entity)
-                TriggerServerEvent('qbpolice:server:cuff', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
+                local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
+                if not targetServerId or targetServerId <= 0 then
+                    return Police.notify('No player to cuff.', 'error')
+                end
+                TriggerServerEvent('qbpolice:server:cuff', targetServerId)
             end,
         },
         {
@@ -69,7 +73,11 @@ local function registerCuffTargets()
                 return Police.isOnDuty() and IsPedCuffed(entity)
             end,
             onSelect = function(entity)
-                TriggerServerEvent('qbpolice:server:uncuff', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
+                local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
+                if not targetServerId or targetServerId <= 0 then
+                    return Police.notify('No player to uncuff.', 'error')
+                end
+                TriggerServerEvent('qbpolice:server:uncuff', targetServerId)
             end,
         },
     }, Config.cuff.distance)

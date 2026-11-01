@@ -164,7 +164,7 @@ h.test('the network result accepts one source-bound mash proof', function()
     handle.fireEvent('qbpolice:server:breakCuffsResult', CIVILIAN, proof)
 
     h.assertFalse(Police.isCuffed(CIVILIAN))
-    h.assertEqual(handle.lastClient('QBCore:Notify').target, CIVILIAN)
+    h.assertEqual(handle.lastNotification().src, CIVILIAN)
     handle.setCoords(CIVILIAN, 0.0, FAR, 0.0)
 end)
 

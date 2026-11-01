@@ -12,6 +12,9 @@ local function registerBillTargets()
             end,
             onSelect = function(entity)
                 local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
+                if not targetServerId or targetServerId <= 0 then
+                    return Police.notify('No player to cite.', 'error')
+                end
                 local result = Kora.nui.openInputDialog({
                     { id = 'amount', label = 'Fine Amount', type = 'number', default = Config.fine.tiers[1][1], min = 1, required = true },
                     { id = 'reason', label = 'Reason', type = 'text' },

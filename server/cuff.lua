@@ -6,6 +6,23 @@
 -- src -> { soft = boolean, officer = integer|nil, attemptsUsed = integer, cooldownUntil = integer }
 Police.cuffState = Police.cuffState or {}
 
+-- Player-facing wording for a refused cuff/uncuff, so a refusal is never silent.
+local REFUSALS = {
+    ['not an on-duty officer'] = 'You must be an on-duty police officer to do that.',
+    ['cannot cuff yourself'] = 'You cannot cuff yourself.',
+    ['target not found'] = 'That player could not be found.',
+    ['already cuffed'] = 'They are already cuffed.',
+    ['too far away'] = 'You are too far away.',
+    ['not cuffed'] = 'They are not cuffed.',
+    ['not authorised'] = 'You are not allowed to do that.',
+    ['handcuffs required'] = 'You need handcuffs.',
+}
+---@param err string|nil
+---@return string
+function Police.cuffRefusal(err)
+    return REFUSALS[err] or err or 'That did not work.'
+end
+
 ---@param officerSrc integer
 ---@param targetSrc integer
 ---@return boolean, string|nil
@@ -69,7 +86,7 @@ end
 
 exports.kora_core:createUseable('handcuffs', function(src)
     local ok, err = Police.softCuffNearby(src)
-    if not ok then TriggerClientEvent('QBCore:Notify', src, err, 'error') end
+    if not ok then Police.notify(src, Police.cuffRefusal(err)) end
     return ok
 end)
 
@@ -126,16 +143,16 @@ end
 
 RegisterNetEvent('qbpolice:server:cuff', function(target)
     local ok, err = Police.cuff(source, tonumber(target))
-    if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+    if not ok then Police.notify(source, Police.cuffRefusal(err)) end
 end)
 RegisterNetEvent('qbpolice:server:uncuff', function(target)
     local ok, err = Police.uncuff(source, tonumber(target))
-    if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+    if not ok then Police.notify(source, Police.cuffRefusal(err)) end
 end)
 RegisterNetEvent('qbpolice:server:breakCuffsResult', function(proof)
     local escaped = type(proof) == 'string' and Police.breakCuffs(source, proof)
     if escaped then
-        TriggerClientEvent('QBCore:Notify', source, 'You broke free!', 'success')
+        Police.notify(source, 'You broke free!', 'success')
     else
         Police.breakCuffsFailed(source)
     end

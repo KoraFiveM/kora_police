@@ -320,6 +320,18 @@ cap), `Config.armory.shops` (per-room coords/`minGrade`/inventory),
 `Config.duty.points`/`.vehicles` (duty toggle zones and patrol fleet spawns),
 `Config.spikes.*`, `Config.impound.lots`, `Config.fine.tiers`/`.account`.
 
+### Citations
+
+An issued citation is stored on the recipient (metadata `citations`) until paid, and the recipient is told how to pay it. Options in `Config.Citations`:
+
+- `autoDeduct` (default `false`): `true` charges `Config.fine.account` immediately on issue and stores nothing.
+- `payMethods.command` (default `true`): `/citations` lists unpaid citations, `/paycitation [number]` pays one (names via `listCommand` / `payCommand`).
+- `payMethods.exports` (default `true`): `exports.kora_police:getCitations(src)` and `exports.kora_police:payCitation(src, id)` for a phone or bank UI to call.
+- `maxUnpaid` (default `25`): oldest citation is dropped beyond this.
+
+Refused cuff / uncuff / citation actions (not on duty, too far, already cuffed, ...) now notify the officer instead of doing nothing.
+
+
 ## Related resources
 
 Part of the [qbcore2](https://github.com/qbcore2) resource set:

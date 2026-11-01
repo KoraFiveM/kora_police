@@ -201,6 +201,19 @@ Config.fine = {
     account = 'bank',                  -- which money account BillPlayer/citations charge
 }
 
+-- Issued citations are stored on the recipient (player metadata `citations`)
+-- until paid, so they survive relogs and restarts.
+Config.Citations = {
+    autoDeduct = false,                -- true = charge Config.fine.account immediately on issue (nothing stored, nothing to pay); false = store the citation and let the recipient pay it
+    maxUnpaid = 25,                    -- most unpaid citations one player can hold; the oldest is dropped beyond this
+    payMethods = {
+        command = true,                -- /citations lists unpaid citations, /paycitation [id] pays one from Config.fine.account (command names below)
+        exports = true,                -- exports.kora_police:getCitations(src) / payCitation(src, id) for a phone or bank UI to call
+    },
+    listCommand = 'citations',
+    payCommand = 'paycitation',
+}
+
 Config.rob = {
     takeCash = true,                   -- robbing a restrained/downed player moves their cash to the robber
     openInventory = true,              -- robbing also opens the target inventory as the robber's secondary inventory

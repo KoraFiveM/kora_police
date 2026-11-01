@@ -141,6 +141,15 @@ local function citizenId(src)
 end
 Police.citizenId = citizenId
 
+---Tells one player something via kora_lib notify (no dependence on the QBCore:Notify compat event).
+---@param src integer
+---@param message string
+---@param type_ string|nil `error`, `success` or `inform` (default `error`)
+function Police.notify(src, message, type_)
+    if not src or not message then return end
+    Kora.notify.send(src, { message = message, type = type_ or "error" })
+end
+
 AddEventHandler('playerDropped', function()
     local src = source
     -- Tell the surviving side so it does not keep a stale escort/drag state
