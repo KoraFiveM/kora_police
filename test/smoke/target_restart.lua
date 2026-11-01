@@ -41,6 +41,7 @@ end
 
 function _G.RegisterNetEvent(_, _) end
 function _G.RegisterCommand(_, _) end
+function _G.RegisterKeyMapping() end
 function _G.AddEventHandler(name, cb)
     eventHandlers[name] = eventHandlers[name] or {}
     table.insert(eventHandlers[name], cb)

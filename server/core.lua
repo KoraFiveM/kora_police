@@ -143,13 +143,25 @@ Police.citizenId = citizenId
 
 AddEventHandler('playerDropped', function()
     local src = source
+    -- Tell the surviving side so it does not keep a stale escort/drag state
+    -- (a stale draggedTarget would hide the Drag option until relog).
+    local officer = Police.escorted[src]
+    if officer then TriggerClientEvent('qbpolice:client:escortStopSelf', officer, src) end
+    local dragger = Police.kidnapped[src]
+    if dragger then TriggerClientEvent('qbpolice:client:dragStopSelf', dragger, src) end
     Police.escorted[src] = nil
     Police.kidnapped[src] = nil
     Police.tracked[src] = nil
-    for target, officer in pairs(Police.escorted) do
-        if officer == src then Police.escorted[target] = nil end
+    for target, owner in pairs(Police.escorted) do
+        if owner == src then
+            Police.escorted[target] = nil
+            TriggerClientEvent('qbpolice:client:escortStop', target)
+        end
     end
-    for target, dragger in pairs(Police.kidnapped) do
-        if dragger == src then Police.kidnapped[target] = nil end
+    for target, owner in pairs(Police.kidnapped) do
+        if owner == src then
+            Police.kidnapped[target] = nil
+            TriggerClientEvent('qbpolice:client:dragStop', target)
+        end
     end
 end)

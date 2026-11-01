@@ -8,6 +8,9 @@
 
 CreateThread(function()
     exports.kora_inventory:registerInspectionAccess(function(src, target)
+        -- A successful Police.rob (server/rob.lua) grants the robber access
+        -- while the target stays restrained/downed and in range.
+        if Police.hasRobAccess and Police.hasRobAccess(src, target) then return true end
         if not Police.isPolice(src) then return false, 'not an on-duty officer' end
         if not Police.isCuffed(target) then return false, 'target is not restrained' end
         return true

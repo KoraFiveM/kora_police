@@ -1,5 +1,12 @@
 -- Legacy RobPlayer -- plain player-vs-player, no cuff requirement.
 
+-- The server validated the rob and granted inventory access; open the
+-- target's inventory as the secondary inventory (kora_inventory re-checks the
+-- grant server-side, so a forged event here opens nothing).
+RegisterNetEvent('qbpolice:client:openRob', function(targetServerId)
+    exports.kora_inventory:openInventory('player', targetServerId)
+end)
+
 local function registerRobTargets()
     Police.target.reset('rob')
     Police.target.global('rob', 'player', {

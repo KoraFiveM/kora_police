@@ -7,15 +7,22 @@
 -- attaches anything on the suspect's behalf.
 
 local ESCORT_OFFSET = { x = 0.0, y = 0.7, z = 0.0 }
-local DRAG_OFFSET = { x = 0.0, y = 0.5, z = 0.0 }
+local NO_ROTATION = { x = 0.0, y = 0.0, z = 0.0 }
 
-local function attachTo(otherServerId, offset)
+local function dragSettings()
+    local cfg = Config.drag or {}
+    return cfg.offset or { x = 0.0, y = 0.5, z = 0.0 }, cfg.rotation or NO_ROTATION, tonumber(cfg.bone) or 0
+end
+
+local function attachTo(otherServerId, offset, rotation, bone)
     local otherPlayer = GetPlayerFromServerId(otherServerId)
-    if otherPlayer == -1 then return end
+    if otherPlayer == -1 then return false end
     local otherPed = GetPlayerPed(otherPlayer)
-    if not otherPed or otherPed == 0 then return end
+    if not otherPed or otherPed == 0 then return false end
     local myPed = PlayerPedId()
-    AttachEntityToEntity(myPed, otherPed, 0, offset.x, offset.y, offset.z, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
+    rotation = rotation or NO_ROTATION
+    AttachEntityToEntity(myPed, otherPed, bone or 0, offset.x, offset.y, offset.z, rotation.x, rotation.y, rotation.z, false, false, false, false, 2, true)
+    return true
 end
 
 local function detach()
@@ -75,6 +82,11 @@ RegisterCommand('escort', function()
         return
     end
 
+    if Police.draggedTarget then
+        TriggerServerEvent('qbpolice:server:stopDrag', Police.draggedTarget)
+        return
+    end
+
     local target = closestPlayerServerId()
     if not target then
         Police.notify('No player nearby.', 'error')
@@ -83,9 +95,42 @@ RegisterCommand('escort', function()
     TriggerServerEvent('qbpolice:server:escort', target)
 end, false)
 
+-- The dragger's ped may not be streamed in on this client yet when the server
+-- relays dragStart, so retry the attach for a few seconds instead of silently
+-- leaving the dragged player unattached.
+-- Release the player being dragged without having to aim the target eye at
+-- them (they are attached right in front of the dragger). Command and default
+-- key come from Config.drag; players can rebind the key in their settings.
+local function releaseDrag()
+    if not Police.draggedTarget then
+        Police.notify('You are not dragging anyone.', 'error')
+        return
+    end
+    TriggerServerEvent('qbpolice:server:stopDrag', Police.draggedTarget)
+end
+
+do
+    local cfg = Config.drag or {}
+    local command = cfg.releaseCommand
+    if type(command) == 'string' and command ~= '' then
+        RegisterCommand(command, releaseDrag, false)
+        if type(cfg.releaseKey) == 'string' and cfg.releaseKey ~= '' then
+            RegisterKeyMapping(command, 'Release dragged player', 'keyboard', cfg.releaseKey)
+        end
+    end
+end
+
 RegisterNetEvent('qbpolice:client:dragStart', function(draggerServerId)
     Police.dragger = draggerServerId
-    attachTo(draggerServerId, DRAG_OFFSET)
+    local offset, rotation, bone = dragSettings()
+    if attachTo(draggerServerId, offset, rotation, bone) then return end
+    CreateThread(function()
+        for _ = 1, 10 do
+            Wait(500)
+            if Police.dragger ~= draggerServerId then return end
+            if attachTo(draggerServerId, offset, rotation, bone) then return end
+        end
+    end)
 end)
 RegisterNetEvent('qbpolice:client:dragStop', function()
     Police.dragger = nil
@@ -133,10 +178,13 @@ local function registerEscortTargets()
             end,
         },
         {
-            label = 'Stop Dragging',
-            icon = 'move',
-            canInteract = function(entity)
-                return Police.draggedTarget ~= nil and GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)) == Police.draggedTarget
+            -- Shown on any nearby player while dragging: the dragged ped is
+            -- attached and hard to aim at, and the server only accepts the
+            -- stop from the dragger or the dragged player.
+            label = 'Release',
+            icon = 'hand',
+            canInteract = function()
+                return Police.draggedTarget ~= nil
             end,
             onSelect = function()
                 TriggerServerEvent('qbpolice:server:stopDrag', Police.draggedTarget)

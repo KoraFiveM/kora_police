@@ -201,5 +201,25 @@ Config.fine = {
     account = 'bank',                  -- which money account BillPlayer/citations charge
 }
 
+Config.rob = {
+    takeCash = true,                   -- robbing a restrained/downed player moves their cash to the robber
+    openInventory = true,              -- robbing also opens the target inventory as the robber's secondary inventory
+    accessSeconds = 120,               -- seconds the robber keeps inventory access after starting a rob (press Rob again to renew)
+    closeDistance = 4.0,               -- metres; the robber's inventory is closed (and access revoked) beyond this distance
+    checkInterval = 1000,              -- ms between server checks that the target is still restrained/downed and in range
+}
+
+Config.drag = {
+    releaseKey = 'E',                -- default keyboard key (RegisterKeyMapping, rebindable in settings) that releases the player you drag; '' = no key mapping
+    releaseCommand = 'releasedrag',  -- command that releases the player you drag; '' = no command
+    autoReleaseDistance = 8.0,         -- metres between dragger and dragged before the drag is released server-side
+    releaseInVehicle = true,           -- release when either player enters a vehicle
+    releaseWhenRecovered = true,       -- release when the dragged player is no longer restrained or downed
+    checkInterval = 1000,              -- ms between server drag checks
+    bone = 0,                          -- dragger ped bone index the dragged ped is attached to (0 = ped root; 11816 = pelvis)
+    offset = { x = 0.0, y = 0.5, z = 0.0 },       -- attach offset relative to the bone
+    rotation = { x = 0.0, y = 0.0, z = 0.0 },     -- attach rotation in degrees
+}
+
 -- Registers this resource-owned configuration with kora_lib without changing its public Config table.
 if Kora and Kora.config and Kora.config.adopt then Config = Kora.config.adopt(Config) end

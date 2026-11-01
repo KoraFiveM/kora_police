@@ -74,6 +74,44 @@ function Police.stopDrag(requesterSrc, targetSrc)
     return true
 end
 
+local function pedInVehicle(src)
+    local ped = GetPlayerPed(src)
+    if not ped or ped == 0 or type(GetVehiclePedIsIn) ~= 'function' then return false end
+    local vehicle = GetVehiclePedIsIn(ped, false)
+    return vehicle ~= nil and vehicle ~= 0
+end
+
+---Why a drag should end right now, or nil to keep it going.
+---@param draggerSrc integer
+---@param targetSrc integer
+---@return string|nil
+local function dragReleaseReason(draggerSrc, targetSrc)
+    local cfg = Config.drag or {}
+    if not exports.kora_core:getPlayerData(draggerSrc) or not exports.kora_core:getPlayerData(targetSrc) then
+        return 'player left'
+    end
+    if Police.distanceBetween(draggerSrc, targetSrc) > (tonumber(cfg.autoReleaseDistance) or 8.0) then return 'too far away' end
+    if Police.isDowned(draggerSrc) then return 'dragger is down' end
+    if cfg.releaseInVehicle ~= false and (pedInVehicle(draggerSrc) or pedInVehicle(targetSrc)) then return 'entered a vehicle' end
+    if cfg.releaseWhenRecovered ~= false and not Police.isIncapacitated(targetSrc) then return 'target is no longer restrained or down' end
+    return nil
+end
+
+---Releases every drag whose dragger died, moved away, entered a vehicle,
+---disconnected, or whose target recovered. Run by the sweep thread below.
+function Police.sweepDrags()
+    for target, dragger in pairs(Police.kidnapped) do
+        if dragReleaseReason(dragger, target) then Police.stopDrag(dragger, target) end
+    end
+end
+
+CreateThread(function()
+    while true do
+        Wait(math.max(250, tonumber((Config.drag or {}).checkInterval) or 1000))
+        Police.sweepDrags()
+    end
+end)
+
 function Police.getKidnappedTarget(draggerSrc)
     for target, dragger in pairs(Police.kidnapped) do
         if dragger == draggerSrc then return target end
