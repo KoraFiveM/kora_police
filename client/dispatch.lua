@@ -1,11 +1,6 @@
 -- Dispatch presentation now belongs entirely to qbdispatch: the call feed, the
 -- map, history, the response state machine and the route blip all live there.
 --
--- What used to be here was a renderer -- two notifies and a routed blip on a
--- SetTimeout, with an activeBlips table that grew forever because entries were
--- never removed from it. All of that is gone rather than duplicated; a call
--- rendered twice, once by each system, is worse than one rendered well.
---
 -- What remains is the police-specific side: the officer-facing commands that
 -- RAISE calls, and the cop-count listeners other police features read.
 

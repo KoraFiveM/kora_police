@@ -23,8 +23,6 @@ local function detach()
     if IsEntityAttached(myPed) then DetachEntity(myPed, true, true) end
 end
 
--- Escorted side ----------------------------------------------------------
-
 RegisterNetEvent('qbpolice:client:escortStart', function(officerServerId)
     Police.escortOfficer = officerServerId
     attachTo(officerServerId, ESCORT_OFFSET)
@@ -33,8 +31,6 @@ RegisterNetEvent('qbpolice:client:escortStop', function()
     Police.escortOfficer = nil
     detach()
 end)
-
--- Officer side (escorting) ------------------------------------------------
 
 RegisterNetEvent('qbpolice:client:escortStartSelf', function(targetServerId)
     Police.escortedTarget = targetServerId
@@ -87,8 +83,6 @@ RegisterCommand('escort', function()
     TriggerServerEvent('qbpolice:server:escort', target)
 end, false)
 
--- Dragged side --------------------------------------------------------
-
 RegisterNetEvent('qbpolice:client:dragStart', function(draggerServerId)
     Police.dragger = draggerServerId
     attachTo(draggerServerId, DRAG_OFFSET)
@@ -97,8 +91,6 @@ RegisterNetEvent('qbpolice:client:dragStop', function()
     Police.dragger = nil
     detach()
 end)
-
--- Dragger side --------------------------------------------------------
 
 RegisterNetEvent('qbpolice:client:dragStartSelf', function(targetServerId)
     Police.draggedTarget = targetServerId
