@@ -49,10 +49,6 @@ end)
 -- checklist obligation is that these event names exist and behave sanely for
 -- a third-party script that still calls them, not a new feature to design.
 
----@param evType string 'blood'|'fingerprint'|'casing'
----@param coords table
----@param ownerCitizenId string|nil
----@return integer id
 local evidenceCreatedAt = {}
 
 local function removeWorldEvidence(id)
@@ -98,8 +94,8 @@ local function createWorldEvidence(src, evType, ballistic, suppliedCoords)
         ballistic = ballistic,
     }
 
-    for _, src in ipairs(exports.kora_core:getPlayersByJob(Config.police.job, true)) do
-        TriggerClientEvent('qbpolice:client:worldEvidenceCreated', src, id, evType, coords)
+    for _, officer in ipairs(exports.kora_core:getPlayersByJob(Config.police.job, true)) do
+        TriggerClientEvent('qbpolice:client:worldEvidenceCreated', officer, id, evType, coords)
     end
     return id
 end

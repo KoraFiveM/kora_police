@@ -153,12 +153,9 @@ Kora.callback.register('police:GetImpoundedVehicles', function(src)
     return Police.getImpoundedVehicles()
 end)
 
-Kora.callback.register('police:IsPlateFlagged', function(src, plate)
+local function isPlateFlagged(src, plate)
     if not Police.isPolice(src) then return false end
     return Police.isPlateFlagged(plate)
-end)
-
-Kora.callback.register('police:server:IsPlateFlagged', function(src, plate)
-    if not Police.isPolice(src) then return false end
-    return Police.isPlateFlagged(plate)
-end)
+end
+Kora.callback.register('police:IsPlateFlagged', isPlateFlagged)
+Kora.callback.register('police:server:IsPlateFlagged', isPlateFlagged)
