@@ -84,6 +84,7 @@ _G.Kora = {
         remove = function() return true end,
         setInfo = function() return true end,
     },
+    keybind = { add = function() return nil end },  -- client/escort.lua's release key
 }
 
 _G.exports = setmetatable({}, {

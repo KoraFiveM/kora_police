@@ -95,10 +95,11 @@ RegisterCommand('escort', function()
 end, false)
 
 -- Release the player being dragged without having to aim the target eye at
--- them (they are attached right in front of the dragger). Command, default
--- key and the polled control come from Config.drag; players can rebind the key
--- in their settings. Silent when nothing is being dragged, because E is also
--- the target-select key and must not nag during unrelated interactions.
+-- them (they are attached right in front of the dragger). Command and default
+-- key come from Config.drag; players can rebind the key in their settings.
+-- The key is a kora_lib keybind that is only enabled while this player drags
+-- someone, so E (also the door, target and door-creator key) does nothing here
+-- otherwise, and release is silent when nothing is being dragged.
 local lastReleaseAt = 0
 
 local function targetingActive()
@@ -114,6 +115,8 @@ local function releaseDrag()
     TriggerServerEvent('qbpolice:server:stopDrag', Police.draggedTarget)
 end
 
+local releaseBinding
+
 do
     local cfg = Config.drag or {}
     local command = cfg.releaseCommand
@@ -122,15 +125,27 @@ do
             if targetingActive() then return end
             releaseDrag()
         end, false)
-        if type(cfg.releaseKey) == 'string' and cfg.releaseKey ~= '' then
-            RegisterKeyMapping(command, 'Release dragged player', 'keyboard', cfg.releaseKey)
-        end
+    end
+    if type(cfg.releaseKey) == 'string' and cfg.releaseKey ~= '' then
+        releaseBinding = Kora.keybind.add({
+            name = 'kora_police_releasedrag',
+            description = 'Police: release dragged player',
+            defaultKey = cfg.releaseKey,
+            disabled = true,
+            onPressed = function()
+                if not targetingActive() then releaseDrag() end
+            end,
+        })
     end
 end
 
--- Key mappings are only applied the first time a player sees them and can be
--- shadowed by another resource's mapping on the same key, so while dragging
--- the release control is also polled directly (Config.drag.releaseControl).
+local function setReleaseKeyActive(active)
+    if releaseBinding then releaseBinding.disable(not active) end
+end
+
+-- Optional fallback, off by default (Config.drag.releaseControl = 0): poll a
+-- raw control every frame, only while dragging, for servers where another
+-- script swallows the release key.
 local releasePollRunning = false
 
 local function startReleasePoll()
@@ -171,10 +186,12 @@ RegisterNetEvent('qbpolice:client:dragStartSelf', function(targetServerId)
     if (Config.drag or {}).releaseHint ~= false then
         Police.notify('Dragging a player. Release with /' .. tostring((Config.drag or {}).releaseCommand or 'releasedrag') .. ' or the Release option.', 'info')
     end
+    setReleaseKeyActive(true)
     startReleasePoll()
 end)
 RegisterNetEvent('qbpolice:client:dragStopSelf', function()
     Police.draggedTarget = nil
+    setReleaseKeyActive(false)
 end)
 
 local function registerEscortTargets()

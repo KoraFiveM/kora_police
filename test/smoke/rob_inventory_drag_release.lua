@@ -129,7 +129,7 @@ end)
 
 h.test('client exposes a release command, key mapping and Release target while dragging', function()
     local f = assert(io.open('client/escort.lua', 'r')); local src = f:read('*a'); f:close()
-    h.assertTrue(src:find("RegisterKeyMapping%(command") ~= nil)
+    h.assertTrue(src:find("Kora.keybind.add", 1, true) ~= nil)
     h.assertTrue(src:find("label = 'Release'", 1, true) ~= nil)
     h.assertTrue(src:find("DetachEntity", 1, true) ~= nil)
     local r = assert(io.open('client/rob.lua', 'r')); local rs = r:read('*a'); r:close()
@@ -144,10 +144,41 @@ h.test('stopDrag event falls back to the server-side target and resyncs a stale 
     h.assertEqual(handle.lastClient('qbpolice:client:dragStopSelf').target, ROBBER)
 end)
 
-h.test('release is silent when not dragging and polled as a control', function()
+h.test('release is silent when not dragging and the polled control is opt-in', function()
     local f = assert(io.open('client/escort.lua', 'r')); local src = f:read('*a'); f:close()
     h.assertTrue(src:find("You are not dragging anyone", 1, true) == nil)
-    h.assertTrue(src:find("IsControlJustPressed", 1, true) ~= nil)
+    h.assertTrue(src:find("RegisterKeyMapping", 1, true) == nil, 'no global key mapping that fires on every press')
+    h.assertEqual(Config.drag.releaseControl, 0, 'no per-frame poll by default')
+end)
+
+h.test('release key is a kora_lib keybind enabled only while dragging', function()
+    local added, binding = nil, { disabledState = nil }
+    function binding.disable(state) binding.disabledState = state; return true end
+    local events, commands = {}, {}
+    local env = setmetatable({
+        Config = Config,
+        Police = { notify = function() end, target = { reset = function() end, global = function() end } },
+        Kora = { keybind = { add = function(options) added = options; return binding end } },
+        RegisterNetEvent = function(name, fn) events[name] = fn end,
+        RegisterCommand = function(name, fn) commands[name] = fn end,
+        CreateThread = function() end,
+        exports = setmetatable({}, { __index = function() return { getState = function() return { active = false } end } end }),
+        GetGameTimer = function() return 100000 end,
+    }, { __index = _G })
+    local triggered = {}
+    env.TriggerServerEvent = function(name, target) triggered[#triggered + 1] = { name = name, target = target } end
+    local chunk = assert(loadfile('client/escort.lua', 't', env)); chunk()
+    h.assertTrue(added ~= nil, 'keybind registered')
+    h.assertEqual(added.defaultKey, Config.drag.releaseKey)
+    h.assertTrue(added.disabled == true, 'disabled until a drag starts')
+    added.onPressed(); h.assertEqual(#triggered, 0, 'pressing E while not dragging sends nothing')
+    events['qbpolice:client:dragStartSelf'](5)
+    h.assertTrue(binding.disabledState == false, 'enabled while dragging')
+    added.onPressed()
+    h.assertEqual(triggered[1].name, 'qbpolice:server:stopDrag'); h.assertEqual(triggered[1].target, 5)
+    events['qbpolice:client:dragStopSelf']()
+    h.assertTrue(binding.disabledState == true, 'disabled again once released')
+    h.assertTrue(commands[Config.drag.releaseCommand] ~= nil, 'release command still registered')
 end)
 
 h.report('rob_inventory_drag_release')
