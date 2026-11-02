@@ -33,6 +33,8 @@ Config.cuff = {
     uncuffCommand = 'uncuff',          -- command that releases the nearest cuffed player (officers, and the soft-cuffer); '' = no command
     restoreOnLogin = false,            -- anti-combat-log: a player who was cuffed when they logged out/disconnected comes back cuffed (as a hard cuff). false (default): a cuff only lasts for the session it was put on in and any stored cuff is cleared at login
     verifyWithServer = true,           -- a client that finds itself cuffed by the replicated state (or whose cuff animation/prop could not be applied) asks the server to confirm once, and is freed if the server has no cuff for it
+    clearTasksOnUncuff = true,         -- an uncuff also clears the freed player's ped tasks (on foot and not downed only) so no cuff pose is left behind; false only stops the cuff animation itself
+    uncuffRecheckMs = 1000,            -- ms after an uncuff to check once more that the cuff animation/prop are gone and take them off if not; 0 = no re-check
 }
 
 Config.incapacitated = {

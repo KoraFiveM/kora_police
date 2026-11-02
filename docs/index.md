@@ -146,6 +146,13 @@ cuff still stored in the metadata is cleared at the next login. Set
 stored cuff back as a hard cuff instead. A client that finds itself cuffed by the
 bag, or cannot show the cuff animation/prop, asks the server once to confirm and
 is freed if the server holds no cuff for it (`Config.cuff.verifyWithServer`).
+An uncuff (any path: target option, `/uncuff`, an escape, a release on booking)
+takes everything off on the freed player's own client straight away: the control
+lease, the prop, the handcuffed ped flag and the cuff animation (and, with
+`Config.cuff.clearTasksOnUncuff`, the ped's tasks when on foot and not downed),
+so every other client sees it stop too. `Config.cuff.uncuffRecheckMs` (default
+1000, 0 = off) checks once more after that and removes anything still left. An
+escort of the freed player ends with the cuff.
 
 Robbing a restrained or downed player takes their cash at most once per
 `Config.rob.robCooldownSeconds` per target; the cooldown does not stop the

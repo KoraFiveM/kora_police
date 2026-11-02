@@ -14,6 +14,7 @@ handle.exportImpls.kora_core.hasItem = function(src, name)
 end
 dofile(arg[1] or 'server/cuff.lua')
 dofile('server/compat/police.lua')
+dofile('server/escort.lua')
 
 local OFFICER, SUSPECT, CIVILIAN = 1, 2, 3
 local FAR = 9999.0
@@ -492,6 +493,19 @@ h.test('every cuffed-only target option reads the replicated bag, not the local 
         local f = assert(io.open('client/' .. file .. '.lua', 'r')); local src = f:read('*a'); f:close()
         h.assertFalse(src:find('IsPedCuffed', 1, true), file .. ' still trusts IsPedCuffed')
     end
+end)
+
+h.test('uncuffing an escorted suspect ends the escort on both sides', function()
+    resetAll()
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    h.assertTrue(Police.escort(OFFICER, SUSPECT))
+    local stops, selfStops = #handle.clientEventsFor('qbpolice:client:escortStop'), #handle.clientEventsFor('qbpolice:client:escortStopSelf')
+    h.assertTrue(Police.uncuff(OFFICER, SUSPECT))
+    h.assertEqual(Police.escorted[SUSPECT], nil)
+    h.assertEqual(#handle.clientEventsFor('qbpolice:client:escortStop'), stops + 1, 'the suspect detaches')
+    h.assertEqual(#handle.clientEventsFor('qbpolice:client:escortStopSelf'), selfStops + 1, 'the officer is told')
+    local events = handle.clientEventsFor('qbpolice:client:cuffed')
+    h.assertEqual(events[#events].args[1], false)
 end)
 
 h.report('cuff')

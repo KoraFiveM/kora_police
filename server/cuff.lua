@@ -74,6 +74,10 @@ local function release(targetSrc)
     Police.cuffState[targetSrc] = nil
     publish(targetSrc, false, false)
     TriggerClientEvent('qbpolice:client:cuffed', targetSrc, false, false)
+    -- An escort only exists for a cuffed suspect (Police.escort refuses anyone
+    -- else); left running it keeps the freed player attached to the officer.
+    local officer = Police.escorted and Police.escorted[targetSrc]
+    if officer and Police.deEscort then Police.deEscort(officer, targetSrc) end
 end
 
 ---@param officerSrc integer
