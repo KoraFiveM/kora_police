@@ -7,9 +7,11 @@
 Police.cuffState = Police.cuffState or {}
 
 -- The restraint is stored once (kora_core metadata `ishandcuffed`, which is what
--- Police.isCuffed reads and what persists) and mirrored to the replicated player
--- state bags below by `restrain`/`release`, the only writers. Clients, the emote
--- menu and kora_inventory only ever read the bags; a client write is reverted.
+-- Police.isCuffed reads) and mirrored to the replicated player state bags below
+-- by `restrain`/`release`, the only writers. Clients, the emote menu and
+-- kora_inventory only ever read them; a client write is reverted. The metadata
+-- persists with the character, but a cuff only lasts for the session it was put
+-- on in (see syncLogin below).
 local STATE_KEY, SOFT_KEY = 'koraCuffed', 'koraCuffedSoft'
 
 -- Player-facing wording for a refused cuff/uncuff, so a refusal is never silent.
@@ -233,45 +235,97 @@ Kora.callback.register('qbpolice:server:getCuffed', function(src, target)
     return Police.isCuffed(target or src)
 end)
 
--- Restores the restraint after a login or a restart of this resource. The
--- metadata persists with the character, so without this a cuffed player who
--- relogged was still cuffed server-side while their client was free. The soft
--- flag survives a restart of this resource on the bag; after a relog the cuff
--- comes back as a hard one. Config.cuff.restoreOnLogin = false releases instead.
+-- A cuff belongs to the session it was put on in: Police.cuffState holds it and
+-- is dropped on logout, character switch and disconnect. The `ishandcuffed`
+-- metadata still persists with the character, so at login a stored cuff with no
+-- live session behind it is stale and is cleared -- unless
+-- Config.cuff.restoreOnLogin (anti-combat-log, off by default) brings it back as
+-- a hard cuff.
 ---@param src integer
-local function syncPlayer(src)
+local function syncLogin(src)
     if not exports.kora_core:getPlayerData(src) then return end
-    if not Police.isCuffed(src) then
-        publish(src, false, false)
-        return
-    end
-    if Config.cuff.restoreOnLogin == false then return release(src) end
+    local live = Police.cuffState[src]
+    if live then return restrain(src, live.soft, live.cuffer) end
+    if Police.isCuffed(src) and Config.cuff.restoreOnLogin == true then return restrain(src, false, nil) end
     local player = Player(src)
     local bag = player and player.state
-    local state = Police.cuffState[src]
-    restrain(src, state ~= nil and state.soft or (bag ~= nil and bag[SOFT_KEY] == true), nil)
+    if Police.isCuffed(src) or (bag ~= nil and bag[STATE_KEY] == true) then return release(src) end
+    publish(src, false, false)
 end
 
-AddEventHandler('qbcore:server:playerLoaded', syncPlayer)
+-- A restart of this resource loses Police.cuffState but not the session: a
+-- player whose bag still says cuffed was cuffed by the previous instance and
+-- stays cuffed (soft flag included).
+---@param src integer
+local function syncRunning(src)
+    if not exports.kora_core:getPlayerData(src) then return end
+    local player = Player(src)
+    local bag = player and player.state
+    local bagCuffed = bag ~= nil and bag[STATE_KEY] == true
+    if Police.isCuffed(src) and (bagCuffed or Config.cuff.restoreOnLogin == true) then
+        return restrain(src, bagCuffed and bag[SOFT_KEY] == true, nil)
+    end
+    if Police.isCuffed(src) or bagCuffed then return release(src) end
+    publish(src, false, false)
+end
+
+AddEventHandler('qbcore:server:playerLoaded', syncLogin)
 AddEventHandler('onResourceStart', function(resourceName)
     if resourceName ~= GetCurrentResourceName() then return end
-    for _, src in ipairs(exports.kora_core:getPlayers()) do syncPlayer(src) end
+    for _, src in ipairs(exports.kora_core:getPlayers()) do syncRunning(src) end
 end)
 
+-- Logout/character switch (kora_core fires the unload for a disconnect too).
+-- The metadata is left alone: kora_core has already saved it, and the next
+-- login decides what a stored cuff means.
+---@param src integer
+local function endSession(src)
+    local wasCuffed = Police.cuffState[src] ~= nil
+    Police.cuffState[src] = nil
+    publish(src, false, false)
+    if wasCuffed then TriggerClientEvent('qbpolice:client:cuffed', src, false, false) end
+end
+
+AddEventHandler('QBCore:Server:OnPlayerUnload', function(src) endSession(tonumber(src) or source) end)
 AddEventHandler('playerDropped', function()
     Police.cuffState[source] = nil
 end)
 
+---Whether `src` is cuffed in this session: the live restraint and the stored
+---metadata agree.
+---@param src integer
+---@return boolean cuffed
+---@return boolean soft
+local function sessionCuffed(src)
+    local state = Police.cuffState[src]
+    if state == nil or not Police.isCuffed(src) then return false, false end
+    return true, state.soft == true
+end
+
+-- A client that sees itself cuffed asks here before it stays locked. The answer is
+-- the session state; a bag or metadata that disagrees with it is corrected.
+Kora.callback.register('kora_police:server:resyncCuff', function(src)
+    if not exports.kora_core:getPlayerData(src) then
+        publish(src, false, false)
+        return false, false
+    end
+    local cuffed, soft = sessionCuffed(src)
+    if not cuffed then
+        if Police.cuffState[src] or Police.isCuffed(src) or Player(src).state[STATE_KEY] == true then release(src) end
+        return false, false
+    end
+    local bag = Player(src).state
+    if bag[STATE_KEY] ~= true or (bag[SOFT_KEY] == true) ~= soft then publish(src, true, soft) end
+    return true, soft
+end)
+
 -- A client can write its own player bag; whatever it writes, the bag is put back
--- to what the server holds.
+-- to what the server holds for the session.
 if AddStateBagChangeHandler then
     AddStateBagChangeHandler(STATE_KEY, nil, function(bagName, _, value)
         local src = GetPlayerFromStateBagName(bagName)
-        if not src or src == 0 or not exports.kora_core:getPlayerData(src) then return end
-        local cuffed = Police.isCuffed(src)
-        if (value == true) ~= cuffed then
-            local state = Police.cuffState[src]
-            publish(src, cuffed, state ~= nil and state.soft or false)
-        end
+        if not src or src == 0 then return end
+        local cuffed, soft = sessionCuffed(src)
+        if (value == true) ~= cuffed then publish(src, cuffed, soft) end
     end)
 end

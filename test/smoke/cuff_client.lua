@@ -5,7 +5,8 @@ local h = dofile('test/harness.lua')
 
 local eventHandlers, commands, bagListeners, changeListeners = {}, {}, {}, {}
 local threads = {}
-local calls = { taskPlayAnim = 0, stopAnim = 0, props = 0, propsRemoved = 0, acquired = {}, released = 0 }
+local calls = { taskPlayAnim = 0, stopAnim = 0, props = 0, propsRemoved = 0, acquired = {}, released = 0, confirms = 0 }
+local propFails, serverCuffed = false, true
 local playingCuffAnim, ped, dead, ragdoll = true, 100, false, false
 
 function _G.RegisterNetEvent(name, cb) if cb then eventHandlers[name] = { cb } end end
@@ -21,7 +22,7 @@ function _G.PlayerId() return 0 end
 function _G.GetActivePlayers() return {} end
 function _G.GetPlayerPed() return 0 end
 function _G.NetworkGetPlayerIndexFromPed(entity) return entity end
-function _G.DoesEntityExist() return true end
+function _G.DoesEntityExist(entity) return entity ~= nil and entity ~= 0 end
 function _G.IsPedRagdoll() return ragdoll end
 function _G.IsEntityPlayingAnim() return playingCuffAnim end
 function _G.IsEntityAttachedToEntity() return true end
@@ -38,6 +39,12 @@ local function resume()
         if coroutine.status(threads[index]) == 'dead' then table.remove(threads, index)
         else assert(coroutine.resume(threads[index])) end
     end
+end
+
+local function liveThreads()
+    local count = 0
+    for _, co in ipairs(threads) do if coroutine.status(co) ~= 'dead' then count = count + 1 end end
+    return count
 end
 
 local bags = {}
@@ -57,10 +64,15 @@ Kora = {
         release = function() calls.released = calls.released + 1; return true end,
     },
     anim = {
-        attachProp = function() calls.props = calls.props + 1; return 900 + calls.props end,
+        attachProp = function(entity)
+            -- kora_lib asserts on a ped that does not exist; the export call raises.
+            if propFails then error(('Invalid entity: %s'):format(entity)) end
+            calls.props = calls.props + 1; return 900 + calls.props
+        end,
         detachProp = function() calls.propsRemoved = calls.propsRemoved + 1; return true end,
     },
     state = { onChange = function(key, _, fn) bagListeners[key] = fn; return 1 end },
+    callback = { trigger = function() calls.confirms = calls.confirms + 1; return serverCuffed, false end },
     notify = { send = function() end },
 }
 exports = setmetatable({}, {
@@ -81,7 +93,8 @@ end
 h.test('nothing runs or is applied while the bag says free', function()
     h.assertFalse(Police.cuffed)
     h.assertEqual(calls.taskPlayAnim, 0)
-    h.assertEqual(#threads, 0)
+    h.assertEqual(liveThreads(), 0)
+    h.assertEqual(calls.confirms, 0, 'joining uncuffed asks the server nothing')
 end)
 
 h.test('the bag cuffs the local player: animation, prop, control lease and watch', function()
@@ -92,7 +105,8 @@ h.test('the bag cuffs the local player: animation, prop, control lease and watch
     h.assertEqual(#calls.acquired, 1)
     h.assertEqual(calls.acquired[1].ids, Config.cuff.disabledControls)
     h.assertTrue(calls.acquired[1].options.disablePlayerFiring)
-    h.assertEqual(#threads, 1)
+    h.assertEqual(liveThreads(), 1)
+    h.assertEqual(calls.confirms, 1, 'a cuff learned from the bag is confirmed with the server once')
 end)
 
 h.test('a change of someone else\'s bag is ignored', function()
@@ -131,7 +145,7 @@ h.test('a re-cuff event re-applies the animation without a second control lease'
     eventHandlers['qbpolice:client:cuffed'][1](true, false)
     h.assertEqual(calls.taskPlayAnim, 5)
     h.assertEqual(#calls.acquired, 1)
-    h.assertEqual(#threads, 1, 'still one watch thread')
+    h.assertEqual(liveThreads(), 1, 'still one watch thread')
 end)
 
 h.test('the soft flag follows the bag while cuffed', function()
@@ -148,7 +162,7 @@ h.test('clearing the bag releases the controls, stops the animation and ends the
     h.assertEqual(calls.stopAnim, 1)
     h.assertEqual(calls.propsRemoved, 1)
     resume(); resume()
-    h.assertEqual(#threads, 0, 'the watch thread is gone once free')
+    h.assertEqual(liveThreads(), 0, 'the watch thread is gone once free')
     playingCuffAnim = false
     local before = calls.taskPlayAnim
     resume()
@@ -174,6 +188,49 @@ end)
 
 h.test('/uncuff is registered from Config.cuff.uncuffCommand', function()
     h.assertTrue(commands[Config.cuff.uncuffCommand] ~= nil)
+end)
+
+h.test('a failing prop attach raises nothing and keeps the cuff state consistent', function()
+    setOwnBag(false, false); resume(); resume()
+    local confirmsBefore, releasedBefore = calls.confirms, calls.released
+    propFails, serverCuffed = true, true
+    setOwnBag(true, false)
+    resume()
+    h.assertTrue(Police.cuffed)
+    h.assertTrue(playingCuffAnim, 'the animation is still applied')
+    h.assertEqual(liveThreads(), 1, 'the watch still runs')
+    h.assertEqual(calls.confirms, confirmsBefore + 1, 'the server is asked once')
+    resume(); resume()
+    h.assertEqual(calls.confirms, confirmsBefore + 1, 'and not again on every watch tick')
+    h.assertEqual(calls.released, releasedBefore)
+    propFails = false
+end)
+
+h.test('a cuff the server does not confirm frees the client', function()
+    setOwnBag(false, false); resume(); resume()
+    local releasedBefore = calls.released
+    propFails, serverCuffed = true, false
+    setOwnBag(true, false)
+    resume()
+    h.assertFalse(Police.cuffed, 'freed by the server answer')
+    h.assertEqual(calls.released, releasedBefore + 1, 'the control lease is released')
+    propFails, serverCuffed = false, true
+    LocalPlayer.state.koraCuffed = false
+end)
+
+h.test('cuffed while joining with no ped yet: no error, visuals once the ped exists', function()
+    setOwnBag(false, false); resume(); resume()
+    ped, playingCuffAnim = 0, false
+    local animsBefore = calls.taskPlayAnim
+    setOwnBag(true, false)
+    resume()
+    h.assertTrue(Police.cuffed)
+    h.assertEqual(calls.taskPlayAnim, animsBefore, 'nothing played on a missing ped')
+    ped = 102
+    changeListeners.ped()
+    h.assertEqual(calls.taskPlayAnim, animsBefore + 1)
+    setOwnBag(false, false)
+    h.assertFalse(Police.cuffed)
 end)
 
 h.report('cuff_client')

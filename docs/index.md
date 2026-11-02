@@ -139,8 +139,13 @@ menu and inventory refuse to open. Cuffing someone who is already cuffed
 re-applies the restraint (`Config.cuff.recuffRefreshes`); an officer's cuff
 hardens a soft one. Uncuff works on anyone cuffed: an on-duty officer, the
 player who soft-cuffed them (`Config.cuff.cufferCanUncuff`), or `/uncuff`
-(`Config.cuff.uncuffCommand`) for the nearest cuffed player. A cuffed player who
-relogs is still cuffed (`Config.cuff.restoreOnLogin`).
+(`Config.cuff.uncuffCommand`) for the nearest cuffed player. A cuff lasts for the
+session it was put on in: logout, character switch and disconnect end it, and a
+cuff still stored in the metadata is cleared at the next login. Set
+`Config.cuff.restoreOnLogin = true` (anti-combat-log, off by default) to bring a
+stored cuff back as a hard cuff instead. A client that finds itself cuffed by the
+bag, or cannot show the cuff animation/prop, asks the server once to confirm and
+is freed if the server holds no cuff for it (`Config.cuff.verifyWithServer`).
 
 Robbing a restrained or downed player takes their cash at most once per
 `Config.rob.robCooldownSeconds` per target; the cooldown does not stop the

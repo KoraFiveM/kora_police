@@ -31,7 +31,8 @@ Config.cuff = {
     recuffRefreshes = true,            -- cuffing an already-cuffed player re-applies the restraint (an officer's cuff also hardens a soft one); false refuses with "already cuffed"
     cufferCanUncuff = true,            -- whoever soft-cuffed a player with the handcuffs item can release them again (officers can always release anyone)
     uncuffCommand = 'uncuff',          -- command that releases the nearest cuffed player (officers, and the soft-cuffer); '' = no command
-    restoreOnLogin = true,             -- a cuffed player who relogs or whose server restarts is still cuffed (comes back as a hard cuff); false releases them at login
+    restoreOnLogin = false,            -- anti-combat-log: a player who was cuffed when they logged out/disconnected comes back cuffed (as a hard cuff). false (default): a cuff only lasts for the session it was put on in and any stored cuff is cleared at login
+    verifyWithServer = true,           -- a client that finds itself cuffed by the replicated state (or whose cuff animation/prop could not be applied) asks the server to confirm once, and is freed if the server has no cuff for it
 }
 
 Config.incapacitated = {

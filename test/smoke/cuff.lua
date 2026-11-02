@@ -378,21 +378,101 @@ h.test('whoever soft-cuffed a player can uncuff them; a stranger and a hard cuff
     h.assertFalse(ok); h.assertEqual(err, 'not authorised')
 end)
 
-h.test('a login restores the cuff on the bag and the client, or releases it by config', function()
+h.test('joining with no cuff is not cuffed and sends no cuff event', function()
     resetAll()
+    local before = #handle.clientEventsFor('qbpolice:client:cuffed')
+    handle.fireEvent('qbcore:server:playerLoaded', 0, SUSPECT, 'CID2')
+    h.assertFalse(Police.isCuffed(SUSPECT))
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
+    h.assertEqual(Police.cuffState[SUSPECT], nil)
+    h.assertEqual(#handle.clientEventsFor('qbpolice:client:cuffed'), before)
+end)
+
+h.test('a stored cuff with no live session is cleared at login by default', function()
+    resetAll()
+    handle.players[SUSPECT].data.metadata.ishandcuffed = true
+    handle.fireEvent('qbcore:server:playerLoaded', 0, SUSPECT, 'CID2')
+    h.assertFalse(Police.isCuffed(SUSPECT))
+    h.assertEqual(handle.players[SUSPECT].data.metadata.ishandcuffed, false)
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
+    h.assertEqual(Police.cuffState[SUSPECT], nil)
+    local events = handle.clientEventsFor('qbpolice:client:cuffed')
+    h.assertEqual(events[#events].target, SUSPECT)
+    h.assertEqual(events[#events].args[1], false)
+end)
+
+h.test('Config.cuff.restoreOnLogin = true brings a stored cuff back as a hard cuff', function()
+    resetAll()
+    Config.cuff.restoreOnLogin = true
     handle.players[SUSPECT].data.metadata.ishandcuffed = true
     local before = #handle.clientEventsFor('qbpolice:client:cuffed')
     handle.fireEvent('qbcore:server:playerLoaded', 0, SUSPECT, 'CID2')
     h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, true)
     h.assertTrue(Police.cuffState[SUSPECT] ~= nil)
+    h.assertFalse(Police.cuffState[SUSPECT].soft)
     local events = handle.clientEventsFor('qbpolice:client:cuffed')
     h.assertEqual(#events, before + 1)
     h.assertEqual(events[#events].args[1], true)
+end)
 
-    Config.cuff.restoreOnLogin = false
+h.test('drop and rejoin comes back uncuffed', function()
+    resetAll()
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    handle.fireEvent('QBCore:Server:OnPlayerUnload', 0, SUSPECT)
+    handle.fireEvent('playerDropped', SUSPECT)
+    h.assertEqual(Police.cuffState[SUSPECT], nil)
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
     handle.fireEvent('qbcore:server:playerLoaded', 0, SUSPECT, 'CID2')
     h.assertFalse(Police.isCuffed(SUSPECT))
     h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
+end)
+
+h.test('a logout clears the bag and tells the client; the next character loads uncuffed', function()
+    resetAll()
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    local before = #handle.clientEventsFor('qbpolice:client:cuffed')
+    handle.fireEvent('QBCore:Server:OnPlayerUnload', 0, SUSPECT)
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
+    local events = handle.clientEventsFor('qbpolice:client:cuffed')
+    h.assertEqual(#events, before + 1)
+    h.assertEqual(events[#events].args[1], false)
+    handle.fireEvent('qbcore:server:playerLoaded', 0, SUSPECT, 'CID9')
+    h.assertFalse(Police.isCuffed(SUSPECT))
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
+end)
+
+h.test('a restart of this resource keeps a session cuff and clears a stale one', function()
+    resetAll()
+    h.assertTrue(Police.softCuffNearby(OFFICER))
+    h.assertTrue(Police.cuffState[SUSPECT].soft)
+    Police.cuffState[SUSPECT] = nil -- what a restart loses
+    handle.fireEvent('onResourceStart', 0, 'kora_police')
+    h.assertTrue(Police.isCuffed(SUSPECT))
+    h.assertTrue(Police.cuffState[SUSPECT].soft)
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, true)
+
+    resetAll()
+    handle.players[SUSPECT].data.metadata.ishandcuffed = true
+    handle.fireEvent('onResourceStart', 0, 'kora_police')
+    h.assertFalse(Police.isCuffed(SUSPECT))
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
+end)
+
+h.test('the resync callback answers with the session state and repairs the rest', function()
+    local resync = Kora.callback.registry['kora_police:server:resyncCuff']
+    resetAll()
+    local cuffed, soft = resync(SUSPECT)
+    h.assertFalse(cuffed); h.assertFalse(soft)
+
+    handle.players[SUSPECT].data.metadata.ishandcuffed = true -- stored, but no session
+    cuffed = resync(SUSPECT)
+    h.assertFalse(cuffed)
+    h.assertFalse(Police.isCuffed(SUSPECT))
+
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    cuffed, soft = resync(SUSPECT)
+    h.assertTrue(cuffed); h.assertFalse(soft)
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, true)
 end)
 
 h.test('a restrained player cannot cuff anyone, and a drop clears their cuff state', function()

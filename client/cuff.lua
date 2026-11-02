@@ -9,26 +9,54 @@ local attachedProp = nil
 local controlLease = nil
 local watching = false
 
+local confirmRequested = false
+
+---The ped is nil/0 until kora_lib's cache has one (joining, loading screen) and
+---can stop existing between two calls (respawn, model change).
+local function validPed(ped)
+    return type(ped) == 'number' and ped ~= 0 and DoesEntityExist(ped)
+end
+
 -- Nothing tells us when another script (an emote, a scenario, a progress bar)
 -- replaces the cuff animation, so while cuffed it is checked every
 -- Config.cuff.animCheckInterval ms (never below 250) and put back. The animation
 -- is played with the native directly: Kora.anim.play refuses to start while another
 -- resource owns the ped's animation, which is exactly when it has to be restored.
+---@return boolean played
 local function playCuffAnim(ped)
-    if not Kora.stream.loadAnimDict(CUFF_DICT) then return end
+    if not validPed(ped) or not Kora.stream.loadAnimDict(CUFF_DICT) then return false end
     TaskPlayAnim(ped, CUFF_DICT, CUFF_CLIP, 8.0, 8.0, -1, 49, 0.0, false, false, false)
     SetEnableHandcuffs(ped, true)
+    return true
 end
 
 local function removeCuffProp()
-    if attachedProp then Kora.anim.detachProp(attachedProp); attachedProp = nil end
+    if attachedProp then pcall(Kora.anim.detachProp, attachedProp); attachedProp = nil end
 end
 
+-- The prop is cosmetic: Kora.anim.attachProp raises on a ped that is gone, and
+-- that must never take the cuff state or the rest of the visuals down with it.
+---@return boolean attached
 local function ensureCuffProp(ped)
-    if attachedProp and DoesEntityExist(attachedProp) and IsEntityAttachedToEntity(attachedProp, ped) then return end
+    if not validPed(ped) then return false end
+    if attachedProp and DoesEntityExist(attachedProp) and IsEntityAttachedToEntity(attachedProp, ped) then return true end
     removeCuffProp()
-    local prop = Kora.anim.attachProp(ped, CUFF_PROP_MODEL, CUFF_PROP_BONE, { x = 0.0, y = 0.0, z = 0.0 })
-    if prop then attachedProp = prop end
+    local ok, prop = pcall(Kora.anim.attachProp, ped, CUFF_PROP_MODEL, CUFF_PROP_BONE, { x = 0.0, y = 0.0, z = 0.0 })
+    if ok and prop then attachedProp = prop; return true end
+    return false
+end
+
+---Asks the server once per cuff whether it really holds one for this player
+---(server/cuff.lua corrects a stale bag on its side) and applies the answer, so a
+---replicated cuff the server does not stand behind never leaves the player locked
+---out of their inventory with nothing to show for it.
+local function confirmWithServer()
+    if confirmRequested or Config.cuff.verifyWithServer == false then return end
+    confirmRequested = true
+    CreateThread(function()
+        local ok, cuffed, soft = pcall(Kora.callback.trigger, 'kora_police:server:resyncCuff')
+        if ok and type(cuffed) == 'boolean' then Police.syncCuffState(cuffed, soft) end
+    end)
 end
 
 ---Puts back whatever the cuffed ped lost: the animation and the cuffs prop.
@@ -36,7 +64,7 @@ end
 ---medical resource, and of a ragdoll.
 local function restoreCuffed()
     local ped = Kora.cache.ped()
-    if not ped or not DoesEntityExist(ped) or Kora.cache.isDead() or IsPedRagdoll(ped) then return end
+    if not validPed(ped) or Kora.cache.isDead() or IsPedRagdoll(ped) then return end
     local down = LocalPlayer.state.emsDown
     if down ~= nil and down ~= 'alive' then return end
     if not IsEntityPlayingAnim(ped, CUFF_DICT, CUFF_CLIP, 3) then playCuffAnim(ped) end
@@ -56,28 +84,33 @@ local function startCuffWatch()
 end
 
 -- The disabled controls go through a kora_lib lease, whose per-frame loop exists
--- only while a lease is held, i.e. while cuffed.
+-- only while a lease is held, i.e. while cuffed. Without a ped yet (joining) the
+-- animation and prop follow from the cache's ped change below.
 local function applyCuffedVisuals(cuffed)
     local ped = Kora.cache.ped()
     if cuffed then
         if not controlLease then
             controlLease = Kora.controls.acquire(Config.cuff.disabledControls, { disablePlayerFiring = true, ignoreWeaponWheel = true })
         end
-        playCuffAnim(ped)
-        ensureCuffProp(ped)
+        local shown = playCuffAnim(ped)
+        shown = ensureCuffProp(ped) and shown
         startCuffWatch()
+        if not shown then confirmWithServer() end
     else
+        confirmRequested = false
         if controlLease then Kora.controls.release(controlLease); controlLease = nil end
-        StopAnimTask(ped, CUFF_DICT, CUFF_CLIP, 8.0)
-        RemoveAnimDict(CUFF_DICT)
         removeCuffProp()
-        SetEnableHandcuffs(ped, false)
+        if validPed(ped) then
+            StopAnimTask(ped, CUFF_DICT, CUFF_CLIP, 8.0)
+            SetEnableHandcuffs(ped, false)
+        end
+        RemoveAnimDict(CUFF_DICT)
     end
 end
 
 AddEventHandler('qbpolice:client:cuffStateChanged', applyCuffedVisuals)
 
--- A new ped (respawn, model change) has neither the animation nor the prop.
+-- A new ped (joining, respawn, model change) has neither the animation nor the prop.
 Kora.cache.onChange('ped', function()
     if Police.cuffed then restoreCuffed() end
 end)
@@ -90,7 +123,9 @@ end
 
 local function syncFromBag()
     local state = LocalPlayer.state
-    Police.syncCuffState(state.koraCuffed == true, state.koraCuffedSoft == true)
+    local cuffed, wasCuffed = state.koraCuffed == true, Police.cuffed
+    Police.syncCuffState(cuffed, state.koraCuffedSoft == true)
+    if cuffed and not wasCuffed then confirmWithServer() end
 end
 
 for _, key in ipairs({ 'koraCuffed', 'koraCuffedSoft' }) do
@@ -99,8 +134,8 @@ for _, key in ipairs({ 'koraCuffed', 'koraCuffedSoft' }) do
     end)
 end
 
--- Covers a resource restart while already cuffed -- the bag keeps its value, so
--- no change handler fires for it.
+-- Covers joining and a resource restart while already cuffed -- the bag keeps
+-- its value, so no change handler fires for it.
 syncFromBag()
 
 local function nearestCuffedServerId()
