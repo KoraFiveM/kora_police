@@ -81,11 +81,55 @@ function Police.notify(message, type_)
     Kora.notify.send({ message = message, type = type_ or 'info' })
 end
 
+-- The server publishes the restraint on the replicated player state bag
+-- (`koraCuffed`, `koraCuffedSoft`, written only by server/cuff.lua) and also
+-- sends this event. Either one lands here; the event always re-applies the
+-- visuals (a re-cuff refreshes them), the bag only on a change.
 RegisterNetEvent('qbpolice:client:cuffed', function(cuffed, soft, otherSrc)
     Police.cuffed = cuffed == true
     Police.soft = soft == true
     TriggerEvent('qbpolice:client:cuffStateChanged', Police.cuffed, Police.soft, otherSrc)
 end)
+
+---@param cuffed boolean|nil
+---@param soft boolean|nil
+function Police.syncCuffState(cuffed, soft)
+    cuffed, soft = cuffed == true, soft == true
+    if cuffed == Police.cuffed and soft == Police.soft then return end
+    Police.cuffed, Police.soft = cuffed, soft
+    TriggerEvent('qbpolice:client:cuffStateChanged', cuffed, soft)
+end
+
+---Replicated state bag of the player that owns `ped`, nil for anything else.
+---@param ped integer
+---@return table|nil
+local function playerStateOf(ped)
+    local index = NetworkGetPlayerIndexFromPed(ped)
+    if not index or index == -1 then return nil end
+    local serverId = GetPlayerServerId(index)
+    if not serverId or serverId <= 0 then return nil end
+    return Player(serverId).state
+end
+
+---Whether the player owning `ped` is cuffed, from the replicated bag (the same
+---source for every client, unlike the local ped's animation state).
+---@param ped integer
+---@return boolean
+function Police.isPedCuffed(ped)
+    local state = playerStateOf(ped)
+    return state ~= nil and state.koraCuffed == true
+end
+
+---Cuffed, or downed when Config.incapacitated allows it: who may be robbed or dragged.
+---@param ped integer
+---@return boolean
+function Police.isPedRestrained(ped)
+    local state = playerStateOf(ped)
+    if not state then return false end
+    local cfg = Config.incapacitated or {}
+    if cfg.cuffed ~= false and state.koraCuffed == true then return true end
+    return cfg.downed ~= false and state.emsDown ~= nil and state.emsDown ~= 'alive'
+end
 
 ---Legacy client export.
 function isHandcuffed()

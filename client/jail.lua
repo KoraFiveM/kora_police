@@ -8,7 +8,7 @@ local function registerJailTargets()
             label = 'Book (Jail)',
             icon = 'gavel',
             canInteract = function(entity)
-                return Police.isOnDuty() and IsPedCuffed(entity)
+                return Police.isOnDuty() and Police.isPedCuffed(entity)
             end,
             onSelect = function(entity)
                 local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))

@@ -201,7 +201,7 @@ local function registerEscortTargets()
             label = 'Escort',
             icon = 'footprints',
             canInteract = function(entity)
-                return Police.isOnDuty() and IsPedCuffed(entity) and not Police.escortedTarget
+                return Police.isOnDuty() and Police.isPedCuffed(entity) and not Police.escortedTarget
             end,
             onSelect = function(entity)
                 TriggerServerEvent('qbpolice:server:escort', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
@@ -221,7 +221,7 @@ local function registerEscortTargets()
             label = 'Drag',
             icon = 'move',
             canInteract = function(entity)
-                return not Police.draggedTarget and GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)) ~= nil
+                return not Police.draggedTarget and Police.isPedRestrained(entity)
             end,
             onSelect = function(entity)
                 TriggerServerEvent('qbpolice:server:startDrag', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))

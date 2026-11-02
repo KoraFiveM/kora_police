@@ -51,10 +51,21 @@ h.test('an on-duty officer within range cuffs a target', function()
     h.assertEqual(events[1].args[2], false)
 end)
 
-h.test('cuffing an already-cuffed target fails', function()
+h.test('cuffing an already-cuffed target re-applies the restraint instead of failing', function()
+    local before = #handle.clientEventsFor('qbpolice:client:cuffed')
+    local ok, err, info = Police.cuff(OFFICER, SUSPECT)
+    h.assertTrue(ok, tostring(err))
+    h.assertEqual(info, 'refreshed')
+    h.assertTrue(Police.isCuffed(SUSPECT))
+    h.assertEqual(#handle.clientEventsFor('qbpolice:client:cuffed'), before + 1)
+end)
+
+h.test('Config.cuff.recuffRefreshes = false keeps the old "already cuffed" refusal', function()
+    Config.cuff.recuffRefreshes = false
     local ok, err = Police.cuff(OFFICER, SUSPECT)
+    Config.cuff.recuffRefreshes = nil
     h.assertFalse(ok)
-    h.assertTrue(err ~= nil)
+    h.assertEqual(err, 'already cuffed')
 end)
 
 h.test('an officer can uncuff a hard-cuffed target', function()
@@ -242,6 +253,165 @@ h.test('one same-instance target is selected when an invisible target is also ne
     h.assertTrue(Police.isCuffed(OFFICER))
     h.assertFalse(Police.isCuffed(SUSPECT))
     Police.uncuff(OFFICER, OFFICER)
+end)
+
+-- ---------------------------------------------------------------------------
+-- Single source of truth: the replicated state bag, re-cuff, uncuff and login.
+-- ---------------------------------------------------------------------------
+local function resetAll()
+    for _, who in ipairs({ OFFICER, SUSPECT, CIVILIAN }) do
+        handle.players[who].data.metadata.ishandcuffed = false
+        Police.cuffState[who] = nil
+        handle.stateBag(who):set('koraCuffed', false, true)
+        handle.stateBag(who):set('koraCuffedSoft', false, true)
+    end
+    handle.players[OFFICER].job.onduty = true
+    handle.players[OFFICER].data.items = { { name = 'handcuffs', amount = 1 } }
+    handle.players[SUSPECT].data.items = {}
+    handle.setCoords(OFFICER, 0.0, 0.0, 0.0)
+    handle.setCoords(SUSPECT, 0.0, 0.0, 0.0)
+    handle.setCoords(CIVILIAN, 0.0, FAR, 0.0)
+    Config.cuff.recuffRefreshes, Config.cuff.cufferCanUncuff, Config.cuff.restoreOnLogin = nil, nil, nil
+end
+
+h.test('cuffing and uncuffing write the replicated bag, soft flag included', function()
+    resetAll()
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, true)
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffedSoft, false)
+    h.assertTrue(Police.uncuff(OFFICER, SUSPECT))
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
+
+    handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0); handle.setCoords(SUSPECT, 0.0, FAR, 0.0)
+    h.assertTrue(Police.softCuffNearby(OFFICER))
+    h.assertEqual(handle.stateBag(CIVILIAN).koraCuffed, true)
+    h.assertEqual(handle.stateBag(CIVILIAN).koraCuffedSoft, true)
+end)
+
+h.test('the handcuffs item on a player who is already cuffed re-applies the cuff, not "no one nearby"', function()
+    resetAll()
+    handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0); handle.setCoords(SUSPECT, 0.0, FAR, 0.0)
+    h.assertTrue(Police.softCuffNearby(OFFICER))
+    local before = #handle.clientEventsFor('qbpolice:client:cuffed')
+    local ok, err, info = Police.softCuffNearby(OFFICER)
+    h.assertTrue(ok, tostring(err))
+    h.assertEqual(info, 'refreshed')
+    h.assertTrue(Police.isCuffed(CIVILIAN))
+    h.assertEqual(#handle.clientEventsFor('qbpolice:client:cuffed'), before + 1)
+
+    Config.cuff.recuffRefreshes = false
+    local refused, refusal = Police.softCuffNearby(OFFICER)
+    h.assertFalse(refused)
+    h.assertEqual(refusal, 'already cuffed')
+end)
+
+h.test('the item picks the player who is not cuffed when a cuffed one is also in reach', function()
+    resetAll()
+    handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0); handle.setCoords(SUSPECT, 0.0, FAR, 0.0)
+    h.assertTrue(Police.softCuffNearby(OFFICER))
+    handle.setCoords(SUSPECT, 0.0, 0.0, 0.0)
+    h.assertTrue(Police.softCuffNearby(OFFICER))
+    h.assertTrue(Police.isCuffed(SUSPECT))
+    local ok, err = Police.softCuffNearby(OFFICER)
+    h.assertFalse(ok)
+    h.assertTrue(err:find('too many', 1, true) ~= nil)
+end)
+
+h.test('an officer cuff hardens a soft cuff and a soft cuff never softens a hard one', function()
+    resetAll()
+    handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0); handle.setCoords(SUSPECT, 0.0, FAR, 0.0)
+    h.assertTrue(Police.softCuffNearby(OFFICER))
+    h.assertTrue(Police.cuffState[CIVILIAN].soft)
+    h.assertTrue(Police.cuff(OFFICER, CIVILIAN))
+    h.assertFalse(Police.cuffState[CIVILIAN].soft)
+    h.assertEqual(handle.stateBag(CIVILIAN).koraCuffedSoft, false)
+    h.assertTrue(Police.softCuffNearby(OFFICER))
+    h.assertFalse(Police.cuffState[CIVILIAN].soft)
+end)
+
+h.test('uncuff clears a cuffed target and a stale client of a target that is not cuffed', function()
+    resetAll()
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    h.assertTrue(Police.uncuff(OFFICER, SUSPECT))
+    local before = #handle.clientEventsFor('qbpolice:client:cuffed')
+    local ok, err = Police.uncuff(OFFICER, SUSPECT)
+    h.assertFalse(ok)
+    h.assertEqual(err, 'not cuffed')
+    local events = handle.clientEventsFor('qbpolice:client:cuffed')
+    h.assertEqual(#events, before + 1)
+    h.assertEqual(events[#events].args[1], false)
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
+end)
+
+h.test('a client cannot flip its own cuffed bag', function()
+    resetAll()
+    handle.stateBag(SUSPECT):set('koraCuffed', true, true)
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    handle.stateBag(SUSPECT):set('koraCuffed', false, true)
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, true)
+    h.assertTrue(Police.isCuffed(SUSPECT))
+end)
+
+h.test('whoever soft-cuffed a player can uncuff them; a stranger and a hard cuff are refused', function()
+    resetAll()
+    handle.players[OFFICER].job.onduty = false
+    handle.players[SUSPECT].data.items = { { name = 'handcuffs', amount = 1 } }
+    handle.players[OFFICER].data.items = {}
+    handle.setCoords(SUSPECT, 0.0, 0.0, 0.0); handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0)
+    handle.setCoords(OFFICER, FAR, FAR, 0.0)
+    h.assertTrue(Police.softCuffNearby(SUSPECT))
+    h.assertTrue(Police.isCuffed(CIVILIAN))
+    handle.setCoords(OFFICER, 0.0, 0.0, 0.0)
+    local ok, err = Police.uncuff(OFFICER, CIVILIAN)
+    h.assertFalse(ok); h.assertEqual(err, 'not authorised')
+    Config.cuff.cufferCanUncuff = false
+    ok, err = Police.uncuff(SUSPECT, CIVILIAN)
+    h.assertFalse(ok); h.assertEqual(err, 'not authorised')
+    Config.cuff.cufferCanUncuff = nil
+    h.assertTrue(Police.uncuff(SUSPECT, CIVILIAN))
+    h.assertFalse(Police.isCuffed(CIVILIAN))
+
+    handle.players[OFFICER].job.onduty = true
+    h.assertTrue(Police.cuff(OFFICER, CIVILIAN))
+    ok, err = Police.uncuff(SUSPECT, CIVILIAN)
+    h.assertFalse(ok); h.assertEqual(err, 'not authorised')
+end)
+
+h.test('a login restores the cuff on the bag and the client, or releases it by config', function()
+    resetAll()
+    handle.players[SUSPECT].data.metadata.ishandcuffed = true
+    local before = #handle.clientEventsFor('qbpolice:client:cuffed')
+    handle.fireEvent('qbcore:server:playerLoaded', 0, SUSPECT, 'CID2')
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, true)
+    h.assertTrue(Police.cuffState[SUSPECT] ~= nil)
+    local events = handle.clientEventsFor('qbpolice:client:cuffed')
+    h.assertEqual(#events, before + 1)
+    h.assertEqual(events[#events].args[1], true)
+
+    Config.cuff.restoreOnLogin = false
+    handle.fireEvent('qbcore:server:playerLoaded', 0, SUSPECT, 'CID2')
+    h.assertFalse(Police.isCuffed(SUSPECT))
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, false)
+end)
+
+h.test('a restrained player cannot cuff anyone, and a drop clears their cuff state', function()
+    resetAll()
+    handle.players[OFFICER].data.metadata.ishandcuffed = true
+    local ok, err = Police.cuff(OFFICER, SUSPECT)
+    h.assertFalse(ok); h.assertEqual(err, 'you are restrained')
+    handle.players[OFFICER].data.metadata.ishandcuffed = false
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    handle.fireEvent('playerDropped', SUSPECT)
+    h.assertEqual(Police.cuffState[SUSPECT], nil)
+    h.assertTrue(Police.isCuffed(SUSPECT), 'the persisted cuff outlives the session')
+end)
+
+h.test('every cuffed-only target option reads the replicated bag, not the local ped', function()
+    for _, file in ipairs({ 'cuff', 'search', 'seize', 'jail', 'escort', 'fingerprint', 'tracker', 'rob' }) do
+        local f = assert(io.open('client/' .. file .. '.lua', 'r')); local src = f:read('*a'); f:close()
+        h.assertFalse(src:find('IsPedCuffed', 1, true), file .. ' still trusts IsPedCuffed')
+    end
 end)
 
 h.report('cuff')

@@ -24,6 +24,34 @@ local function robConfig()
     return Config.rob or {}
 end
 
+-- [citizenid] = GetGameTimer() ms at which cash can be taken from that person
+-- again. Per target (not per robber), so alternating robbers or cuff/uncuff
+-- cycles cannot take the same cash twice; only the cash is rate limited, searching
+-- the restrained player's inventory is not.
+Police.robCooldowns = Police.robCooldowns or {}
+
+---@param targetSrc integer
+---@return number remainingMs 0 when cash can be taken now.
+local function cashCooldownRemaining(targetSrc)
+    local citizenid = Police.citizenId(targetSrc)
+    local expires = citizenid and Police.robCooldowns[citizenid]
+    if not expires then return 0 end
+    local remaining = expires - GetGameTimer()
+    if remaining <= 0 then
+        Police.robCooldowns[citizenid] = nil
+        return 0
+    end
+    return remaining
+end
+
+local function startCashCooldown(targetSrc)
+    local seconds = tonumber(robConfig().robCooldownSeconds)
+    if seconds == nil then seconds = 300 end
+    local citizenid = Police.citizenId(targetSrc)
+    if seconds <= 0 or not citizenid then return end
+    Police.robCooldowns[citizenid] = GetGameTimer() + seconds * 1000
+end
+
 local function robStillValid(robberSrc, targetSrc)
     if not exports.kora_core:getPlayerData(targetSrc) then return false end
     if not Police.isIncapacitated(targetSrc) then return false end
@@ -54,17 +82,30 @@ end
 
 ---@param robberSrc integer
 ---@param targetSrc integer
----@return boolean, string|nil, number|nil amount cash taken (0 when only the inventory was opened)
+---@return boolean ok
+---@return string|nil err
+---@return number|nil amount cash taken (0 when only the inventory was opened)
+---@return number|nil waitSeconds seconds until cash can be taken again, set when the cash was refused by Config.rob.robCooldownSeconds
 function Police.rob(robberSrc, targetSrc)
     local cfg = robConfig()
     local takeCash, openInventory = cfg.takeCash ~= false, cfg.openInventory ~= false
     if not takeCash and not openInventory then return false, 'robbing is disabled' end
     if robberSrc == targetSrc then return false, 'cannot rob yourself' end
+    if Police.isCuffed(robberSrc) then return false, 'you are restrained' end
     if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
     if Police.distanceBetween(robberSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
     if not Police.isIncapacitated(targetSrc) then return false, 'target is not restrained or down' end
 
     local amount = 0
+    local waitSeconds
+    if takeCash then
+        local remaining = cashCooldownRemaining(targetSrc)
+        if remaining > 0 then
+            waitSeconds = math.ceil(remaining / 1000)
+            if not openInventory then return false, ('they were robbed recently -- try again in %ds'):format(waitSeconds) end
+            takeCash = false
+        end
+    end
     if takeCash then
         local available = exports.kora_core:getMoney(targetSrc, 'cash') or 0
         amount = math.min(available, MAX_ROB_AMOUNT)
@@ -74,6 +115,8 @@ function Police.rob(robberSrc, targetSrc)
             if not transferred then
                 if not openInventory then return false, transferErr or 'could not take cash' end
                 amount = 0
+            else
+                startCashCooldown(targetSrc)
             end
         end
     end
@@ -87,16 +130,18 @@ function Police.rob(robberSrc, targetSrc)
         }
         TriggerClientEvent('qbpolice:client:openRob', robberSrc, targetSrc)
     end
-    return true, nil, amount
+    return true, nil, amount, waitSeconds
 end
 
 RegisterNetEvent('qbpolice:server:rob', function(target)
     local src = source
-    local ok, err, amount = Police.rob(src, tonumber(target))
+    local ok, err, amount, waitSeconds = Police.rob(src, tonumber(target))
     if not ok then
         TriggerClientEvent('QBCore:Notify', src, err, 'error')
     elseif amount > 0 then
         TriggerClientEvent('QBCore:Notify', src, ('You took $%d.'):format(amount), 'success')
+    elseif waitSeconds then
+        TriggerClientEvent('QBCore:Notify', src, ('You already took their cash recently (%ds left). You search them.'):format(waitSeconds), 'inform')
     else
         TriggerClientEvent('QBCore:Notify', src, 'You search them.', 'success')
     end

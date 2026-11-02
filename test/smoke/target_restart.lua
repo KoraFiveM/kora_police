@@ -85,7 +85,9 @@ _G.Kora = {
         setInfo = function() return true end,
     },
     keybind = { add = function() return nil end },  -- client/escort.lua's release key
+    state = { onChange = function() return 1 end },  -- client/cuff.lua's cuffed-bag listeners
 }
+_G.LocalPlayer = { state = {} }
 
 _G.exports = setmetatable({}, {
     __call = function(_, _name, _fn) end,  -- exports('IsHandcuffed', fn)-style self-registration

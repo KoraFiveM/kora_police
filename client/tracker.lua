@@ -82,7 +82,7 @@ local function registerTrackerTargets()
             label = 'Attach Tracker',
             icon = 'radar',
             canInteract = function(entity)
-                return Police.isOnDuty() and IsPedCuffed(entity)
+                return Police.isOnDuty() and Police.isPedCuffed(entity)
             end,
             onSelect = function(entity)
                 TriggerServerEvent('qbpolice:server:setTracker', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)), true)

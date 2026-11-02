@@ -19,7 +19,7 @@ local ROBBER, TARGET = 1, 2
 local function reset()
     handle.addPlayer(ROBBER, { job = { name = 'unemployed', onduty = false, grade = { level = 1 } }, money = { cash = 0, bank = 0 } })
     handle.addPlayer(TARGET, { job = { name = 'unemployed', onduty = false, grade = { level = 1 } }, money = { cash = 100, bank = 0 }, metadata = { ishandcuffed = true } })
-    Police.robGrants, Police.kidnapped, Police.escorted = {}, {}, {}
+    Police.robGrants, Police.kidnapped, Police.escorted, Police.robCooldowns = {}, {}, {}, {}
     for i = #closed, 1, -1 do closed[i] = nil end
     for k in pairs(Config.rob) do Config.rob[k] = nil end
     Config.rob.takeCash, Config.rob.openInventory, Config.rob.closeDistance, Config.rob.accessSeconds = true, true, 4.0, 120
@@ -55,6 +55,7 @@ h.test('openInventory off keeps the cash-only behaviour and grants nothing', fun
     h.assertTrue(Police.rob(ROBBER, TARGET))
     h.assertFalse(policy(ROBBER, TARGET) and true or false)
     handle.players[TARGET].data.money.cash = 0
+    Police.robCooldowns = {}
     local ok, err = Police.rob(ROBBER, TARGET)
     h.assertFalse(ok); h.assertEqual(err, 'target has no cash')
     reset(); Config.rob.takeCash, Config.rob.openInventory = false, false
@@ -179,6 +180,63 @@ h.test('release key is a kora_lib keybind enabled only while dragging', function
     events['qbpolice:client:dragStopSelf']()
     h.assertTrue(binding.disabledState == true, 'disabled again once released')
     h.assertTrue(commands[Config.drag.releaseCommand] ~= nil, 'release command still registered')
+end)
+
+h.test('cash is taken once per target per cooldown, the inventory can still be searched', function()
+    reset()
+    local ok, _, amount = Police.rob(ROBBER, TARGET)
+    h.assertTrue(ok); h.assertEqual(amount, 100)
+    handle.players[TARGET].data.money.cash = 55
+    local ok2, err2, again, waitSeconds = Police.rob(ROBBER, TARGET)
+    h.assertTrue(ok2, tostring(err2)); h.assertEqual(again, 0)
+    h.assertTrue(waitSeconds ~= nil and waitSeconds > 0 and waitSeconds <= 300)
+    h.assertEqual(handle.players[TARGET].data.money.cash, 55)
+    h.assertEqual(handle.players[ROBBER].data.money.cash, 100)
+    h.assertTrue(policy(ROBBER, TARGET), 'still allowed to search')
+    handle.advanceClock(301 * 1000)
+    local _, _, later = Police.rob(ROBBER, TARGET)
+    h.assertEqual(later, 55)
+end)
+
+h.test('the cooldown is per target, so another robber cannot take the cash either', function()
+    reset()
+    handle.addPlayer(3, { job = { name = 'unemployed', onduty = false, grade = { level = 1 } }, money = { cash = 0, bank = 0 } })
+    h.assertTrue(Police.rob(ROBBER, TARGET))
+    handle.players[TARGET].data.money.cash = 40
+    local _, _, amount = Police.rob(3, TARGET)
+    h.assertEqual(amount, 0)
+    h.assertEqual(handle.players[TARGET].data.money.cash, 40)
+end)
+
+h.test('a cash-only rob inside the cooldown is refused with the wait, and 0 turns the cooldown off', function()
+    reset(); Config.rob.openInventory = false
+    h.assertTrue(Police.rob(ROBBER, TARGET))
+    handle.players[TARGET].data.money.cash = 30
+    local ok, err = Police.rob(ROBBER, TARGET)
+    h.assertFalse(ok); h.assertTrue(err:find('robbed recently', 1, true) ~= nil)
+    Config.rob.robCooldownSeconds = 0
+    reset(); Config.rob.openInventory, Config.rob.robCooldownSeconds = false, 0
+    h.assertTrue(Police.rob(ROBBER, TARGET))
+    handle.players[TARGET].data.money.cash = 30
+    local ok2, _, amount = Police.rob(ROBBER, TARGET)
+    h.assertTrue(ok2); h.assertEqual(amount, 30)
+end)
+
+h.test('the rob event tells the robber when the cash is on cooldown', function()
+    reset()
+    handle.fireEvent('qbpolice:server:rob', ROBBER, TARGET)
+    handle.players[TARGET].data.money.cash = 10
+    handle.fireEvent('qbpolice:server:rob', ROBBER, TARGET)
+    local event = handle.lastClient('QBCore:Notify')
+    h.assertTrue(event.args[1]:find('already took their cash', 1, true) ~= nil)
+end)
+
+h.test('a restrained robber or dragger is refused', function()
+    reset(); handle.players[ROBBER].data.metadata.ishandcuffed = true
+    local ok, err = Police.rob(ROBBER, TARGET)
+    h.assertFalse(ok); h.assertEqual(err, 'you are restrained')
+    ok, err = Police.startDrag(ROBBER, TARGET)
+    h.assertFalse(ok); h.assertEqual(err, 'you are restrained')
 end)
 
 h.report('rob_inventory_drag_release')

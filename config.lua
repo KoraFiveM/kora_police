@@ -26,6 +26,12 @@ Config.cuff = {
     breakCuffsDifficulty = { 'medium', 'hard', 'medium' },  -- per-attempt Kora.minigames difficulty for a soft-cuffed suspect's escape attempt (ported qbx_police mechanic)
     breakCuffsAttempts = 3,            -- total escape attempts before the item gives up until the next use
     breakCuffsCooldown = 60000,        -- ms a suspect must wait after a failed break-cuffs try before another
+    disabledControls = { 21, 22, 23, 24, 25, 37, 44, 47, 58, 140, 141, 142, 257, 263, 264 },  -- controls blocked while cuffed: sprint, jump, enter vehicle, attack/aim, weapon wheel, cover, weapon/grenade, melee (remove 23 to let a cuffed player climb into a vehicle themself)
+    animCheckInterval = 500,           -- ms between checks, only while cuffed, that the cuff animation and prop are still there (an emote or another script replaced them); never below 250
+    recuffRefreshes = true,            -- cuffing an already-cuffed player re-applies the restraint (an officer's cuff also hardens a soft one); false refuses with "already cuffed"
+    cufferCanUncuff = true,            -- whoever soft-cuffed a player with the handcuffs item can release them again (officers can always release anyone)
+    uncuffCommand = 'uncuff',          -- command that releases the nearest cuffed player (officers, and the soft-cuffer); '' = no command
+    restoreOnLogin = true,             -- a cuffed player who relogs or whose server restarts is still cuffed (comes back as a hard cuff); false releases them at login
 }
 
 Config.incapacitated = {
@@ -314,6 +320,7 @@ Config.rob = {
     accessSeconds = 120,               -- seconds the robber keeps inventory access after starting a rob (press Rob again to renew)
     closeDistance = 4.0,               -- metres; the robber's inventory is closed (and access revoked) beyond this distance
     checkInterval = 1000,              -- ms between server checks that the target is still restrained/downed and in range
+    robCooldownSeconds = 300,          -- seconds before cash can be taken from the same player again (per target, whoever robs); searching their inventory stays possible; 0 = no cooldown
 }
 
 Config.drag = {

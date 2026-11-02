@@ -14,7 +14,7 @@ local function registerSearchTargets()
             label = 'Search',
             icon = 'search',
             canInteract = function(entity)
-                return Police.isOnDuty() and IsPedCuffed(entity)
+                return Police.isOnDuty() and Police.isPedCuffed(entity)
             end,
             onSelect = function(entity)
                 TriggerServerEvent('qbpolice:server:search', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))

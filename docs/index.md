@@ -127,6 +127,25 @@ soft-cuffed suspect runs `/breakcuffs` to attempt the ported
 `qbx_police`-style escape skillcheck (`Config.cuff.breakCuffsDifficulty` /
 `breakCuffsAttempts` / `breakCuffsCooldown`).
 
+The restraint is stored once, in kora_core metadata `ishandcuffed` (what
+`Police.isCuffed` reads, and what persists), and the server mirrors it onto the
+replicated player state bag: `Player(src).state.koraCuffed` (boolean) and
+`koraCuffedSoft`. Only `server/cuff.lua` writes them (a client write is put
+back); clients, `kora_emotemenu` and `kora_inventory` only read them. While the
+bag says cuffed the client keeps the cuff animation and prop (checked every
+`Config.cuff.animCheckInterval` ms, only while cuffed), holds
+`Config.cuff.disabledControls` through a kora_lib control lease, and the emote
+menu and inventory refuse to open. Cuffing someone who is already cuffed
+re-applies the restraint (`Config.cuff.recuffRefreshes`); an officer's cuff
+hardens a soft one. Uncuff works on anyone cuffed: an on-duty officer, the
+player who soft-cuffed them (`Config.cuff.cufferCanUncuff`), or `/uncuff`
+(`Config.cuff.uncuffCommand`) for the nearest cuffed player. A cuffed player who
+relogs is still cuffed (`Config.cuff.restoreOnLogin`).
+
+Robbing a restrained or downed player takes their cash at most once per
+`Config.rob.robCooldownSeconds` per target; the cooldown does not stop the
+robber searching the inventory.
+
 ### Escort / drag / vehicle
 ```lua
 TriggerServerEvent('qbpolice:server:escort', target)

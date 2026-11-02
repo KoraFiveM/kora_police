@@ -7,7 +7,7 @@ local function registerFingerprintTargets()
             label = 'Check Fingerprint',
             icon = 'fingerprint',
             canInteract = function(entity)
-                return Police.isOnDuty() and IsPedCuffed(entity)
+                return Police.isOnDuty() and Police.isPedCuffed(entity)
             end,
             onSelect = function(entity)
                 local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))

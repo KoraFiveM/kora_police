@@ -13,8 +13,8 @@ local function registerRobTargets()
         {
             label = 'Rob',
             icon = 'hand-coins',
-            canInteract = function()
-                return not Police.isOnDuty()
+            canInteract = function(entity)
+                return not Police.isOnDuty() and Police.isPedRestrained(entity)
             end,
             onSelect = function(entity)
                 TriggerServerEvent('qbpolice:server:rob', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))

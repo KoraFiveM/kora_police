@@ -7,7 +7,7 @@ local function registerSeizeTargets()
             label = 'Seize Cash',
             icon = 'banknote',
             canInteract = function(entity)
-                return Police.isOnDuty() and IsPedCuffed(entity)
+                return Police.isOnDuty() and Police.isPedCuffed(entity)
             end,
             onSelect = function(entity)
                 TriggerServerEvent('qbpolice:server:seizeCash', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
@@ -17,7 +17,7 @@ local function registerSeizeTargets()
             label = "Seize Driver's License",
             icon = 'id-card',
             canInteract = function(entity)
-                return Police.isOnDuty() and IsPedCuffed(entity)
+                return Police.isOnDuty() and Police.isPedCuffed(entity)
             end,
             onSelect = function(entity)
                 TriggerServerEvent('qbpolice:server:seizeDriverLicense', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))

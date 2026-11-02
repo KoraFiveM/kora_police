@@ -72,6 +72,28 @@ function M.install()
     _G.os = os
     _G.math = math
 
+    -- Replicated player state bags: `Player(src).state.key` reads, `state:set(key,
+    -- value, replicated)` writes and runs the AddStateBagChangeHandler listeners,
+    -- the same for a server write and for a (cheating) client write.
+    local stateBags, bagHandlers = {}, {}
+    local function stateBag(src)
+        if not stateBags[src] then
+            local values = {}
+            stateBags[src] = setmetatable({
+                set = function(_, key, value)
+                    values[key] = value
+                    for _, listener in ipairs(bagHandlers) do
+                        if listener.key == key then listener.fn(('player:%d'):format(src), key, value) end
+                    end
+                end,
+            }, { __index = function(_, key) return values[key] end })
+        end
+        return stateBags[src]
+    end
+    function _G.Player(src) return { state = stateBag(src) } end
+    function _G.AddStateBagChangeHandler(key, _, fn) bagHandlers[#bagHandlers + 1] = { key = key, fn = fn } end
+    function _G.GetPlayerFromStateBagName(name) return tonumber(name:match('^player:(%d+)$')) or 0 end
+
     function _G.GetPlayerPed(src)
         return players[src] and src or 0
     end
@@ -383,6 +405,7 @@ function M.install()
         clientEvents = clientEvents,
         eventHandlers = eventHandlers,
         netHandlers = netHandlers,
+        stateBag = stateBag,
         exportImpls = exportImpls,
         resourceStates = resourceStates,
         Kora = Kora,
