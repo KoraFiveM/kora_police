@@ -364,6 +364,10 @@ cap), `Config.armory.shops` (per-room coords/`minGrade`/inventory),
 `Config.duty.points`/`.vehicles` (duty toggle zones and patrol fleet spawns),
 `Config.spikes.*`, `Config.impound.lots`, `Config.plateFlags` (mirrorToMdt/days: Flag/Unflag Plate write and resolve a vehicle BOLO in kora_mdt), `Config.impound.progress` (enabled/duration/label/canCancel/anim/prop for the impound progress bar), `Config.fine.tiers`/`.account`.
 
+### Body armour (`Config.armour`)
+
+`armor` (the item the armory hands out), `armour` (alias for existing stock) and `heavyarmor` are registered as usable items. Using one shows a cancellable progress bar, then the server removes one item and sets armour to the item's `amount` (`mode = 'add'` adds instead; both cap at 100). `blockIfFull` keeps the item when it would not raise armour; `enabled = false` leaves the items to another resource.
+
 ### Citations
 
 An issued citation is stored on the recipient (metadata `citations`) until paid, and the recipient is told how to pay it. Options in `Config.Citations`:

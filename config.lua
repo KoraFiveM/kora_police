@@ -89,6 +89,24 @@ Config.evidence = {
     },
 }
 
+Config.armour = {
+    enabled = true,                    -- register the armour items below as usable; false leaves them to another resource
+    mode = 'set',                      -- 'set' = armour becomes the item's amount; 'add' = amount is added to current armour (both capped at 100); per-item `mode` overrides
+    blockIfFull = true,                -- refuse (and keep the item) when it would not raise armour
+    fullMessage = 'You are already wearing enough armour.',
+    progress = {
+        label = 'Putting on body armour...',
+        duration = 3000,               -- ms; per-item `duration` overrides
+        canCancel = true,
+        anim = { dict = 'clothingshirt', clip = 'try_shirt_positive_d', flag = 49 },  -- Kora.progressbar anim; nil = no animation
+    },
+    items = {                          -- item name -> { amount = armour 0-100, mode?, duration?, label?, anim? }
+        armor = { amount = 50 },       -- the vest the police armory hands out
+        armour = { amount = 50 },      -- alias so existing 'armour' stock is usable too
+        heavyarmor = { amount = 100 }, -- stock heavy vest
+    },
+}
+
 Config.armory = {
     shops = {
         {
