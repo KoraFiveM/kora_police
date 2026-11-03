@@ -55,8 +55,7 @@ end
 -- only guarantees START ORDER on a fresh boot, not survival of a later
 -- kora_inventory RESTART mid-session, which wipes kora_inventory's own shop table
 -- without touching kora_police at all.
----@param restock boolean Top the saved stock up (this resource starting).
-local function registerArmoryShops(restock)
+local function registerArmoryShops()
     for _, shop in ipairs(Config.armory.shops) do
         -- `groups` is kora_inventory's own job/grade access check (see its
         -- server.lua canAccess/groupAllowed) -- set here so the shop is
@@ -72,14 +71,47 @@ local function registerArmoryShops(restock)
             access = function(src) return Police.canAccessArmory(src, shop.id) end,
         })
         Police.armoryShops[shop.id] = { config = shop, key = key }
-        if key and restock then Police.restockArmory(shop) end
     end
 end
 
-CreateThread(function() registerArmoryShops(true) end)
+-- Config.armory.restockOnStart runs once per start of this resource. On a
+-- server boot kora_inventory loads its saved shops from the database only
+-- after this resource has registered them, and that load replaces the
+-- registered stock with the saved one, so restocking at registration was
+-- undone straight away. The restock therefore waits for kora_inventory's
+-- 'qbinventory:server:ready' (saved inventories loaded) unless it has
+-- already loaded them.
+local restockPending = Config.armory.restockOnStart ~= false
+
+---@return boolean waiting kora_inventory has not loaded its saved shops yet.
+local function awaitingInventoryLoad()
+    local ok, status = pcall(function() return exports.kora_inventory:getPersistenceStatus() end)
+    if not ok or type(status) ~= 'table' then return false end
+    return status.enabled == true and status.ready ~= true and not status.lastError
+end
+
+local function restockArmories()
+    restockPending = false
+    for _, shop in ipairs(Config.armory.shops) do
+        local registered = Police.armoryShops[shop.id]
+        if registered and registered.key then Police.restockArmory(shop) end
+    end
+end
+
+CreateThread(function()
+    registerArmoryShops()
+    if restockPending and not awaitingInventoryLoad() then restockArmories() end
+end)
+
+AddEventHandler('qbinventory:server:ready', function()
+    -- Only the load that follows this resource starting: a later
+    -- kora_inventory restart keeps what was taken this session.
+    if not restockPending or not next(Police.armoryShops) then return end
+    CreateThread(restockArmories)
+end)
 
 AddEventHandler('onResourceStart', function(resourceName)
-    if resourceName == 'kora_inventory' then CreateThread(function() registerArmoryShops(false) end) end
+    if resourceName == 'kora_inventory' then CreateThread(registerArmoryShops) end
 end)
 
 ---@param src integer

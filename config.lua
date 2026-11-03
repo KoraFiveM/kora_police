@@ -159,12 +159,12 @@ Config.armour = {
 }
 
 Config.armory = {
-    restockOnStart = true,             -- kora_inventory keeps shop stock across restarts: when kora_police starts (server boot), put back configured items missing from a saved armory and top rows up to their `amount` (new items show up, free kit never runs out for good; a kora_inventory restart mid-session does not restock); false = saved stock is left as it is
+    restockOnStart = true,             -- kora_inventory keeps shop stock across restarts: when kora_police starts (server boot: once kora_inventory has loaded its saved shops), put back configured items missing from a saved armory and top rows up to their `amount` (new items show up, free kit never runs out for good; a kora_inventory restart mid-session does not restock); false = saved stock is left as it is
     shops = {
         {
             id = 'pd-armory-patrol',
             label = 'Patrol Armory',
-            coords = vector4(441.1, -981.2, 30.7, 90.0),
+            coords = vector4(452.43, -980.19, 30.69, 273.74), -- MRPD armory doorway (tester-picked spot)
             distance = 2.0,
             minGrade = 1,               -- job.grade.level required to see/use this shop at all -- 1 = Cadet, everyone qualifies
             slots = 20,

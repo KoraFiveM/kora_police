@@ -123,4 +123,30 @@ h.test('a saved armory gets new config items back and its free kit topped up', f
     inv.GetShopItems, inv.SetShopItems = nil, nil
 end)
 
+h.test('on a server boot the restock waits until kora_inventory has loaded its saved shops', function()
+    local inv = handle.exportImpls.kora_inventory
+    -- kora_inventory hydrates saved shops after this resource registered them,
+    -- replacing the registered stock: a restock before that is lost.
+    local loaded, writes = false, 0
+    local saved = { [3] = { name = 'handcuffs', amount = 3, price = 0 } }
+    inv.getPersistenceStatus = function() return { enabled = true, ready = loaded } end
+    inv.GetShopItems = function(id) return id == patrol.id and saved or {} end
+    inv.SetShopItems = function(id, items)
+        if id == patrol.id then writes, saved = writes + 1, items end
+        return true
+    end
+    dofile('server/armory.lua')
+    h.assertEqual(writes, 0, 'no restock before the saved shops are loaded')
+
+    loaded = true
+    TriggerEvent('qbinventory:server:ready', { ready = true })
+    h.assertEqual(writes, 1, 'restocked once the saved shops are loaded')
+    h.assertEqual(saved[3].amount, patrol.items[3].amount, 'run-out kit topped up')
+    h.assertEqual(saved[#patrol.items].name, Config.evidence.bagItem, 'missing kit put back')
+
+    TriggerEvent('qbinventory:server:ready', { ready = true })
+    h.assertEqual(writes, 1, 'a later kora_inventory load (its restart) does not restock again')
+    inv.getPersistenceStatus, inv.GetShopItems, inv.SetShopItems = nil, nil, nil
+end)
+
 h.report('armory')
