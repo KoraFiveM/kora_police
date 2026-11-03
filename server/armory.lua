@@ -14,13 +14,49 @@
 
 Police.armoryShops = Police.armoryShops or {}
 
+---kora_inventory keeps a shop's stock across restarts and never reseeds a
+---restored one, so an armory saved before an item was added to its config
+---would never show that item, and free-issue kit that ran out stayed out.
+---With Config.armory.restockOnStart, when this resource starts, every
+---configured row missing from the saved stock is put back and every row below
+---its configured amount is topped up; rows that hold another item (a reordered
+---config) are left alone. A kora_inventory restart mid-session does not
+---restock: what was taken this session stays taken.
+---@param shop table A Config.armory.shops entry.
+---@return boolean changed
+function Police.restockArmory(shop)
+    if Config.armory.restockOnStart == false then return false end
+    local current = exports.kora_inventory:GetShopItems(shop.id)
+    if type(current) ~= 'table' then return false end
+    local changed = false
+    for index, row in ipairs(shop.items or {}) do
+        local slot = math.floor(tonumber(row.slot) or index)
+        local stocked = current[slot]
+        if not stocked then
+            current[slot] = { name = row.name, amount = row.amount, price = row.price }
+            changed = true
+        elseif stocked.name == row.name and (tonumber(stocked.amount) or 0) < row.amount then
+            stocked.amount = row.amount
+            changed = true
+        end
+    end
+    if not changed then return false end
+    local ok, err = exports.kora_inventory:SetShopItems(shop.id, current)
+    if not ok then
+        print(('^3[kora_police] armory %s could not be restocked: %s^7'):format(shop.id, tostring(err)))
+        return false
+    end
+    return true
+end
+
 -- Registers every armory-room shop against kora_inventory. Called once at load
 -- (via the dependency-ordering guarantee below) AND again on every
 -- kora_inventory onResourceStart -- a `dependency 'kora_inventory'` declaration
 -- only guarantees START ORDER on a fresh boot, not survival of a later
 -- kora_inventory RESTART mid-session, which wipes kora_inventory's own shop table
 -- without touching kora_police at all.
-local function registerArmoryShops()
+---@param restock boolean Top the saved stock up (this resource starting).
+local function registerArmoryShops(restock)
     for _, shop in ipairs(Config.armory.shops) do
         -- `groups` is kora_inventory's own job/grade access check (see its
         -- server.lua canAccess/groupAllowed) -- set here so the shop is
@@ -36,13 +72,14 @@ local function registerArmoryShops()
             access = function(src) return Police.canAccessArmory(src, shop.id) end,
         })
         Police.armoryShops[shop.id] = { config = shop, key = key }
+        if key and restock then Police.restockArmory(shop) end
     end
 end
 
-CreateThread(registerArmoryShops)
+CreateThread(function() registerArmoryShops(true) end)
 
 AddEventHandler('onResourceStart', function(resourceName)
-    if resourceName == 'kora_inventory' then CreateThread(registerArmoryShops) end
+    if resourceName == 'kora_inventory' then CreateThread(function() registerArmoryShops(false) end) end
 end)
 
 ---@param src integer

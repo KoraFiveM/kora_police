@@ -234,6 +234,11 @@ Each `Config.armory.shops` entry is its own `exports.kora_inventory:RegisterShop
 room with `groups = { [Config.police.job] = shop.minGrade }` — grade 1
 (Cadet) and up sees Patrol, grade 3+ Sergeant, grade 4+ SWAT. Client:
 `RegisterNetEvent('qbpolice:client:openArmory', function(shopId) ... end)`.
+kora_inventory saves shop stock across restarts, so with `Config.armory.restockOnStart`
+(default `true`) every start of kora_police puts back configured items a saved room is
+missing and tops rows up to their `amount`; a kora_inventory restart mid-session does not.
+The Patrol room issues `empty_evidence_bag` (`Config.evidence.bagItem`), which collecting
+casings, blood and fingerprints consumes.
 
 ### Jail
 ```lua

@@ -86,4 +86,41 @@ h.test('a qualifying officer standing far from the room is refused', function()
     handle.setCoords(CHIEF, patrol.coords.x, patrol.coords.y, patrol.coords.z)
 end)
 
+h.test('the patrol armory issues the evidence bag needed to collect casings', function()
+    local found = false
+    for _, row in ipairs(patrol.items) do
+        if row.name == Config.evidence.bagItem then found = true end
+    end
+    h.assertTrue(found, 'Config.evidence.bagItem is free-issue in the patrol armory')
+end)
+
+h.test('a saved armory gets new config items back and its free kit topped up', function()
+    local inv = handle.exportImpls.kora_inventory
+    -- Stock saved before the evidence bag was configured, the handcuffs since run out.
+    local saved = {
+        [1] = { name = patrol.items[1].name, amount = patrol.items[1].amount, price = 0 },
+        [2] = { name = patrol.items[2].name, amount = patrol.items[2].amount, price = 0 },
+        [3] = { name = 'handcuffs', amount = 0, price = 0 },
+        [4] = { name = patrol.items[4].name, amount = patrol.items[4].amount, price = 0 },
+        [5] = { name = patrol.items[5].name, amount = patrol.items[5].amount, price = 0 },
+    }
+    local written
+    inv.GetShopItems = function(id) h.assertEqual(id, patrol.id); return saved end
+    inv.SetShopItems = function(id, items) written = items; return true end
+
+    h.assertTrue(Police.restockArmory(patrol), 'restocked')
+    h.assertEqual(written[3].amount, patrol.items[3].amount, 'run-out kit topped up')
+    h.assertEqual(written[6].name, Config.evidence.bagItem, 'new config item added to its slot')
+
+    written = nil
+    h.assertFalse(Police.restockArmory(patrol), 'nothing to do once full')
+    h.assertEqual(written, nil)
+
+    Config.armory.restockOnStart = false
+    saved[6] = nil
+    h.assertFalse(Police.restockArmory(patrol), 'off leaves saved stock alone')
+    Config.armory.restockOnStart = true
+    inv.GetShopItems, inv.SetShopItems = nil, nil
+end)
+
 h.report('armory')

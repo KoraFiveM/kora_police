@@ -196,4 +196,19 @@ h.test('inventory re-registration preserves stock and binds each room access cal
     h.assertTrue(callbackCalls > 0, 'callable cross-resource callbacks ran in fresh coroutines')
 end)
 
+h.test('a saved patrol armory without the evidence bag gets it back through the real inventory', function()
+    local bagSlot = #patrol.items
+    h.assertEqual(patrol.items[bagSlot].name, Config.evidence.bagItem)
+    local stock = shopInventory(patrol).stock
+    stock[bagSlot] = nil -- saved before the bag was configured
+    h.assertTrue(Police.restockArmory(patrol))
+    local row = shopInventory(patrol).stock[bagSlot]
+    h.assertEqual(row.name, Config.evidence.bagItem)
+    h.assertEqual(row.amount, patrol.items[bagSlot].amount)
+    h.assertEqual(row.price, 0)
+    local src = officer(patrol, patrol.minGrade)
+    h.assertTrue(exports.kora_inventory:buyItem(src, patrol.id, bagSlot, 1))
+    h.assertEqual(api.getItemCount(src, Config.evidence.bagItem), 1)
+end)
+
 h.report('armory_inventory')

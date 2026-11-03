@@ -127,7 +127,7 @@ Config.evidence = {
     createCooldown = 250,              -- minimum milliseconds between marker submissions from one player
     collectDistance = 2.5,             -- server-side distance required to collect a marker
     bagItem = 'empty_evidence_bag',    -- inventory item consumed to collect a casing, blood drop or fingerprint
-    bagLabel = 'Evidence Bag',         -- name of bagItem shown in missingBagMessage
+    bagLabel = 'Empty Evidence Bag',   -- name of bagItem shown in missingBagMessage (its inventory label); free in the Patrol Armory (Config.armory)
     missingBagMessage = 'You need an %s to collect %s.', -- shown when the officer has no bagItem; %s = bagLabel, then casings / evidence samples
     ballistic = {
         enabled = true,                -- whether fired server-owned rounds leave collectible casings
@@ -159,6 +159,7 @@ Config.armour = {
 }
 
 Config.armory = {
+    restockOnStart = true,             -- kora_inventory keeps shop stock across restarts: when kora_police starts (server boot), put back configured items missing from a saved armory and top rows up to their `amount` (new items show up, free kit never runs out for good; a kora_inventory restart mid-session does not restock); false = saved stock is left as it is
     shops = {
         {
             id = 'pd-armory-patrol',
@@ -173,6 +174,7 @@ Config.armory = {
                 { name = 'handcuffs',        price = 0,    amount = 5 },
                 { name = 'pistol_ammo',      price = 0,    amount = 10 },
                 { name = 'armor',            price = 0,    amount = 3 },
+                { name = 'empty_evidence_bag', price = 0,  amount = 50 }, -- Config.evidence.bagItem: needed to collect casings, blood and fingerprints
             },
         },
         {
