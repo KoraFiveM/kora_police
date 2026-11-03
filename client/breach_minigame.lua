@@ -6,10 +6,12 @@
 
 CreateThread(function()
     for _, door in ipairs(Config.breach.doors) do
+        if door.enabled == false then goto continue end
         local doorHash = joaat(door.id)
         AddDoorToSystem(doorHash, joaat(door.model), door.coords.x, door.coords.y, door.coords.z, false, false, false)
         DoorSystemSetDoorState(doorHash, 1, false, false)  -- locked
         door.hash = doorHash
+        ::continue::
     end
 end)
 
@@ -30,6 +32,7 @@ end
 local function registerBreachDoorTargets()
     Police.target.reset('breachDoors')
     for _, door in ipairs(Config.breach.doors) do
+        if door.enabled == false then goto continue end
         Police.target.box('breachDoors', {
             coords = door.coords,
             size = { x = 1.2, y = 1.2, z = 2.2 },
@@ -47,6 +50,7 @@ local function registerBreachDoorTargets()
                 },
             },
         })
+        ::continue::
     end
 end
 

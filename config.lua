@@ -299,8 +299,14 @@ Config.breach = {
     -- qbx_police): a lockpick-minigame door breach. Each entry is a real GTA
     -- door object registered with FiveM's own door system (self-replicating
     -- across clients, no server round trip needed for the lock state itself).
+    -- Per door: enabled = false skips it entirely (never locked, no Breach Door
+    -- target); unlockedFor = ms the door stays open after a successful breach.
+    -- The demo door is the MRPD armory door, 0.5 m from the Patrol Armory
+    -- target: when enabled it is locked for everyone and its Breach Door box
+    -- overlaps the armory, so it is off by default. Enable it only on a server
+    -- that moves the armory, or point the entry at a different door.
     doors = {
-        { id = 'qbpolice-breach-demo', model = 'v_ilev_gundoor01', coords = vector3(452.0, -980.0, 30.7), unlockedFor = 30000 },
+        { id = 'kora-police-breach-demo', enabled = false, model = 'v_ilev_gundoor01', coords = vector3(452.0, -980.0, 30.7), unlockedFor = 30000 },
     },
 }
 
