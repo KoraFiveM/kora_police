@@ -166,6 +166,19 @@ RegisterNetEvent('evidence:server:CreateCasing', function()
     createWorldEvidence(source, 'casing')
 end)
 
+---Item the officer must hold to package evidence (Config.evidence.bagItem).
+local function bagItem()
+    return Config.evidence.bagItem or 'empty_evidence_bag'
+end
+
+---Notification for a failed bag removal: a clear "you need X" message when the
+---bag is simply missing, the inventory's own reason for any other failure.
+local function bagFailureMessage(removeErr, what)
+    if removeErr and not tostring(removeErr):lower():find('not enough', 1, true) then return removeErr end
+    local template = Config.evidence.missingBagMessage or 'You need an %s to collect %s.'
+    return template:format(Config.evidence.bagLabel or 'Evidence Bag', what)
+end
+
 RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
     local src = source
     evidenceId = tonumber(evidenceId)
@@ -177,9 +190,9 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
     local ped = GetPlayerPed(src)
     if not ped or ped == 0 or #(GetEntityCoords(ped) - vector3(marker.coords.x, marker.coords.y, marker.coords.z)) > Config.evidence.collectDistance then return end
     if marker.ballistic then
-        local removed, removeErr = exports.kora_inventory:RemoveItem(src, 'empty_evidence_bag', 1, false, 'ballistic-casing-collection')
+        local removed, removeErr = exports.kora_inventory:RemoveItem(src, bagItem(), 1, false, 'ballistic-casing-collection')
         if not removed then
-            Kora.notify.send(src, { title = 'Evidence', message = removeErr or 'An empty evidence bag is required.', type = 'error' })
+            Kora.notify.send(src, { title = 'Evidence', message = bagFailureMessage(removeErr, 'casings'), type = 'error' })
             return
         end
         local added, addErr = exports.kora_inventory:AddItem(src, 'filled_evidence_bag', 1, false, {
@@ -187,7 +200,7 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
             type = 'ballistic_casing', caseId = marker.ballistic.caseId,
         }, 'ballistic-casing-collection')
         if not added then
-            exports.kora_inventory:AddItem(src, 'empty_evidence_bag', 1, false, {}, 'ballistic-casing-rollback')
+            exports.kora_inventory:AddItem(src, bagItem(), 1, false, {}, 'ballistic-casing-rollback')
             Kora.notify.send(src, { title = 'Evidence', message = addErr or 'Could not package casing.', type = 'error' })
             return
         end
@@ -270,14 +283,14 @@ local function collectSample(src, evidenceId, wantedType)
     if not marker or marker.type ~= wantedType or not Police.isPolice(src) then return end
     if marker.expiresAt <= GetGameTimer() then removeWorldEvidence(evidenceId); return end
     if not sameBucketAndNear(src, marker, Config.evidence.collectDistance) then return end
-    local removed, removeErr = exports.kora_inventory:RemoveItem(src, 'empty_evidence_bag', 1, false, 'evidence-sample-collection')
+    local removed, removeErr = exports.kora_inventory:RemoveItem(src, bagItem(), 1, false, 'evidence-sample-collection')
     if not removed then
-        Kora.notify.send(src, { title = 'Evidence', message = removeErr or 'An empty evidence bag is required.', type = 'error' })
+        Kora.notify.send(src, { title = 'Evidence', message = bagFailureMessage(removeErr, marker.type == 'casing' and 'casings' or 'evidence samples'), type = 'error' })
         return
     end
     local added, addErr = exports.kora_inventory:AddItem(src, 'filled_evidence_bag', 1, false, sampleInfo(marker), 'evidence-sample-collection')
     if not added then
-        exports.kora_inventory:AddItem(src, 'empty_evidence_bag', 1, false, {}, 'evidence-sample-rollback')
+        exports.kora_inventory:AddItem(src, bagItem(), 1, false, {}, 'evidence-sample-rollback')
         Kora.notify.send(src, { title = 'Evidence', message = addErr or 'Could not package evidence.', type = 'error' })
         return
     end

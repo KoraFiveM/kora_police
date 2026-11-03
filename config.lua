@@ -121,6 +121,9 @@ Config.evidence = {
     maxWorldMarkers = 500,             -- hard memory/broadcast cap across all world evidence
     createCooldown = 250,              -- minimum milliseconds between marker submissions from one player
     collectDistance = 2.5,             -- server-side distance required to collect a marker
+    bagItem = 'empty_evidence_bag',    -- inventory item consumed to collect a casing, blood drop or fingerprint
+    bagLabel = 'Evidence Bag',         -- name of bagItem shown in missingBagMessage
+    missingBagMessage = 'You need an %s to collect %s.', -- shown when the officer has no bagItem; %s = bagLabel, then casings / evidence samples
     ballistic = {
         enabled = true,                -- whether fired server-owned rounds leave collectible casings
         casingOffset = 0.75,           -- randomised distance from the shooter where a casing lands
