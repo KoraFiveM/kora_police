@@ -34,6 +34,7 @@ shared_scripts {
 -- load first; compat/police.lua calls into nearly every other file's
 -- Police.* functions and must load last.
 server_scripts {
+    'server/schema.lua',
     'server/migrate.lua',
     'server/core.lua',
     'server/items.lua',
