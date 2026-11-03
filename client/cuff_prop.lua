@@ -4,8 +4,10 @@
 -- Every client creates its own copy from the replicated `koraCuffed` player bag
 -- instead of the suspect spawning one networked object: a client-created
 -- networked object is refused under sv_entityLockdown, and a local copy cannot
--- be left behind by a crash or a disconnect. kora_lib's Kora.anim.attachProp
--- owns the objects, so a stop of this resource deletes them as well.
+-- be left behind by a crash or a disconnect. The object is a kora_lib
+-- Kora.entities one (local, deleted if this resource stops), attached here by
+-- ped bone id: Kora.anim.attachProp only takes bone names, which MP peds do not
+-- reliably resolve (kora_emotemenu hit the same), and it failed silently.
 --
 -- client/cuff.lua drives the local player (from Police.cuffed) and passes on the
 -- bag changes of everyone else.
@@ -18,6 +20,15 @@ local props = {}   -- serverId -> { prop = entity, ped = ped }
 local loading = {} -- serverId -> true while the cuffs model streams in
 local heard = {}   -- serverId -> true once a bag change or the server said anything about them
 local watching = false
+local warned = {}  -- message -> true once printed
+
+-- Ped bone ids for the bone names a config may use; GetPedBoneIndex takes the id.
+local BONE_IDS = {
+    SKEL_L_Hand = 18905, SKEL_R_Hand = 57005,
+    PH_L_Hand = 60309, PH_R_Hand = 28422,
+    IK_L_Hand = 36029, IK_R_Hand = 6286,
+}
+local DEFAULT_BONE = 60309
 
 ---@return table|nil
 local function settings()
@@ -30,11 +41,54 @@ local function ownServerId()
     return GetPlayerServerId(Kora.cache.playerId())
 end
 
+---A cuffs prop that cannot be made is reported once in F8, not on every check.
+local function warnOnce(message)
+    message = tostring(message)
+    if warned[message] then return end
+    warned[message] = true
+    print(('^3[kora_police] handcuffs prop: %s^7'):format(message))
+end
+
+local function deleteProp(prop)
+    if DoesEntityExist(prop) then DetachEntity(prop, true, false) end
+    Kora.entities.remove(prop)
+end
+
 local function removeProp(serverId)
     local entry = props[serverId]
     if not entry then return end
     props[serverId] = nil
-    pcall(Kora.anim.detachProp, entry.prop)
+    pcall(deleteProp, entry.prop)
+end
+
+---@return integer boneIndex -1 when the ped has no such bone
+local function boneIndexOf(ped, bone)
+    if bone == nil then bone = DEFAULT_BONE end
+    if type(bone) == 'string' then bone = BONE_IDS[bone] or tonumber(bone) or bone end
+    if type(bone) == 'number' then return GetPedBoneIndex(ped, math.floor(bone)) end
+    if type(bone) == 'string' and bone ~= '' then return GetEntityBoneIndexByName(ped, bone) end
+    return -1
+end
+
+---Creates the cuffs (yields while the model streams in) and attaches them to
+---`ped` at Config.cuff.prop.bone/offset/rotation.
+---@return integer|nil prop
+---@return string|nil error
+local function createProp(ped, cfg)
+    local boneIndex = boneIndexOf(ped, cfg.bone)
+    if not boneIndex or boneIndex == -1 then return nil, ('bone %s was not found on the ped'):format(tostring(cfg.bone)) end
+    local prop, err = Kora.entities.create(cfg.model, GetEntityCoords(ped))
+    if not prop then return nil, ('model %s could not be created: %s'):format(cfg.model, tostring(err)) end
+    if not DoesEntityExist(ped) then
+        Kora.entities.remove(prop)
+        return nil
+    end
+    local offset, rotation = cfg.offset or {}, cfg.rotation or {}
+    SetEntityCollision(prop, false, false)
+    AttachEntityToEntity(prop, ped, boneIndex,
+        offset.x or 0.0, offset.y or 0.0, offset.z or 0.0, rotation.x or 0.0, rotation.y or 0.0, rotation.z or 0.0,
+        true, false, false, false, 0, true)
+    return prop
 end
 
 ---The ped of `serverId` while it is in scope on this client, else nil.
@@ -74,12 +128,15 @@ local function ensureProp(serverId)
     end
     if loading[serverId] then return end
     loading[serverId] = true
-    local ok, prop = pcall(Kora.anim.attachProp, ped, cfg.model, cfg.bone or 'SKEL_L_Hand', cfg.offset, cfg.rotation)
+    local ok, prop, err = pcall(createProp, ped, cfg)
     loading[serverId] = nil
-    if not ok or not prop then return end
+    if not ok or not prop then
+        if not ok or err then warnOnce(ok and err or prop) end
+        return
+    end
     -- Uncuffed, or given a new ped, while the model streamed in.
     if not cuffed[serverId] or props[serverId] or pedOf(serverId, own) ~= ped then
-        pcall(Kora.anim.detachProp, prop)
+        pcall(deleteProp, prop)
         return
     end
     props[serverId] = { prop = prop, ped = ped }

@@ -18,7 +18,9 @@ local timeouts = {}
 local clock = 0
 local resourceStates = { kora_target = 'started', kora_phone = 'started' }
 local remotePeds = {}           -- serverId (== player index here) -> ped in scope on this client
-local attachedEntity = {}       -- ped -> true while the ped is attached to something (escorted)
+local attachedEntity = {}       -- ped -> what it is attached to (escorted, the paired cuff)
+local propRecords = {}          -- cuffs prop -> its calls.attached entry
+local pedAttach = {}            -- every AttachEntityToEntity of a ped (the suspect onto the officer)
 local seedList = nil            -- what kora_police:server:cuffedPlayers answers
 local currentAction = nil       -- 'dict/clip' of the last non-idle clip played
 
@@ -49,7 +51,22 @@ function _G.GetGameTimer() return clock end
 function _G.GetHashKey(name) return name end
 function _G.SetCurrentPedWeapon(_, weapon) if weapon == 'WEAPON_UNARMED' then calls.holstered = calls.holstered + 1 end end
 function _G.GetAnimDuration() return 4.5 end
-function _G.IsEntityAttached(entity) return attachedEntity[entity] == true end
+function _G.IsEntityAttached(entity) return attachedEntity[entity] ~= nil end
+-- Ped bone ids resolve through GetPedBoneIndex; bone names do not resolve on MP peds.
+function _G.GetPedBoneIndex(_, boneId) return 1000 + boneId end
+function _G.GetEntityBoneIndexByName() return -1 end
+function _G.SetEntityCollision() end
+function _G.AttachEntityToEntity(entity, target, boneIndex, ox, oy, oz, rx, ry, rz)
+    local record = propRecords[entity]
+    if record then
+        record.entity, record.boneIndex = target, boneIndex
+        record.offset, record.rotation = { x = ox, y = oy, z = oz }, { x = rx, y = ry, z = rz }
+        return
+    end
+    attachedEntity[entity] = target
+    pedAttach[#pedAttach + 1] = { entity = entity, target = target, boneIndex = boneIndex, x = ox, y = oy, z = oz, rz = rz }
+end
+function _G.DetachEntity(entity) if not propRecords[entity] then attachedEntity[entity] = nil end end
 function _G.GetEntityHeading() return 90.0 end
 function _G.GetEntityCoords() return { x = 0.0, y = 0.0, z = 0.0 } end
 function _G.GetOffsetFromEntityInWorldCoords(_, x, y, z) return { x = x, y = y, z = z } end
@@ -63,7 +80,10 @@ function _G.IsEntityPlayingAnim(_, dict, clip)
     if clip == 'idle' then return playingCuffAnim end
     return currentAction == ('%s/%s'):format(dict, clip)
 end
-function _G.IsEntityAttachedToEntity() return true end
+function _G.IsEntityAttachedToEntity(entity, target)
+    if propRecords[entity] then return true end
+    return attachedEntity[entity] == target
+end
 function _G.TaskPlayAnim(entity, dict, clip, _, _, duration, flag)
     calls.taskPlayAnim = calls.taskPlayAnim + 1
     calls.anims[#calls.anims + 1] = { entity = entity, dict = dict, clip = clip, duration = duration, flag = flag }
@@ -114,17 +134,18 @@ Kora = {
         acquire = function(ids, options) calls.acquired[#calls.acquired + 1] = { ids = ids, options = options }; return #calls.acquired end,
         release = function() calls.released = calls.released + 1; return true end,
     },
-    anim = {
-        attachProp = function(entity, model, bone, offset, rotation)
-            -- kora_lib asserts on a ped that does not exist; the export call raises.
-            if propFails then error(('Invalid entity: %s'):format(entity)) end
+    entities = {
+        create = function(model, coords)
+            -- kora_lib asserts on a model it cannot load; the export call raises.
+            if propFails then error(('Invalid model: %s'):format(model)) end
             if slowPropModel then Wait() end
             calls.props = calls.props + 1
             local prop = 900 + calls.props
-            calls.attached[#calls.attached + 1] = { entity = entity, model = model, bone = bone, offset = offset, rotation = rotation, prop = prop }
+            calls.attached[#calls.attached + 1] = { model = model, coords = coords, prop = prop }
+            propRecords[prop] = calls.attached[#calls.attached]
             return prop
         end,
-        detachProp = function(prop)
+        remove = function(prop)
             calls.propsRemoved = calls.propsRemoved + 1
             calls.removedProps[prop] = true
             return true
@@ -568,7 +589,7 @@ h.test('a fresh cuff puts the weapon away and closes the phone once', function()
     resourceStates.kora_phone = 'started'
 end)
 
-h.test('a fresh cuff plays the suspect side of the paired clip in front of the officer, then the cuffed idle', function()
+h.test('a fresh cuff plays the suspect side of the paired clip attached in front of the officer, then the cuffed idle', function()
     freshUncuffed()
     remotePeds[1] = 501
     local before = #calls.anims
@@ -580,10 +601,13 @@ h.test('a fresh cuff plays the suspect side of the paired clip in front of the o
     h.assertEqual(anim.duration, 3043, 'stopped at 3043 ms')
     h.assertEqual(anim.flag, 0)
     h.assertEqual(anim.entity, ped)
-    local moved = calls.moved[#calls.moved]
-    h.assertEqual(moved.entity, ped)
-    h.assertEqual(moved.y, cfg.offset.y, 'stood in front of the officer (+y in their frame)')
-    h.assertEqual(calls.heading, 90.0, 'facing the way the officer faces')
+    local attach = pedAttach[#pedAttach]
+    h.assertEqual(attach.entity, ped)
+    h.assertEqual(attach.target, 501, 'attached to the officer\'s ped')
+    h.assertEqual(attach.boneIndex, 0, 'on the officer\'s root (attach.bone = 0)')
+    h.assertEqual(attach.x, cfg.attach.offset.x)
+    h.assertEqual(attach.y, cfg.attach.offset.y, 'in front of the officer (+y in their frame)')
+    h.assertEqual(attach.rz, cfg.attach.rotation.z)
     h.assertTrue(handcuffsFlag)
     h.assertEqual(#calls.anims, before + 1, 'the idle does not start over the paired clip')
     changeListeners.ped()
@@ -605,17 +629,17 @@ h.test('the paired clip is skipped in a vehicle and without an officer; no move 
     cuffedEvent(true); resume()
     h.assertEqual(calls.anims[before + 1].clip, 'idle', 'no officer named (a re-cuff, a join): no paired clip')
     freshUncuffed()
-    attachedEntity[ped] = true
-    local moves = #calls.moved
+    attachedEntity[ped] = 777
+    local moves = #pedAttach
     cuffedEventBy(true, 1)
     h.assertEqual(calls.anims[#calls.anims].clip, 'crook_p2_back_left')
-    h.assertEqual(#calls.moved, moves, 'an attached ped is not moved')
+    h.assertEqual(#pedAttach, moves, 'an attached (escorted) ped is not attached to the officer')
     attachedEntity[ped] = nil
     freshUncuffed()
     remotePeds[1] = nil
-    moves = #calls.moved
+    moves = #pedAttach
     cuffedEventBy(true, 1)
-    h.assertEqual(#calls.moved, moves, 'officer out of scope: played where the suspect stands')
+    h.assertEqual(#pedAttach, moves, 'officer out of scope: played where the suspect stands')
     remotePeds[1] = 501
 end)
 
@@ -686,9 +710,11 @@ h.test('another player\'s cuffs: drawn from their bag on their ped, deleted when
     local cfg = Config.cuff.prop
     h.assertEqual(attached.entity, 512)
     h.assertEqual(attached.model, cfg.model)
-    h.assertEqual(attached.bone, cfg.bone)
-    h.assertEqual(attached.offset, cfg.offset)
-    h.assertEqual(attached.rotation, cfg.rotation)
+    h.assertEqual(attached.boneIndex, 1000 + cfg.bone, 'the ped bone id, through GetPedBoneIndex')
+    for _, axis in ipairs({ 'x', 'y', 'z' }) do
+        h.assertEqual(attached.offset[axis], cfg.offset[axis])
+        h.assertEqual(attached.rotation[axis], cfg.rotation[axis])
+    end
     h.assertEqual(Police.cuffProps.get(12), attached.prop)
     h.assertFalse(Police.cuffed, 'their bag never cuffs this player')
     setOtherBag(12, false)
@@ -763,6 +789,128 @@ h.test('players already cuffed when this client loads get their cuffs', function
     h.assertEqual(calls.attached[#calls.attached].entity, 520)
     h.assertTrue(Police.cuffProps.get(20) ~= nil)
     h.assertEqual(Police.cuffProps.get(5), nil, 'its own cuffs follow its own cuff state, not the list')
+end)
+
+-- t162: kora_ambulance publishes emsDown = false for every living player, which
+-- the client read as downed, so no cuff/uncuff clip ever played; and the cuffs
+-- prop was attached by bone name, which MP peds do not resolve.
+
+h.test('a living player (emsDown = false, as kora_ambulance publishes) still plays every cuff and uncuff clip', function()
+    freshUncuffed()
+    LocalPlayer.state.emsDown = false
+    remotePeds[1] = 501
+    local fire = eventHandlers['kora_police:client:cuffAction'][1]
+    local before = #calls.anims
+    fire('cuff', 7)
+    h.assertEqual(calls.anims[before + 1] and calls.anims[before + 1].clip, 'cop_p2_back_left', 'officer side of the cuff')
+    cuffedEventBy(true, 1)
+    h.assertEqual(calls.anims[before + 2] and calls.anims[before + 2].clip, 'crook_p2_back_left', 'suspect side of the cuff')
+    resume()
+    h.assertEqual(calls.anims[#calls.anims].clip, 'idle', 'then the cuffed idle')
+    playingCuffAnim = false
+    resume()
+    h.assertTrue(playingCuffAnim, 'the watch puts a lost cuffed idle back')
+    cuffedEventBy(false, 1)
+    h.assertEqual(calls.anims[#calls.anims].clip, 'a_uncuff', 'suspect side of the uncuff')
+    fire('uncuff', 7)
+    h.assertEqual(calls.anims[#calls.anims].clip, 'b_uncuff', 'officer side of the uncuff')
+    LocalPlayer.state.emsDown = 'laststand'
+    local count = #calls.anims
+    fire('cuff', 7)
+    h.assertEqual(#calls.anims, count, 'a downed officer plays nothing')
+    LocalPlayer.state.emsDown = nil
+    freshUncuffed()
+end)
+
+h.test('a living player (emsDown = false) is not restrained; last stand and dead are', function()
+    bag(30).emsDown = false
+    h.assertFalse(Police.isPedRestrained(30), 'free and alive: no rob or drag')
+    bag(30).emsDown = 'alive'
+    h.assertFalse(Police.isPedRestrained(30))
+    bag(30).emsDown = 'laststand'
+    h.assertTrue(Police.isPedRestrained(30))
+    bag(30).emsDown = 'dead'
+    h.assertTrue(Police.isPedRestrained(30))
+end)
+
+h.test('the 3043 ms cut is enforced: a one-off timer stops the clip if it is still on the ped', function()
+    freshUncuffed()
+    timeouts = {}
+    local fire = eventHandlers['kora_police:client:cuffAction'][1]
+    fire('cuff', 7)
+    local cut
+    for _, timeout in ipairs(timeouts) do if timeout.ms == 3043 then cut = timeout end end
+    h.assertTrue(cut ~= nil, 'a timer at the configured duration')
+    h.assertEqual(currentAction, 'mp_arrest_paired/cop_p2_back_left')
+    cut.fn()
+    h.assertEqual(currentAction, nil, 'stopped at 3043 ms')
+    timeouts = {}
+    fire('uncuff', 7)
+    h.assertEqual(#timeouts, 0, 'a clip played to its end (-1) has no timer')
+end)
+
+h.test('cuff with the bag before the event: the cuffed idle is taken off so the paired clip shows', function()
+    freshUncuffed()
+    remotePeds[1] = 501
+    setOwnBag(true, false)
+    h.assertTrue(playingCuffAnim, 'the bag alone puts the cuffed idle on')
+    calls.stopped = {}
+    cuffedEventBy(true, 1)
+    h.assertTrue(contains(calls.stopped, 'mp_arresting/idle'), 'the upper-body idle is stopped first')
+    h.assertEqual(currentAction, 'mp_arrest_paired/crook_p2_back_left')
+    freshUncuffed()
+end)
+
+h.test('the suspect is let go of the officer after attach.ms, unless an escort took over', function()
+    freshUncuffed()
+    remotePeds[1] = 501
+    local ms = Config.cuff.anims.cuff.suspect.attach.ms
+    local function runDetach()
+        for _, timeout in ipairs(timeouts) do if timeout.ms == ms then timeout.fn() end end
+    end
+    timeouts = {}
+    cuffedEventBy(true, 1)
+    h.assertEqual(attachedEntity[ped], 501)
+    runDetach()
+    h.assertEqual(attachedEntity[ped], nil, 'detached after attach.ms')
+    freshUncuffed()
+    timeouts = {}
+    cuffedEventBy(true, 1)
+    Police.escortOfficer = 1
+    runDetach()
+    h.assertEqual(attachedEntity[ped], 501, 'an escort keeps the suspect attached')
+    Police.escortOfficer, attachedEntity[ped] = nil, nil
+    freshUncuffed()
+end)
+
+h.test('a cuffs bone given by name is turned into its ped bone id', function()
+    freshUncuffed()
+    remotePeds[17] = 517
+    Config.cuff.prop.bone = 'PH_L_Hand'
+    setOtherBag(17, true)
+    h.assertEqual(calls.attached[#calls.attached].entity, 517)
+    h.assertEqual(calls.attached[#calls.attached].boneIndex, 1000 + 60309)
+    setOtherBag(17, false)
+    Config.cuff.prop.bone = 60309
+    resume()
+end)
+
+h.test('a cuffs prop that cannot be made is reported once in F8, not on every check', function()
+    freshUncuffed()
+    local printed, realPrint = {}, print
+    print = function(message) printed[#printed + 1] = message end
+    Config.cuff.prop.bone = 'NO_SUCH_BONE'
+    remotePeds[18] = 518
+    local before = #calls.attached
+    setOtherBag(18, true)
+    resume(); resume(); resume()
+    print = realPrint
+    Config.cuff.prop.bone = 60309
+    h.assertEqual(#calls.attached, before, 'no prop without the bone')
+    h.assertEqual(#printed, 1, 'one warning')
+    h.assertTrue(tostring(printed[1]):find('NO_SUCH_BONE', 1, true) ~= nil)
+    setOtherBag(18, false)
+    resume()
 end)
 
 h.report('cuff_client')

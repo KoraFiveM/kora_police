@@ -37,9 +37,11 @@ local function ownServerId()
     return GetPlayerServerId(Kora.cache.playerId())
 end
 
+-- kora_ambulance publishes `emsDown = false` for every living player (at login
+-- and revive), so the value has to be read through Police.isDownValue: a plain
+-- `~= 'alive'` test called everyone downed and no cuff/uncuff clip ever played.
 local function isDowned()
-    local down = LocalPlayer.state.emsDown
-    return down ~= nil and down ~= 'alive'
+    return Police.isDownValue(LocalPlayer.state.emsDown)
 end
 
 ---On foot, alive and in control of the ped: the only time a one-off cuff/uncuff
@@ -67,8 +69,10 @@ local function loadActionAnim(anim)
 end
 
 ---Plays a loaded Config.cuff.anims clip on `ped` and releases the dictionary
----(the playing clip keeps what it needs). `duration` > 0 stops it there (the
----cuff clips are cut at 3043 ms); -1 plays the clip once to its end.
+---(the playing clip keeps what it needs). `duration` > 0 cuts it there (the
+---cuff clips stop at 3043 ms): passed to TaskPlayAnim and enforced by a one-off
+---timer that stops the clip if it is still on the ped; -1 plays the clip once
+---to its end.
 ---@return integer ms how long it plays
 local function startActionAnim(ped, anim)
     local duration = math.floor(tonumber(anim.duration) or -1)
@@ -77,27 +81,42 @@ local function startActionAnim(ped, anim)
     if ms < 0 then ms = math.floor((tonumber(GetAnimDuration(anim.dict, anim.clip)) or 0) * 1000) end
     TaskPlayAnim(ped, anim.dict, anim.clip, 8.0, -8.0, duration, math.floor(tonumber(anim.flag) or 0), 0.0, false, false, false)
     RemoveAnimDict(anim.dict)
+    if duration > 0 then
+        SetTimeout(duration, function()
+            if DoesEntityExist(ped) and IsEntityPlayingAnim(ped, anim.dict, anim.clip, 3) then
+                StopAnimTask(ped, anim.dict, anim.clip, 8.0)
+            end
+        end)
+    end
     return ms
 end
 
----Stands the local ped where the paired clip expects it: `offset` metres from
----the officer in the officer's own frame (+y is in front of them), facing the
----officer's heading plus `heading`. Skipped when the officer is not in scope or
----the spot is not where the ped already roughly is, and for an escorted/carried
----(attached) ped.
-local function alignWithOfficer(ped, officerSrc, offset, heading)
-    if type(offset) ~= 'table' and type(offset) ~= 'vector3' then return end
-    if IsEntityAttached(ped) then return end
+---Holds the local ped where the paired clip expects it while it starts:
+---attached to the officer (`attach.bone`: 0 = the ped root, else a ped bone id)
+---at `attach.offset` in the officer's frame (+y = in front of them) turned by
+---`attach.rotation`, and let go after `attach.ms`. The suspect's own client
+---attaches its own ped, as an escort does, so every client sees it. Skipped when
+---the officer is not in scope or not in reach, and for a ped that is already
+---attached (escorted, carried).
+local function attachToOfficer(ped, officerSrc, attach)
+    if type(attach) ~= 'table' or IsEntityAttached(ped) then return end
     local player = GetPlayerFromServerId(officerSrc)
     if not player or player == -1 then return end
     local officerPed = GetPlayerPed(player)
     if not validPed(officerPed) or officerPed == ped then return end
-    local spot = GetOffsetFromEntityInWorldCoords(officerPed, offset.x or 0.0, offset.y or 0.0, offset.z or 0.0)
-    local here = GetEntityCoords(ped)
-    local dx, dy, dz = spot.x - here.x, spot.y - here.y, spot.z - here.z
+    local there, here = GetEntityCoords(officerPed), GetEntityCoords(ped)
+    local dx, dy, dz = there.x - here.x, there.y - here.y, there.z - here.z
     if math.sqrt(dx * dx + dy * dy + dz * dz) > (tonumber(Config.cuff.distance) or 2.5) + 1.0 then return end
-    SetEntityCoordsNoOffset(ped, spot.x, spot.y, spot.z, false, false, false)
-    SetEntityHeading(ped, (GetEntityHeading(officerPed) + (tonumber(heading) or 0.0)) % 360.0)
+    local offset, rotation = attach.offset or {}, attach.rotation or {}
+    local bone = math.floor(tonumber(attach.bone) or 0)
+    AttachEntityToEntity(ped, officerPed, bone == 0 and 0 or GetPedBoneIndex(officerPed, bone),
+        offset.x or 0.0, offset.y or 0.0, offset.z or 0.0, rotation.x or 0.0, rotation.y or 0.0, rotation.z or 0.0,
+        false, false, false, false, 2, true)
+    SetTimeout(math.max(0, math.floor(tonumber(attach.ms) or 950)), function()
+        -- An escort that started meanwhile owns the attachment now.
+        if Police.escortOfficer or not DoesEntityExist(ped) then return end
+        if IsEntityAttachedToEntity(ped, officerPed) then DetachEntity(ped, true, false) end
+    end)
 end
 
 -- Nothing tells us when another script (an emote, a scenario, a progress bar)
@@ -123,7 +142,10 @@ local function playPairedCuff(ped, version, officerSrc)
     if not anim or not officerSrc or not canPlayActionAnim(ped) then return false end
     if not loadActionAnim(anim) then return false end
     if not stillCuffed(version) or not validPed(ped) then RemoveAnimDict(anim.dict); return false end
-    alignWithOfficer(ped, officerSrc, anim.offset, anim.heading)
+    -- The cuffed idle (an upper-body task, already on when the bag arrived before
+    -- the event) would hold the arms behind the back over the paired clip.
+    if IsEntityPlayingAnim(ped, CUFF_DICT, CUFF_CLIP, 3) then StopAnimTask(ped, CUFF_DICT, CUFF_CLIP, 8.0) end
+    attachToOfficer(ped, officerSrc, anim.attach)
     local ms = startActionAnim(ped, anim)
     SetEnableHandcuffs(ped, true)
     animApplied = true
@@ -245,7 +267,7 @@ local function playUncuffAnim(officerSrc, version)
     if not anim or not officerSrc or not canPlayActionAnim(ped) then return end
     if not loadActionAnim(anim) then return end
     if Police.cuffed or version ~= visualsVersion or not validPed(ped) then RemoveAnimDict(anim.dict); return end
-    alignWithOfficer(ped, officerSrc, anim.offset, anim.heading)
+    attachToOfficer(ped, officerSrc, anim.attach)
     startActionAnim(ped, anim)
 end
 

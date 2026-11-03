@@ -49,15 +49,20 @@ Config.cuff = {
     -- not downed, and only cosmetic (the cuff is already in force on the server).
     -- dict/clip: the animation. duration: ms after which it is stopped (-1 = play
     -- the clip once to its end). flag: TaskPlayAnim flags (0 = full body, once).
-    -- offset/heading (suspect side, optional): where the suspect is stood first,
-    -- relative to the officer (+y = in front of them), and the extra heading on top
-    -- of the officer's. The 'p2_back' cuff pair is cuffing from behind: the suspect
-    -- stands 0.45 m in front, facing the same way. Remove a side to skip it; the
-    -- cuffed idle (mp_arresting idle) takes over when the suspect's cuff clip ends.
+    -- attach (suspect side, optional): the suspect is attached to the officer while
+    -- the clip starts, so the pair lines up: bone = officer ped bone id (0 = the
+    -- ped root), offset in the officer's frame (+y = in front of them), rotation
+    -- on top of the officer's, ms = how long before they are let go. The
+    -- 'p2_back' cuff pair is cuffing from behind: the suspect stands in front of
+    -- the officer, back to them. Remove a side to skip it; the cuffed idle
+    -- (mp_arresting idle) takes over when the suspect's cuff clip ends.
     anims = {
         cuff = {
             officer = { dict = 'mp_arrest_paired', clip = 'cop_p2_back_left', duration = 3043, flag = 0 },
-            suspect = { dict = 'mp_arrest_paired', clip = 'crook_p2_back_left', duration = 3043, flag = 0, offset = vector3(0.0, 0.45, 0.0), heading = 0.0 },
+            suspect = {
+                dict = 'mp_arrest_paired', clip = 'crook_p2_back_left', duration = 3043, flag = 0,
+                attach = { bone = 0, offset = vector3(-0.1, 0.45, 0.0), rotation = vector3(0.0, 0.0, 20.0), ms = 950 },
+            },
         },
         uncuff = {
             officer = { dict = 'mp_arresting', clip = 'b_uncuff', duration = -1, flag = 0 },
@@ -70,8 +75,8 @@ Config.cuff = {
     prop = {
         enabled = true,
         model = 'p_cs_cuffs_02_s',
-        bone = 'SKEL_L_Hand',          -- bone name (60309)
-        offset = vector3(-0.055, 0.06, 0.04),
+        bone = 60309,                  -- ped bone id (60309 = PH_L_Hand, the left wrist); SKEL_L_Hand/PH_L_Hand/... names are turned into their id
+        offset = vector3(-0.055, 0.06, 0.04),   -- on that bone
         rotation = vector3(265.0, 155.0, 80.0),
         checkInterval = 1000,          -- ms between checks, only while someone is cuffed, that cuffed players coming into view (or respawning) have their cuffs; never below 250
     },

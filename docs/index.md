@@ -148,19 +148,23 @@ hand is put away (`Config.cuff.holsterWeapon`) and kora_phone is closed
 When a player cuffs someone who was not cuffed, both play the paired cuff
 animation from `Config.cuff.anims.cuff` (by default `mp_arrest_paired`
 `cop_p2_back_left` / `crook_p2_back_left`, stopped at 3043 ms): the officer on
-their own client, the suspect on theirs, first stood 0.45 m in front of the
-officer facing the same way (`offset` / `heading`), then the cuffed idle takes
-over. An uncuff by another player plays `Config.cuff.anims.uncuff` on both
+their own client, the suspect on theirs, attached in front of the officer for
+the first 950 ms so the pair lines up (`attach`: bone, offset, rotation, ms),
+then the cuffed idle takes over. An uncuff by another player plays `Config.cuff.anims.uncuff` on both
 (`mp_arresting` `b_uncuff` for the officer, `a_uncuff` for the suspect). The
 animations are only cosmetic: the server has already put the cuff on or taken it
-off when they start, and they only play on foot and not downed. The suspect is
+off when they start, and they only play on foot and not downed (kora_ambulance's
+`emsDown` bag: `'laststand'`/`'dead'` is downed, `false` is alive). The suspect is
 told `Config.cuff.notify.cuffed` / `.uncuffed` ("You have been uncuffed and are
 free."); `''` turns a message off.
 
 Every cuffed player wears handcuffs on their wrists (`Config.cuff.prop`, default
-`p_cs_cuffs_02_s` on `SKEL_L_Hand`), seen by every player. Each client draws
-them itself from the replicated `koraCuffed` bag instead of one networked object,
-so they also work under `sv_entityLockdown strict` and can never be orphaned. A
+`p_cs_cuffs_02_s` on ped bone 60309, the left wrist), seen by every player. Each
+client draws them itself from the replicated `koraCuffed` bag instead of one
+networked object, so they also work under `sv_entityLockdown strict` and can
+never be orphaned. `bone` is a ped bone id (a name such as `PH_L_Hand` is turned
+into its id: MP peds do not reliably resolve bone names); a prop that cannot be made is
+reported once in F8. A
 client checks every `Config.cuff.prop.checkInterval` ms, and only while someone
 is cuffed, for cuffed players coming into view or respawning. The cuffs go when
 the cuff does, when the player leaves view or disconnects, and when this

@@ -120,6 +120,16 @@ function Police.isPedCuffed(ped)
     return state ~= nil and state.koraCuffed == true
 end
 
+---Whether an `emsDown` bag value means last stand or dead. kora_ambulance
+---publishes 'laststand'/'dead' while down and `false` (not 'alive') for a
+---living player, at every login and revive, so only a truthy value other than
+---'alive' is downed (the same rule as Police.isDowned on the server).
+---@param value any
+---@return boolean
+function Police.isDownValue(value)
+    return value ~= nil and value ~= false and value ~= 'alive'
+end
+
 ---Cuffed, or downed when Config.incapacitated allows it: who may be robbed or dragged.
 ---@param ped integer
 ---@return boolean
@@ -128,7 +138,7 @@ function Police.isPedRestrained(ped)
     if not state then return false end
     local cfg = Config.incapacitated or {}
     if cfg.cuffed ~= false and state.koraCuffed == true then return true end
-    return cfg.downed ~= false and state.emsDown ~= nil and state.emsDown ~= 'alive'
+    return cfg.downed ~= false and Police.isDownValue(state.emsDown)
 end
 
 ---Legacy client export.
