@@ -508,4 +508,143 @@ h.test('uncuffing an escorted suspect ends the escort on both sides', function()
     h.assertEqual(events[#events].args[1], false)
 end)
 
+-- t156: who is told, and who plays which half of the cuff/uncuff animations.
+
+local function notificationsFor(src, message)
+    local found = {}
+    for _, entry in ipairs(handle.notifications) do
+        if entry.src == src and (message == nil or entry.payload.message == message) then found[#found + 1] = entry end
+    end
+    return found
+end
+
+h.test('a fresh cuff names the officer to the suspect, starts the officer\'s half and tells the suspect', function()
+    resetAll()
+    local actions = #handle.clientEventsFor('kora_police:client:cuffAction')
+    local told = #notificationsFor(SUSPECT, Config.cuff.notify.cuffed)
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    local cuffed = handle.lastClient('qbpolice:client:cuffed')
+    h.assertEqual(cuffed.target, SUSPECT)
+    h.assertEqual(cuffed.args[3], OFFICER, 'the suspect plays the paired clip against this officer')
+    local action = handle.lastClient('kora_police:client:cuffAction')
+    h.assertEqual(#handle.clientEventsFor('kora_police:client:cuffAction'), actions + 1)
+    h.assertEqual(action.target, OFFICER)
+    h.assertEqual(action.args[1], 'cuff')
+    h.assertEqual(action.args[2], SUSPECT)
+    h.assertEqual(#notificationsFor(SUSPECT, Config.cuff.notify.cuffed), told + 1)
+    h.assertEqual(handle.stateBag(SUSPECT).koraCuffed, true, 'the cuff is in force when the animation starts')
+
+    actions = #handle.clientEventsFor('kora_police:client:cuffAction')
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    h.assertEqual(#handle.clientEventsFor('kora_police:client:cuffAction'), actions, 'a re-cuff plays nothing')
+    h.assertEqual(handle.lastClient('qbpolice:client:cuffed').args[3], nil)
+    h.assertEqual(#notificationsFor(SUSPECT, Config.cuff.notify.cuffed), told + 1, 'and tells nobody again')
+end)
+
+h.test('an officer uncuff tells the freed player and plays both halves of the uncuff', function()
+    resetAll()
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    local told = #notificationsFor(SUSPECT, Config.cuff.notify.uncuffed)
+    h.assertTrue(Police.uncuff(OFFICER, SUSPECT))
+    local notes = notificationsFor(SUSPECT, Config.cuff.notify.uncuffed)
+    h.assertEqual(#notes, told + 1)
+    h.assertEqual(notes[#notes].payload.type, 'success')
+    h.assertEqual(handle.lastClient('qbpolice:client:cuffed').args[3], OFFICER)
+    local action = handle.lastClient('kora_police:client:cuffAction')
+    h.assertEqual(action.target, OFFICER)
+    h.assertEqual(action.args[1], 'uncuff')
+    h.assertEqual(action.args[2], SUSPECT)
+end)
+
+h.test('the handcuffs item and its soft-cuffer get the same cuff and uncuff treatment', function()
+    resetAll()
+    handle.setCoords(SUSPECT, 0.0, FAR, 0.0); handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0)
+    h.assertTrue(Police.softCuffNearby(OFFICER))
+    h.assertEqual(handle.lastClient('kora_police:client:cuffAction').args[1], 'cuff')
+    h.assertEqual(handle.lastClient('qbpolice:client:cuffed').args[3], OFFICER)
+    handle.players[OFFICER].job.onduty = false
+    h.assertTrue(Police.uncuff(OFFICER, CIVILIAN))
+    h.assertEqual(handle.lastClient('kora_police:client:cuffAction').args[1], 'uncuff')
+    h.assertEqual(#notificationsFor(CIVILIAN, Config.cuff.notify.uncuffed) > 0, true)
+end)
+
+h.test('an escape, a booking and a login clean-up release silently', function()
+    resetAll()
+    handle.setCoords(SUSPECT, 0.0, FAR, 0.0); handle.setCoords(CIVILIAN, 0.0, 0.0, 0.0)
+    h.assertTrue(Police.softCuffNearby(OFFICER))
+    local actions = #handle.clientEventsFor('kora_police:client:cuffAction')
+    local told = #notificationsFor(CIVILIAN, Config.cuff.notify.uncuffed)
+    local authorization = Police.beginBreakCuffs(CIVILIAN)
+    local proof = handle.issueMinigameProof(CIVILIAN, Config.minigames.breakCuffs.type, authorization)
+    h.assertTrue(Police.breakCuffs(CIVILIAN, proof))
+    h.assertEqual(handle.lastClient('qbpolice:client:cuffed').args[3], nil, 'an escape names no officer')
+    h.assertEqual(#handle.clientEventsFor('kora_police:client:cuffAction'), actions, 'and plays no uncuff animation')
+    h.assertEqual(#notificationsFor(CIVILIAN, Config.cuff.notify.uncuffed), told, '"You broke free!" is its own message')
+
+    handle.setCoords(SUSPECT, 0.0, 0.0, 0.0); handle.setCoords(CIVILIAN, 0.0, FAR, 0.0)
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    local suspectTold = #notificationsFor(SUSPECT, Config.cuff.notify.uncuffed)
+    actions = #handle.clientEventsFor('kora_police:client:cuffAction')
+    h.assertTrue(Police.uncuff(OFFICER, SUSPECT, { silent = true }))
+    h.assertFalse(Police.isCuffed(SUSPECT))
+    h.assertEqual(handle.lastClient('qbpolice:client:cuffed').args[3], nil)
+    h.assertEqual(#handle.clientEventsFor('kora_police:client:cuffAction'), actions, 'booking: no uncuff animation')
+
+    handle.players[SUSPECT].data.metadata.ishandcuffed = true
+    handle.fireEvent('qbcore:server:playerLoaded', 0, SUSPECT, 'CID2')
+    h.assertEqual(#handle.clientEventsFor('kora_police:client:cuffAction'), actions, 'login clean-up: no animation')
+    h.assertEqual(#notificationsFor(SUSPECT, Config.cuff.notify.uncuffed), suspectTold, 'booking and login clean-up tell nobody they are free')
+end)
+
+h.test('jailing releases the cuffs without the uncuff animation or a "you are free" notification', function()
+    local f = assert(io.open('server/jail.lua', 'r')); local src = f:read('*a'); f:close()
+    h.assertTrue(src:find('Police.uncuff(officerSrc, targetSrc, { silent = true })', 1, true) ~= nil)
+end)
+
+h.test('Config.cuff.notify texts can be turned off', function()
+    resetAll()
+    local saved = Config.cuff.notify
+    Config.cuff.notify = { cuffed = '', uncuffed = false }
+    local before = #handle.notifications
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    h.assertTrue(Police.uncuff(OFFICER, SUSPECT))
+    h.assertEqual(#handle.notifications, before)
+    Config.cuff.notify = saved
+end)
+
+h.test('restoring a stored cuff at login plays nothing and names nobody', function()
+    resetAll()
+    Config.cuff.restoreOnLogin = true
+    handle.players[SUSPECT].data.metadata.ishandcuffed = true
+    local actions = #handle.clientEventsFor('kora_police:client:cuffAction')
+    handle.fireEvent('qbcore:server:playerLoaded', 0, SUSPECT, 'CID2')
+    h.assertEqual(handle.lastClient('qbpolice:client:cuffed').args[1], true)
+    h.assertEqual(handle.lastClient('qbpolice:client:cuffed').args[3], nil)
+    h.assertEqual(#handle.clientEventsFor('kora_police:client:cuffAction'), actions)
+    Config.cuff.restoreOnLogin = nil
+end)
+
+h.test('a loading client is told who is cuffed right now', function()
+    resetAll()
+    local list = Kora.callback.registry['kora_police:server:cuffedPlayers']
+    h.assertEqual(#list(OFFICER), 0)
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    local cuffed = list(CIVILIAN)
+    h.assertEqual(#cuffed, 1)
+    h.assertEqual(cuffed[1], SUSPECT)
+end)
+
+h.test('a cuffed player dropping without a logout tells every client to take their cuffs off', function()
+    resetAll()
+    h.assertTrue(Police.cuff(OFFICER, SUSPECT))
+    local before = #handle.clientEventsFor('kora_police:client:cuffedPlayerGone')
+    handle.fireEvent('playerDropped', SUSPECT)
+    local events = handle.clientEventsFor('kora_police:client:cuffedPlayerGone')
+    h.assertEqual(#events, before + 1)
+    h.assertEqual(events[#events].target, -1)
+    h.assertEqual(events[#events].args[1], SUSPECT)
+    handle.fireEvent('playerDropped', CIVILIAN)
+    h.assertEqual(#handle.clientEventsFor('kora_police:client:cuffedPlayerGone'), before + 1, 'nothing for a player who was not cuffed')
+end)
+
 h.report('cuff')

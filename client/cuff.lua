@@ -1,22 +1,26 @@
 -- Cuff/uncuff targeting, plus the visual/control side of being cuffed
--- (animation, attached prop, disabled weapons/sprint) for whichever local
--- player the state actually applies to. The cuffed state itself comes from the
--- server (state bag + event), never from the local animation.
+-- (animation, disabled weapons/sprint/targeting) for whichever local player the
+-- state actually applies to, and both sides of the cuff/uncuff animations
+-- (Config.cuff.anims). The cuffed state itself comes from the server (state bag
+-- + event), never from the local animation. The handcuffs prop on every cuffed
+-- player, this one included, is client/cuff_prop.lua.
 
 local CUFF_DICT, CUFF_CLIP = 'mp_arresting', 'idle'
-local CUFF_PROP_MODEL, CUFF_PROP_BONE = 'p_cs_cuffs_01', 'SKEL_L_Hand'
-local attachedProp = nil
 local controlLease = nil
 local watching = false
 
 local confirmRequested = false
 -- The cuff animation/handcuffed flag went on this player's ped and has not been taken off.
 local animApplied = false
+-- The paired cuff clip (Config.cuff.anims.cuff.suspect) on this ped: { dict, clip, untilMs }.
+local pairedAnim = nil
+-- kora_target's eye was switched off by this file for the current cuff.
+local targetBlocked = false
 
--- Bumped by every apply and every clear. Streaming the animation dictionary or
--- the cuffs model can take frames, and each cuffStateChanged handler runs in its
--- own coroutine, so an uncuff can land while a cuff is still loading. Whatever
--- comes back from a load to a newer version (or to a free player) does nothing.
+-- Bumped by every apply and every clear. Streaming the animation dictionary can
+-- take frames, and each cuffStateChanged handler runs in its own coroutine, so
+-- an uncuff can land while a cuff is still loading. Whatever comes back from a
+-- load to a newer version (or to a free player) does nothing.
 local visualsVersion = 0
 
 local function stillCuffed(version)
@@ -27,6 +31,73 @@ end
 ---can stop existing between two calls (respawn, model change).
 local function validPed(ped)
     return type(ped) == 'number' and ped ~= 0 and DoesEntityExist(ped)
+end
+
+local function ownServerId()
+    return GetPlayerServerId(Kora.cache.playerId())
+end
+
+local function isDowned()
+    local down = LocalPlayer.state.emsDown
+    return down ~= nil and down ~= 'alive'
+end
+
+---On foot, alive and in control of the ped: the only time a one-off cuff/uncuff
+---clip is played. A seated, downed or ragdolling ped keeps its own animation.
+local function canPlayActionAnim(ped)
+    return validPed(ped) and not Kora.cache.vehicle() and not Kora.cache.isDead() and not isDowned() and not IsPedRagdoll(ped)
+end
+
+---@param action 'cuff'|'uncuff'
+---@param side 'officer'|'suspect'
+---@return table|nil
+local function actionAnim(action, side)
+    local anims = Config.cuff.anims
+    local set = type(anims) == 'table' and anims[action]
+    local anim = type(set) == 'table' and set[side]
+    if type(anim) ~= 'table' or type(anim.dict) ~= 'string' or type(anim.clip) ~= 'string' then return nil end
+    return anim
+end
+
+---Streams a Config.cuff.anims clip in through kora_lib (with its timeout). A
+---dictionary that does not exist is a config error, not a reason to fail the cuff.
+local function loadActionAnim(anim)
+    local ok, loaded = pcall(Kora.stream.loadAnimDict, anim.dict)
+    return ok and loaded ~= false and loaded ~= nil
+end
+
+---Plays a loaded Config.cuff.anims clip on `ped` and releases the dictionary
+---(the playing clip keeps what it needs). `duration` > 0 stops it there (the
+---cuff clips are cut at 3043 ms); -1 plays the clip once to its end.
+---@return integer ms how long it plays
+local function startActionAnim(ped, anim)
+    local duration = math.floor(tonumber(anim.duration) or -1)
+    if duration <= 0 then duration = -1 end
+    local ms = duration
+    if ms < 0 then ms = math.floor((tonumber(GetAnimDuration(anim.dict, anim.clip)) or 0) * 1000) end
+    TaskPlayAnim(ped, anim.dict, anim.clip, 8.0, -8.0, duration, math.floor(tonumber(anim.flag) or 0), 0.0, false, false, false)
+    RemoveAnimDict(anim.dict)
+    return ms
+end
+
+---Stands the local ped where the paired clip expects it: `offset` metres from
+---the officer in the officer's own frame (+y is in front of them), facing the
+---officer's heading plus `heading`. Skipped when the officer is not in scope or
+---the spot is not where the ped already roughly is, and for an escorted/carried
+---(attached) ped.
+local function alignWithOfficer(ped, officerSrc, offset, heading)
+    if type(offset) ~= 'table' and type(offset) ~= 'vector3' then return end
+    if IsEntityAttached(ped) then return end
+    local player = GetPlayerFromServerId(officerSrc)
+    if not player or player == -1 then return end
+    local officerPed = GetPlayerPed(player)
+    if not validPed(officerPed) or officerPed == ped then return end
+    local spot = GetOffsetFromEntityInWorldCoords(officerPed, offset.x or 0.0, offset.y or 0.0, offset.z or 0.0)
+    local here = GetEntityCoords(ped)
+    local dx, dy, dz = spot.x - here.x, spot.y - here.y, spot.z - here.z
+    if math.sqrt(dx * dx + dy * dy + dz * dz) > (tonumber(Config.cuff.distance) or 2.5) + 1.0 then return end
+    SetEntityCoordsNoOffset(ped, spot.x, spot.y, spot.z, false, false, false)
+    SetEntityHeading(ped, (GetEntityHeading(officerPed) + (tonumber(heading) or 0.0)) % 360.0)
 end
 
 -- Nothing tells us when another script (an emote, a scenario, a progress bar)
@@ -44,25 +115,25 @@ local function playCuffAnim(ped, version)
     return true
 end
 
-local function removeCuffProp()
-    if attachedProp then pcall(Kora.anim.detachProp, attachedProp); attachedProp = nil end
-end
-
--- The prop is cosmetic: Kora.anim.attachProp raises on a ped that is gone, and
--- that must never take the cuff state or the rest of the visuals down with it.
----@return boolean attached
-local function ensureCuffProp(ped, version)
-    if not validPed(ped) then return false end
-    if attachedProp and DoesEntityExist(attachedProp) and IsEntityAttachedToEntity(attachedProp, ped) then return true end
-    removeCuffProp()
-    local ok, prop = pcall(Kora.anim.attachProp, ped, CUFF_PROP_MODEL, CUFF_PROP_BONE, { x = 0.0, y = 0.0, z = 0.0 })
-    if not ok or not prop then return false end
-    -- Uncuffed while the model streamed in, or another apply attached one first.
-    if not stillCuffed(version) or attachedProp then
-        pcall(Kora.anim.detachProp, prop)
-        return attachedProp ~= nil and stillCuffed(version)
-    end
-    attachedProp = prop
+---The suspect's half of the paired cuff animation, when the server named the
+---officer who put the cuffs on. The cuffed idle takes over when it ends.
+---@return boolean played
+local function playPairedCuff(ped, version, officerSrc)
+    local anim = actionAnim('cuff', 'suspect')
+    if not anim or not officerSrc or not canPlayActionAnim(ped) then return false end
+    if not loadActionAnim(anim) then return false end
+    if not stillCuffed(version) or not validPed(ped) then RemoveAnimDict(anim.dict); return false end
+    alignWithOfficer(ped, officerSrc, anim.offset, anim.heading)
+    local ms = startActionAnim(ped, anim)
+    SetEnableHandcuffs(ped, true)
+    animApplied = true
+    pairedAnim = { dict = anim.dict, clip = anim.clip, untilMs = GetGameTimer() + ms }
+    CreateThread(function()
+        Wait(ms)
+        if not stillCuffed(version) then return end
+        pairedAnim = nil
+        playCuffAnim(Kora.cache.ped(), version)
+    end)
     return true
 end
 
@@ -72,17 +143,39 @@ end
 ---never cuffed does not cancel whatever it is doing.
 local function stopCuffAnim(ped)
     local hadCuff = animApplied
-    animApplied = false
+    local paired = pairedAnim
+    animApplied, pairedAnim = false, nil
     if not validPed(ped) then return end
     SetEnableHandcuffs(ped, false)
+    if paired then StopAnimTask(ped, paired.dict, paired.clip, 8.0) end
     if not hadCuff and not IsEntityPlayingAnim(ped, CUFF_DICT, CUFF_CLIP, 3) then return end
     StopAnimTask(ped, CUFF_DICT, CUFF_CLIP, 8.0)
     -- Flag 49 plays the cuff clip as a secondary (upper-body) task.
     ClearPedSecondaryTask(ped)
-    if Config.cuff.clearTasksOnUncuff == false or Kora.cache.vehicle() or Kora.cache.isDead() then return end
-    local down = LocalPlayer.state.emsDown
-    if down ~= nil and down ~= 'alive' then return end
+    if Config.cuff.clearTasksOnUncuff == false or Kora.cache.vehicle() or Kora.cache.isDead() or isDowned() then return end
     ClearPedTasks(ped)
+end
+
+-- kora_target only gates its eye on its own enabled flag (and kora_multichar's
+-- mode and death); nothing else tells it the player is cuffed, and the Alt key
+-- is a key mapping the control lease cannot disable. So while cuffed the eye is
+-- switched off through its setEnabled export (which also closes an open option
+-- menu), and switched back on at the uncuff only when this file switched it off.
+local function setTargetBlocked(blocked)
+    if blocked and Config.cuff.blockTargeting == false then return end
+    if blocked == targetBlocked then return end
+    if GetResourceState('kora_target') ~= 'started' then targetBlocked = false; return end
+    if pcall(function() exports.kora_target:setEnabled(not blocked) end) then targetBlocked = blocked end
+end
+
+---One-offs at the start of a cuff: nothing in hand, the phone put away.
+local function onCuffStart(ped)
+    if Config.cuff.holsterWeapon ~= false and validPed(ped) then
+        SetCurrentPedWeapon(ped, GetHashKey('WEAPON_UNARMED'), true)
+    end
+    if Config.cuff.closePhone ~= false and GetResourceState('kora_phone') == 'started' then
+        pcall(function() exports.kora_phone:close() end)
+    end
 end
 
 ---Asks the server once per cuff whether it really holds one for this player
@@ -98,17 +191,15 @@ local function confirmWithServer()
     end)
 end
 
----Puts back whatever the cuffed ped lost: the animation and the cuffs prop.
----Stays out of the way of a downed/dead player, whose animation belongs to the
----medical resource, and of a ragdoll.
+---Puts back the cuff animation the ped lost. Stays out of the way of the paired
+---cuff clip while it plays, of a downed/dead player, whose animation belongs to
+---the medical resource, and of a ragdoll.
 local function restoreCuffed()
+    if pairedAnim and GetGameTimer() < pairedAnim.untilMs then return end
     local version = visualsVersion
     local ped = Kora.cache.ped()
-    if not validPed(ped) or Kora.cache.isDead() or IsPedRagdoll(ped) then return end
-    local down = LocalPlayer.state.emsDown
-    if down ~= nil and down ~= 'alive' then return end
+    if not validPed(ped) or Kora.cache.isDead() or IsPedRagdoll(ped) or isDowned() then return end
     if not IsEntityPlayingAnim(ped, CUFF_DICT, CUFF_CLIP, 3) then playCuffAnim(ped, version) end
-    if stillCuffed(version) then ensureCuffProp(ped, version) end
 end
 
 local function startCuffWatch()
@@ -128,7 +219,8 @@ end
 local function clearCuffedVisuals()
     confirmRequested = false
     if controlLease then Kora.controls.release(controlLease); controlLease = nil end
-    removeCuffProp()
+    setTargetBlocked(false)
+    Police.cuffProps.set(ownServerId(), false)
     stopCuffAnim(Kora.cache.ped())
     RemoveAnimDict(CUFF_DICT)
 
@@ -139,27 +231,48 @@ local function clearCuffedVisuals()
     local version = visualsVersion
     SetTimeout(delay, function()
         if Police.cuffed or version ~= visualsVersion then return end
-        removeCuffProp()
+        Police.cuffProps.set(ownServerId(), false)
         local ped = Kora.cache.ped()
         if validPed(ped) and (animApplied or IsEntityPlayingAnim(ped, CUFF_DICT, CUFF_CLIP, 3)) then stopCuffAnim(ped) end
     end)
 end
 
+---The freed suspect's half of the uncuff animation, when an officer (or the
+---soft-cuffer) took the cuffs off.
+local function playUncuffAnim(officerSrc, version)
+    local anim = actionAnim('uncuff', 'suspect')
+    local ped = Kora.cache.ped()
+    if not anim or not officerSrc or not canPlayActionAnim(ped) then return end
+    if not loadActionAnim(anim) then return end
+    if Police.cuffed or version ~= visualsVersion or not validPed(ped) then RemoveAnimDict(anim.dict); return end
+    alignWithOfficer(ped, officerSrc, anim.offset, anim.heading)
+    startActionAnim(ped, anim)
+end
+
 -- The disabled controls go through a kora_lib lease, whose per-frame loop exists
 -- only while a lease is held, i.e. while cuffed. Without a ped yet (joining) the
--- animation and prop follow from the cache's ped change below.
-local function applyCuffedVisuals(cuffed)
+-- animation follows from the cache's ped change below. `actorSrc` is the
+-- officer/cuffer the server names for a fresh cuff or an uncuff: it turns on the
+-- suspect's half of the paired animation.
+local function applyCuffedVisuals(cuffed, _, actorSrc)
     visualsVersion = visualsVersion + 1
     local version = visualsVersion
-    if not (cuffed and Police.cuffed) then return clearCuffedVisuals() end
+    actorSrc = tonumber(actorSrc)
+    if not (cuffed and Police.cuffed) then
+        clearCuffedVisuals()
+        return playUncuffAnim(actorSrc, version)
+    end
 
+    local ped = Kora.cache.ped()
     if not controlLease then
         controlLease = Kora.controls.acquire(Config.cuff.disabledControls, { disablePlayerFiring = true, ignoreWeaponWheel = true })
+        onCuffStart(ped)
     end
-    local ped = Kora.cache.ped()
-    local shown = playCuffAnim(ped, version)
+    setTargetBlocked(true)
+    Police.cuffProps.set(ownServerId(), true)
+    local shown = playPairedCuff(ped, version, actorSrc)
     if not stillCuffed(version) then return end
-    shown = ensureCuffProp(ped, version) and shown
+    if not shown then shown = playCuffAnim(ped, version) end
     if not stillCuffed(version) then return end
     startCuffWatch()
     if not shown then confirmWithServer() end
@@ -167,15 +280,26 @@ end
 
 AddEventHandler('qbpolice:client:cuffStateChanged', applyCuffedVisuals)
 
--- A new ped (joining, respawn, model change) has neither the animation nor the prop.
+-- A new ped (joining, respawn, model change) has no cuff animation.
 Kora.cache.onChange('ped', function()
     if Police.cuffed then restoreCuffed() end
+end)
+
+-- The officer's half of the cuff/uncuff animation. The server sends it only
+-- after it accepted the cuff or uncuff; the state never depends on it.
+RegisterNetEvent('kora_police:client:cuffAction', function(action)
+    local anim = (action == 'cuff' or action == 'uncuff') and actionAnim(action, 'officer')
+    if not anim or Police.cuffed then return end
+    local ped = Kora.cache.ped()
+    if not canPlayActionAnim(ped) or not loadActionAnim(anim) then return end
+    if not validPed(ped) then RemoveAnimDict(anim.dict); return end
+    startActionAnim(ped, anim)
 end)
 
 -- The state bag is what the server publishes (see server/cuff.lua) and what every
 -- other client, the emote menu and kora_inventory read.
 local function ownBag(bagName)
-    return bagName == ('player:%d'):format(GetPlayerServerId(Kora.cache.playerId()))
+    return bagName == ('player:%d'):format(ownServerId())
 end
 
 ---@param cuffed boolean
@@ -191,8 +315,13 @@ end
 -- new one is taken from the change itself. Only koraCuffed decides whether the
 -- player is cuffed; koraCuffedSoft (written first by the server) only refines a
 -- cuff that is already on, so it can never put back a cuff an uncuff just took off.
+-- Another player's bag only decides whether they wear the handcuffs prop.
 Kora.state.onChange('koraCuffed', nil, function(change)
-    if not ownBag(change.bagName) then return end
+    if not ownBag(change.bagName) then
+        local serverId = type(change.bagName) == 'string' and tonumber(change.bagName:match('^player:(%d+)$'))
+        if serverId then Police.cuffProps.set(serverId, change.value == true) end
+        return
+    end
     syncFromBag(change.value == true, LocalPlayer.state.koraCuffedSoft == true)
 end)
 
@@ -263,5 +392,18 @@ end
 registerCuffTargets()
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-    if resourceName == 'kora_target' then registerCuffTargets() end
+    if resourceName ~= 'kora_target' then return end
+    registerCuffTargets()
+    -- A fresh kora_target starts with its eye on.
+    targetBlocked = false
+    if Police.cuffed then setTargetBlocked(true) end
+end)
+
+AddEventHandler('onClientResourceStop', function(resourceName)
+    if resourceName == 'kora_target' then
+        targetBlocked = false
+    elseif resourceName == GetCurrentResourceName() then
+        -- Nobody would switch the eye back on after this resource is gone.
+        setTargetBlocked(false)
+    end
 end)

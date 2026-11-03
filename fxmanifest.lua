@@ -63,6 +63,7 @@ server_scripts {
 -- legacy listeners assume every feature file has already registered).
 client_scripts {
     'client/core.lua',
+    'client/cuff_prop.lua',
     'client/cuff.lua',
     'client/cuff_escape.lua',
     'client/escort.lua',

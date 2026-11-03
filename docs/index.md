@@ -120,7 +120,11 @@ TriggerServerEvent('qbpolice:server:uncuff', target)
 TriggerServerEvent('qbpolice:server:breakCuffsResult', success)   -- client reports a soft-cuff escape attempt's outcome
 Kora.callback.trigger('qbpolice:server:getCuffed', target)
 ```
-Client: `RegisterNetEvent('qbpolice:client:cuffed', function(cuffed, soft, otherSrc) ... end)`,
+Client: `RegisterNetEvent('qbpolice:client:cuffed', function(cuffed, soft, otherSrc) ... end)`
+(`otherSrc` is the player who just cuffed or uncuffed them, nil for a re-cuff,
+an escape, a booking or a login clean-up),
+`RegisterNetEvent('kora_police:client:cuffAction', function(action, targetSrc) ... end)`
+(sent to that player: `action` is `'cuff'` or `'uncuff'`),
 `exports('IsHandcuffed')` (legacy, client-realm). The `handcuffs` useable item
 soft-cuffs the single other player within `Config.cuff.distance`; a
 soft-cuffed suspect runs `/breakcuffs` to attempt the ported
@@ -132,10 +136,35 @@ The restraint is stored once, in kora_core metadata `ishandcuffed` (what
 replicated player state bag: `Player(src).state.koraCuffed` (boolean) and
 `koraCuffedSoft`. Only `server/cuff.lua` writes them (a client write is put
 back); clients, `kora_emotemenu` and `kora_inventory` only read them. While the
-bag says cuffed the client keeps the cuff animation and prop (checked every
+bag says cuffed the client keeps the cuff animation (checked every
 `Config.cuff.animCheckInterval` ms, only while cuffed), holds
-`Config.cuff.disabledControls` through a kora_lib control lease, and the emote
-menu and inventory refuse to open. Cuffing someone who is already cuffed
+`Config.cuff.disabledControls` through a kora_lib control lease, switches the
+kora_target eye off through its `setEnabled` export so no target option works
+(vehicles, trunks, doors, ...; `Config.cuff.blockTargeting`), and the emote
+menu, inventory and hotbar refuse to open. At the start of a cuff the weapon in
+hand is put away (`Config.cuff.holsterWeapon`) and kora_phone is closed
+(`Config.cuff.closePhone`).
+
+When a player cuffs someone who was not cuffed, both play the paired cuff
+animation from `Config.cuff.anims.cuff` (by default `mp_arrest_paired`
+`cop_p2_back_left` / `crook_p2_back_left`, stopped at 3043 ms): the officer on
+their own client, the suspect on theirs, first stood 0.45 m in front of the
+officer facing the same way (`offset` / `heading`), then the cuffed idle takes
+over. An uncuff by another player plays `Config.cuff.anims.uncuff` on both
+(`mp_arresting` `b_uncuff` for the officer, `a_uncuff` for the suspect). The
+animations are only cosmetic: the server has already put the cuff on or taken it
+off when they start, and they only play on foot and not downed. The suspect is
+told `Config.cuff.notify.cuffed` / `.uncuffed` ("You have been uncuffed and are
+free."); `''` turns a message off.
+
+Every cuffed player wears handcuffs on their wrists (`Config.cuff.prop`, default
+`p_cs_cuffs_02_s` on `SKEL_L_Hand`), seen by every player. Each client draws
+them itself from the replicated `koraCuffed` bag instead of one networked object,
+so they also work under `sv_entityLockdown strict` and can never be orphaned. A
+client checks every `Config.cuff.prop.checkInterval` ms, and only while someone
+is cuffed, for cuffed players coming into view or respawning. The cuffs go when
+the cuff does, when the player leaves view or disconnects, and when this
+resource stops. A cuff (and so its prop) stays on through death. Cuffing someone who is already cuffed
 re-applies the restraint (`Config.cuff.recuffRefreshes`); an officer's cuff
 hardens a soft one. Uncuff works on anyone cuffed: an on-duty officer, the
 player who soft-cuffed them (`Config.cuff.cufferCanUncuff`), or `/uncuff`
@@ -144,11 +173,11 @@ session it was put on in: logout, character switch and disconnect end it, and a
 cuff still stored in the metadata is cleared at the next login. Set
 `Config.cuff.restoreOnLogin = true` (anti-combat-log, off by default) to bring a
 stored cuff back as a hard cuff instead. A client that finds itself cuffed by the
-bag, or cannot show the cuff animation/prop, asks the server once to confirm and
+bag, or cannot show the cuff animation, asks the server once to confirm and
 is freed if the server holds no cuff for it (`Config.cuff.verifyWithServer`).
 An uncuff (any path: target option, `/uncuff`, an escape, a release on booking)
 takes everything off on the freed player's own client straight away: the control
-lease, the prop, the handcuffed ped flag and the cuff animation (and, with
+lease, the kora_target block, the prop, the handcuffed ped flag and the cuff animation (and, with
 `Config.cuff.clearTasksOnUncuff`, the ped's tasks when on foot and not downed),
 so every other client sees it stop too. `Config.cuff.uncuffRecheckMs` (default
 1000, 0 = off) checks once more after that and removes anything still left. An

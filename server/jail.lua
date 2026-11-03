@@ -19,7 +19,8 @@ function Police.jailPlayer(officerSrc, targetSrc, minutes, reason)
 
     Police.deEscort(officerSrc, targetSrc)
     Police.stopDrag(officerSrc, targetSrc)
-    Police.uncuff(officerSrc, targetSrc)
+    -- Taken into custody, not freed: no uncuff animation or "you are free" notification.
+    Police.uncuff(officerSrc, targetSrc, { silent = true })
     return true
 end
 

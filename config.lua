@@ -27,14 +27,54 @@ Config.cuff = {
     breakCuffsAttempts = 3,            -- total escape attempts before the item gives up until the next use
     breakCuffsCooldown = 60000,        -- ms a suspect must wait after a failed break-cuffs try before another
     disabledControls = { 21, 22, 23, 24, 25, 37, 44, 47, 58, 140, 141, 142, 257, 263, 264 },  -- controls blocked while cuffed: sprint, jump, enter vehicle, attack/aim, weapon wheel, cover, weapon/grenade, melee (remove 23 to let a cuffed player climb into a vehicle themself)
-    animCheckInterval = 500,           -- ms between checks, only while cuffed, that the cuff animation and prop are still there (an emote or another script replaced them); never below 250
+    animCheckInterval = 500,           -- ms between checks, only while cuffed, that the cuff animation is still there (an emote or another script replaced it); never below 250
     recuffRefreshes = true,            -- cuffing an already-cuffed player re-applies the restraint (an officer's cuff also hardens a soft one); false refuses with "already cuffed"
     cufferCanUncuff = true,            -- whoever soft-cuffed a player with the handcuffs item can release them again (officers can always release anyone)
     uncuffCommand = 'uncuff',          -- command that releases the nearest cuffed player (officers, and the soft-cuffer); '' = no command
     restoreOnLogin = false,            -- anti-combat-log: a player who was cuffed when they logged out/disconnected comes back cuffed (as a hard cuff). false (default): a cuff only lasts for the session it was put on in and any stored cuff is cleared at login
-    verifyWithServer = true,           -- a client that finds itself cuffed by the replicated state (or whose cuff animation/prop could not be applied) asks the server to confirm once, and is freed if the server has no cuff for it
+    verifyWithServer = true,           -- a client that finds itself cuffed by the replicated state (or whose cuff animation could not be applied) asks the server to confirm once, and is freed if the server has no cuff for it
     clearTasksOnUncuff = true,         -- an uncuff also clears the freed player's ped tasks (on foot and not downed only) so no cuff pose is left behind; false only stops the cuff animation itself
     uncuffRecheckMs = 1000,            -- ms after an uncuff to check once more that the cuff animation/prop are gone and take them off if not; 0 = no re-check
+    blockTargeting = true,             -- while cuffed the kora_target eye (Alt) is switched off, so no target option works (vehicles, trunks, doors, ...); back on at the uncuff
+    holsterWeapon = true,              -- a player being cuffed puts away the weapon in their hand
+    closePhone = true,                 -- a player being cuffed has kora_phone closed (if it is running)
+    -- Told to the suspect when a player cuffs or uncuffs them ('' or false = no notification).
+    -- Escaping (/breakcuffs) and a release on booking have their own wording.
+    notify = {
+        cuffed = 'You have been cuffed.',
+        uncuffed = 'You have been uncuffed and are free.',
+    },
+    -- One-off animations when a player cuffs/uncuffs someone. The officer side
+    -- plays on the officer, the suspect side on the suspect; both only on foot and
+    -- not downed, and only cosmetic (the cuff is already in force on the server).
+    -- dict/clip: the animation. duration: ms after which it is stopped (-1 = play
+    -- the clip once to its end). flag: TaskPlayAnim flags (0 = full body, once).
+    -- offset/heading (suspect side, optional): where the suspect is stood first,
+    -- relative to the officer (+y = in front of them), and the extra heading on top
+    -- of the officer's. The 'p2_back' cuff pair is cuffing from behind: the suspect
+    -- stands 0.45 m in front, facing the same way. Remove a side to skip it; the
+    -- cuffed idle (mp_arresting idle) takes over when the suspect's cuff clip ends.
+    anims = {
+        cuff = {
+            officer = { dict = 'mp_arrest_paired', clip = 'cop_p2_back_left', duration = 3043, flag = 0 },
+            suspect = { dict = 'mp_arrest_paired', clip = 'crook_p2_back_left', duration = 3043, flag = 0, offset = vector3(0.0, 0.45, 0.0), heading = 0.0 },
+        },
+        uncuff = {
+            officer = { dict = 'mp_arresting', clip = 'b_uncuff', duration = -1, flag = 0 },
+            suspect = { dict = 'mp_arresting', clip = 'a_uncuff', duration = -1, flag = 0 },
+        },
+    },
+    -- Handcuffs on the wrists of every cuffed player, seen by everyone. Each client
+    -- draws them from the replicated cuff state (no networked object), so they
+    -- also work under sv_entityLockdown and are gone the moment the cuff is.
+    prop = {
+        enabled = true,
+        model = 'p_cs_cuffs_02_s',
+        bone = 'SKEL_L_Hand',          -- bone name (60309)
+        offset = vector3(-0.055, 0.06, 0.04),
+        rotation = vector3(265.0, 155.0, 80.0),
+        checkInterval = 1000,          -- ms between checks, only while someone is cuffed, that cuffed players coming into view (or respawning) have their cuffs; never below 250
+    },
 }
 
 Config.incapacitated = {

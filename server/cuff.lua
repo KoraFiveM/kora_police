@@ -44,16 +44,31 @@ local function publish(src, cuffed, soft)
     bag:set(STATE_KEY, cuffed, true)
 end
 
+---Tells `src` they were cuffed/uncuffed, with the Config.cuff.notify text for
+---`key` ('' or false sends nothing).
+---@param src integer
+---@param key 'cuffed'|'uncuffed'
+---@param type_ string
+local function notifyCuff(src, key, type_)
+    local messages = Config.cuff.notify
+    local message = type(messages) == 'table' and messages[key]
+    if type(message) == 'string' and message ~= '' then Police.notify(src, message, type_) end
+end
+
 ---Puts the restraint on `targetSrc`, or re-applies it when they are already cuffed
 ---(the state is written and replicated again, so a client that lost the cuff
 ---animation gets it back). A hard cuff is never downgraded by a soft one; an
----officer's cuff upgrades a soft one.
+---officer's cuff upgrades a soft one. A fresh cuff by a player plays the paired
+---cuff animation (Config.cuff.anims.cuff) on both of them and tells the suspect;
+---it is only cosmetic, the state above is already in force.
 ---@param targetSrc integer
 ---@param soft boolean
 ---@param cuffer integer|nil Who applied it.
 ---@return table state
 local function restrain(targetSrc, soft, cuffer)
     local state = Police.cuffState[targetSrc]
+    local fresh = state == nil and not Police.isCuffed(targetSrc)
+    local actor = fresh and cuffer ~= targetSrc and cuffer or nil
     if state then
         state.soft = state.soft and soft
         state.breakAuthorization = nil
@@ -64,16 +79,26 @@ local function restrain(targetSrc, soft, cuffer)
     if not soft then state.officer = cuffer or state.officer end
     exports.kora_core:setMetaData(targetSrc, 'ishandcuffed', true)
     publish(targetSrc, true, state.soft)
-    TriggerClientEvent('qbpolice:client:cuffed', targetSrc, true, state.soft)
+    TriggerClientEvent('qbpolice:client:cuffed', targetSrc, true, state.soft, actor)
+    if actor then
+        TriggerClientEvent('kora_police:client:cuffAction', actor, 'cuff', targetSrc)
+        notifyCuff(targetSrc, 'cuffed', 'warning')
+    end
     return state
 end
 
 ---@param targetSrc integer
-local function release(targetSrc)
+---@param actorSrc integer|nil Another player who took the cuffs off (officer or soft-cuffer): plays the uncuff animation (Config.cuff.anims.uncuff) on both and tells the freed player.
+local function release(targetSrc, actorSrc)
+    if actorSrc == targetSrc then actorSrc = nil end
     exports.kora_core:setMetaData(targetSrc, 'ishandcuffed', false)
     Police.cuffState[targetSrc] = nil
     publish(targetSrc, false, false)
-    TriggerClientEvent('qbpolice:client:cuffed', targetSrc, false, false)
+    TriggerClientEvent('qbpolice:client:cuffed', targetSrc, false, false, actorSrc)
+    if actorSrc then
+        TriggerClientEvent('kora_police:client:cuffAction', actorSrc, 'uncuff', targetSrc)
+        notifyCuff(targetSrc, 'uncuffed', 'success')
+    end
     -- An escort only exists for a cuffed suspect (Police.escort refuses anyone
     -- else); left running it keeps the freed player attached to the officer.
     local officer = Police.escorted and Police.escorted[targetSrc]
@@ -100,8 +125,9 @@ end
 
 ---@param requesterSrc integer Officer, the cuffed player releasing themself after a successful escape, or whoever soft-cuffed them (Config.cuff.cufferCanUncuff).
 ---@param targetSrc integer
+---@param opts? { silent?: boolean } silent: no uncuff animation and no notification (a release on booking).
 ---@return boolean, string|nil
-function Police.uncuff(requesterSrc, targetSrc)
+function Police.uncuff(requesterSrc, targetSrc, opts)
     local state = Police.cuffState[targetSrc]
     local isOfficer = Police.isPolice(requesterSrc)
     local isSelf = requesterSrc == targetSrc
@@ -116,7 +142,7 @@ function Police.uncuff(requesterSrc, targetSrc)
     if isSelf and not (state and state.soft) then return false, 'cannot self-release a hard cuff' end
     if not isSelf and Police.distanceBetween(requesterSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
 
-    release(targetSrc)
+    release(targetSrc, not (opts and opts.silent) and requesterSrc or nil)
     return true
 end
 
@@ -292,7 +318,11 @@ end
 
 AddEventHandler('QBCore:Server:OnPlayerUnload', function(src) endSession(tonumber(src) or source) end)
 AddEventHandler('playerDropped', function()
-    Police.cuffState[source] = nil
+    local src = source
+    -- The unload above normally cleared the bag already; without it every client
+    -- is told directly, so nobody keeps drawing handcuffs on a player who left.
+    if Police.cuffState[src] then TriggerClientEvent('kora_police:client:cuffedPlayerGone', -1, src) end
+    Police.cuffState[src] = nil
 end)
 
 ---Whether `src` is cuffed in this session: the live restraint and the stored
@@ -321,6 +351,17 @@ Kora.callback.register('kora_police:server:resyncCuff', function(src)
     local bag = Player(src).state
     if bag[STATE_KEY] ~= true or (bag[SOFT_KEY] == true) ~= soft then publish(src, true, soft) end
     return true, soft
+end)
+
+-- Who is cuffed right now, for a client that just loaded: their bags hold the
+-- value, so it sees no change for them (client/cuff_prop.lua draws their cuffs).
+Kora.callback.register('kora_police:server:cuffedPlayers', function()
+    local list = {}
+    for src in pairs(Police.cuffState) do
+        local player = Player(src)
+        if player and player.state and player.state[STATE_KEY] == true then list[#list + 1] = src end
+    end
+    return list
 end)
 
 -- A client can write its own player bag; whatever it writes, the bag is put back
