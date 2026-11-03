@@ -93,11 +93,23 @@ local function startScan()
     end)
 end
 
-Kora.cache.onChange('vehicle', function(vehicle)
-    if vehicle then startScan() end
-end)
-Kora.cache.onChange('seat', function(seat)
-    if seat == -1 then startScan() end
+-- kora_lib drops every onChange registration when it restarts, so these are
+-- registered at load and again on its restart (startScan seeds the current state).
+local function watchDriving()
+    Kora.cache.onChange('vehicle', function(vehicle)
+        if vehicle then startScan() end
+    end)
+    Kora.cache.onChange('seat', function(seat)
+        if seat == -1 then startScan() end
+    end)
+end
+
+watchDriving()
+AddEventHandler('onClientResourceStart', function(resource)
+    if resource == 'kora_lib' then
+        watchDriving()
+        startScan()
+    end
 end)
 
 -- The replicated player-data mirror is push-driven. A duty transition can

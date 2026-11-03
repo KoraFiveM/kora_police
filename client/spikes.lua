@@ -17,36 +17,36 @@ RegisterNetEvent('police:client:SpawnSpikeStrip', Police.requestSpikeStrip)
 local activeStrips = {}
 local scanRunning = false
 
+-- Runs only while a strip exists AND this player is in a vehicle: the cache's
+-- 'vehicle' edge starts it, and leaving the vehicle (or the last strip going)
+-- ends it, so there is no on-foot idle polling.
 local function startScan()
-    if scanRunning or not next(activeStrips) then return end
+    if scanRunning or not next(activeStrips) or not Kora.cache.vehicle() then return end
     scanRunning = true
 
     CreateThread(function()
         local scans = 0
         while next(activeStrips) do
             local vehicle = Kora.cache.vehicle()
+            if not vehicle then break end
 
-            if vehicle then
-                if Config.performance.diagnostics then scans = scans + 1 end
-                local vCoords = GetEntityCoords(vehicle)
-                local maxDistance = Config.spikes.deflateDistance
-                local maxDistanceSq = maxDistance * maxDistance
+            if Config.performance.diagnostics then scans = scans + 1 end
+            local vCoords = GetEntityCoords(vehicle)
+            local maxDistance = Config.spikes.deflateDistance
+            local maxDistanceSq = maxDistance * maxDistance
 
-                for _, stripCoords in pairs(activeStrips) do
-                    local dx = vCoords.x - stripCoords.x
-                    local dy = vCoords.y - stripCoords.y
-                    local dz = vCoords.z - stripCoords.z
-                    if dx * dx + dy * dy + dz * dz <= maxDistanceSq then
-                        for wheel = 0, 5 do SetVehicleTyreBurst(vehicle, wheel, true, 1000.0) end
-                        break
-                    end
+            for _, stripCoords in pairs(activeStrips) do
+                local dx = vCoords.x - stripCoords.x
+                local dy = vCoords.y - stripCoords.y
+                local dz = vCoords.z - stripCoords.z
+                if dx * dx + dy * dy + dz * dz <= maxDistanceSq then
+                    for wheel = 0, 5 do SetVehicleTyreBurst(vehicle, wheel, true, 1000.0) end
+                    break
                 end
             end
 
-            -- A moving vehicle needs a reasonably quick check. On foot this
-            -- thread is still cheap, and it only exists while at least one
-            -- networked strip exists anywhere in the session.
-            Wait(vehicle and 500 or 1000)
+            -- A moving vehicle needs a reasonably quick check.
+            Wait(500)
         end
 
         scanRunning = false
@@ -76,6 +76,16 @@ RegisterNetEvent('qbpolice:client:spikeRemoved', function(netId)
     activeStrips[netId] = nil
 end)
 
-Kora.cache.onChange('vehicle', function(vehicle)
-    if vehicle then startScan() end
+-- kora_lib drops every onChange registration when it restarts, so this runs
+-- at load and again on its restart; startScan() seeds from the current vehicle.
+local function watchVehicle()
+    Kora.cache.onChange('vehicle', function(vehicle)
+        if vehicle then startScan() end
+    end)
+    startScan()
+end
+
+watchVehicle()
+AddEventHandler('onClientResourceStart', function(resource)
+    if resource == 'kora_lib' then watchVehicle() end
 end)
