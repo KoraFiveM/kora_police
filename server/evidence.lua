@@ -136,7 +136,7 @@ function Police.createBallisticCasing(src, round)
     if not id then return nil end
 
     CreateThread(function()
-        local _, err = Kora.sql.execute([[INSERT INTO `qbpolice_ballistic_casings`
+        local _, err = Kora.sql.execute([[INSERT INTO `kora_police_ballistic_casings`
             (`case_id`,`round_id`,`weapon_serial`,`weapon_name`,`ammo_type`,`lot`,`x`,`y`,`z`,`bucket`)
             VALUES (?,?,?,?,?,?,?,?,?,?)]], {
             caseId, round.id, round.weaponSerial, round.weapon, round.ammoType, round.lot,
@@ -205,7 +205,7 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
             return
         end
         CreateThread(function()
-            local _, err = Kora.sql.execute('UPDATE `qbpolice_ballistic_casings` SET `collected_by` = ?, `collected_at` = CURRENT_TIMESTAMP WHERE `case_id` = ?',
+            local _, err = Kora.sql.execute('UPDATE `kora_police_ballistic_casings` SET `collected_by` = ?, `collected_at` = CURRENT_TIMESTAMP WHERE `case_id` = ?',
                 { cid, marker.ballistic.caseId })
             if err then print(('^1[qbpolice:ballistics]^7 could not mark collected casing: %s'):format(tostring(err))) end
         end)
@@ -221,7 +221,7 @@ end)
 ---may be shown to an officer.
 function Police.getBallisticCasing(caseId)
     if type(caseId) ~= 'string' or #caseId > 64 then return nil, 'invalid case id' end
-    return Kora.sql.single('SELECT * FROM `qbpolice_ballistic_casings` WHERE `case_id` = ?', { caseId })
+    return Kora.sql.single('SELECT * FROM `kora_police_ballistic_casings` WHERE `case_id` = ?', { caseId })
 end
 
 exports('CreateBallisticCasing', Police.createBallisticCasing)

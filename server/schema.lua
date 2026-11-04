@@ -1,6 +1,6 @@
 QBPoliceSchema = {
     {
-        name = 'qbpolice_ballistic_casings',
+        name = 'kora_police_ballistic_casings',
         columns = {
             { name = 'case_id', type = 'varchar(64)' },
             { name = 'round_id', type = 'varchar(96)' },

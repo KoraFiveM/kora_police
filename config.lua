@@ -255,7 +255,7 @@ Config.impound = {
 }
 
 Config.plateFlags = {
-    mirrorToMdt = true,                -- also write/resolve an active vehicle BOLO in kora_mdt (qbmdt_bolos) so flagged plates show in the MDT; skipped when kora_mdt is not started
+    mirrorToMdt = true,                -- also write/resolve an active vehicle BOLO in kora_mdt (kora_mdt_bolos) so flagged plates show in the MDT; skipped when kora_mdt is not started
     days = 7,                          -- days the MDT BOLO stays active (kora_mdt may cap it with its own boloMaxDays)
 }
 

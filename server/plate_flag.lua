@@ -3,7 +3,7 @@
 -- nearby a patrol car (client/dispatch.lua polls `IsPlateFlagged`), firing
 -- the legacy `FlaggedPlateTriggered` event at the flagging officer's job.
 
--- kora_mdt owns BOLOs (`qbmdt_bolos`) and its Vehicles/BOLO views read only
+-- kora_mdt owns BOLOs (`kora_mdt_bolos`) and its Vehicles/BOLO views read only
 -- that table, so a flag kept just in this file's memory never reached the MDT.
 -- Flagging therefore also writes an active vehicle BOLO there
 -- (Config.plateFlags.mirrorToMdt); everything is skipped quietly when kora_mdt
@@ -33,11 +33,11 @@ local function mdtFlag(officerSrc, plate, reason)
     local title = ('Flagged plate %s'):format(plate)
     local author = Police.citizenId(officerSrc) or 'police'
     local ok, err = pcall(function()
-        local existing = Kora.sql.single("SELECT `id` FROM `qbmdt_bolos` WHERE `subject_type` = 'vehicle' AND `subject_identifier` = ? AND `status` = 'active' LIMIT 1", { plate })
+        local existing = Kora.sql.single("SELECT `id` FROM `kora_mdt_bolos` WHERE `subject_type` = 'vehicle' AND `subject_identifier` = ? AND `status` = 'active' LIMIT 1", { plate })
         if existing then
-            return Kora.sql.update('UPDATE `qbmdt_bolos` SET `description` = ?, `expires_at` = DATE_ADD(NOW(), INTERVAL ? DAY) WHERE `id` = ?', { reason:sub(1, 1500), days, existing.id })
+            return Kora.sql.update('UPDATE `kora_mdt_bolos` SET `description` = ?, `expires_at` = DATE_ADD(NOW(), INTERVAL ? DAY) WHERE `id` = ?', { reason:sub(1, 1500), days, existing.id })
         end
-        local id, insertErr = Kora.sql.insert([[INSERT INTO `qbmdt_bolos`
+        local id, insertErr = Kora.sql.insert([[INSERT INTO `kora_mdt_bolos`
             (`subject_type`,`subject_identifier`,`title`,`description`,`author_citizenid`,`expires_at`)
             VALUES ('vehicle',?,?,?,?,DATE_ADD(NOW(), INTERVAL ? DAY))]], { plate, title, reason:sub(1, 1500), author, days })
         if not id then error(insertErr or 'insert failed', 0) end
@@ -48,7 +48,7 @@ end
 ---@return integer resolved how many active MDT BOLOs were closed
 local function mdtUnflag(plate)
     if not mdtMirrorEnabled() then return 0 end
-    local ok, changed = pcall(Kora.sql.update, "UPDATE `qbmdt_bolos` SET `status` = 'resolved' WHERE `subject_type` = 'vehicle' AND `subject_identifier` = ? AND `status` = 'active'", { plate })
+    local ok, changed = pcall(Kora.sql.update, "UPDATE `kora_mdt_bolos` SET `status` = 'resolved' WHERE `subject_type` = 'vehicle' AND `subject_identifier` = ? AND `status` = 'active'", { plate })
     if not ok then mdtWarn('resolve', changed); return 0 end
     return tonumber(changed) or 0
 end

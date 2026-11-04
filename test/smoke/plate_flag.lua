@@ -72,7 +72,7 @@ h.test('flagging mirrors an active vehicle BOLO into kora_mdt and unflagging res
         update = function(q, args) calls[#calls + 1] = { 'update', q, args }; return 1 end,
     }
     h.assertTrue(Police.flagPlate(OFFICER, 'mdt 123 ', 'robbery'))
-    h.assertEqual(calls[1][1], 'insert'); h.assertTrue(calls[1][2]:find('qbmdt_bolos', 1, true) ~= nil)
+    h.assertEqual(calls[1][1], 'insert'); h.assertTrue(calls[1][2]:find('kora_mdt_bolos', 1, true) ~= nil)
     h.assertEqual(calls[1][3][1], 'MDT 123')
     h.assertTrue((Police.isPlateFlagged('MDT 123 ')), 'padded plate resolves to the trimmed flag')
     Police.plateFlags['MDT 123'] = nil
