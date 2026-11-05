@@ -161,6 +161,24 @@ local function startReleasePoll()
     end)
 end
 
+-- Persistent "E to release" prompt shown while dragging (Config.drag.releasePrompt).
+local releasePromptId
+
+local function hideReleasePrompt()
+    if not releasePromptId then return end
+    pcall(Kora.textui.hide, releasePromptId)
+    releasePromptId = nil
+end
+
+local function showReleasePrompt()
+    local cfg = Config.drag or {}
+    if cfg.releasePrompt == false then return end
+    hideReleasePrompt()
+    local key = type(cfg.releaseKey) == 'string' and cfg.releaseKey ~= '' and cfg.releaseKey or nil
+    local ok, id = pcall(Kora.textui.show, 'Release drag', { key = key, icon = 'hand', position = 'right-center' })
+    if ok then releasePromptId = id end
+end
+
 -- The dragger's ped may not be streamed in on this client yet when the server
 -- relays dragStart, so retry the attach for a few seconds instead of silently
 -- leaving the dragged player unattached.
@@ -188,10 +206,12 @@ RegisterNetEvent('qbpolice:client:dragStartSelf', function(targetServerId)
     end
     setReleaseKeyActive(true)
     startReleasePoll()
+    showReleasePrompt()
 end)
 RegisterNetEvent('qbpolice:client:dragStopSelf', function()
     Police.draggedTarget = nil
     setReleaseKeyActive(false)
+    hideReleasePrompt()
 end)
 
 local function registerEscortTargets()

@@ -65,8 +65,8 @@ Config.cuff = {
             },
         },
         uncuff = {
-            officer = { dict = 'mp_arresting', clip = 'b_uncuff', duration = -1, flag = 0 },
-            suspect = { dict = 'mp_arresting', clip = 'a_uncuff', duration = -1, flag = 0 },
+            officer = { dict = 'mp_arresting', clip = 'a_uncuff', duration = -1, flag = 0 },
+            suspect = { dict = 'mp_arresting', clip = 'b_uncuff', duration = -1, flag = 0 },
         },
     },
     -- Handcuffs on the wrists of every cuffed player, seen by everyone. Each client
@@ -404,7 +404,8 @@ Config.drag = {
     releaseKey = 'E',                -- default keyboard key (kora_lib keybind, rebindable in settings) that releases the player you drag; only active while dragging; '' = no key
     releaseCommand = 'releasedrag',  -- command that releases the player you drag; '' = no command
     releaseControl = 0,              -- optional fallback: control polled every frame while dragging, for when another script swallows releaseKey (38 = E); 0/false = off (default, no loop)
-    releaseHint = true,              -- tell the dragger how to release when a drag starts
+    releasePrompt = true,            -- show a persistent on-screen "release drag" prompt (right side) while dragging a player
+    releaseHint = true,             -- tell the dragger how to release when a drag starts
     autoReleaseDistance = 8.0,         -- metres between dragger and dragged before the drag is released server-side
     releaseInVehicle = true,           -- release when either player enters a vehicle
     releaseWhenRecovered = true,       -- release when the dragged player is no longer restrained or downed
