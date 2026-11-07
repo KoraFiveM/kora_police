@@ -20,7 +20,6 @@ dependency 'kora_target'
 
 shared_scripts {
     '@kora_lib/init.lua',
-    '@kora_sql/init.lua',
 }
 
 shared_scripts {
@@ -34,6 +33,7 @@ shared_scripts {
 -- load first; compat/police.lua calls into nearly every other file's
 -- Police.* functions and must load last.
 server_scripts {
+    '@kora_sql/init.lua',
     'server/schema.lua',
     'server/migrate.lua',
     'server/core.lua',

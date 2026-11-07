@@ -11,7 +11,10 @@ local CHARS = '0123456789'
 function Police.getFingerprint(citizenId)
     if Police.fingerprints[citizenId] then return Police.fingerprints[citizenId] end
     local id = {}
-    for i = 1, 10 do id[i] = CHARS:sub(math.random(1, #CHARS), math.random(1, #CHARS)) end
+    for i = 1, 10 do
+        local pick = math.random(1, #CHARS)
+        id[i] = CHARS:sub(pick, pick)
+    end
     local fingerprint = table.concat(id)
     Police.fingerprints[citizenId] = fingerprint
     return fingerprint
