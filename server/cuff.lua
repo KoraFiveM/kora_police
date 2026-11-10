@@ -240,20 +240,24 @@ function Police.beginBreakCuffs(src)
     return authorization
 end
 
+-- `source` is only valid until a handler first yields, so each captures it.
 RegisterNetEvent('kora_police:server:cuff', function(target)
-    local ok, err, info = Police.cuff(source, tonumber(target))
-    if not ok then Police.notify(source, Police.cuffRefusal(err)) elseif info then Police.notify(source, Police.cuffRefusal(info), 'inform') end
+    local src = source
+    local ok, err, info = Police.cuff(src, tonumber(target))
+    if not ok then Police.notify(src, Police.cuffRefusal(err)) elseif info then Police.notify(src, Police.cuffRefusal(info), 'inform') end
 end)
 RegisterNetEvent('kora_police:server:uncuff', function(target)
-    local ok, err = Police.uncuff(source, tonumber(target))
-    if not ok then Police.notify(source, Police.cuffRefusal(err)) end
+    local src = source
+    local ok, err = Police.uncuff(src, tonumber(target))
+    if not ok then Police.notify(src, Police.cuffRefusal(err)) end
 end)
 RegisterNetEvent('kora_police:server:breakCuffsResult', function(proof)
-    local escaped = type(proof) == 'string' and Police.breakCuffs(source, proof)
+    local src = source
+    local escaped = type(proof) == 'string' and Police.breakCuffs(src, proof)
     if escaped then
-        Police.notify(source, 'You broke free!', 'success')
+        Police.notify(src, 'You broke free!', 'success')
     else
-        Police.breakCuffsFailed(source)
+        Police.breakCuffsFailed(src)
     end
 end)
 

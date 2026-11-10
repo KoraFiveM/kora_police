@@ -103,11 +103,15 @@ function Police.storeDutyVehicle(src, plate)
     return true
 end
 
+-- `source` is only valid until the handler first yields (the kora_core
+-- vehicle exports wait on kora_sql), so it is captured up front.
 RegisterNetEvent('kora_police:server:spawnDutyVehicle', function(plate, coords, heading)
-    local networkId, err = Police.spawnDutyVehicle(source, plate)
-    if not networkId then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+    local src = source
+    local networkId, err = Police.spawnDutyVehicle(src, plate)
+    if not networkId then TriggerClientEvent('QBCore:Notify', src, err, 'error') end
 end)
 RegisterNetEvent('kora_police:server:storeDutyVehicle', function(plate)
-    local ok, err = Police.storeDutyVehicle(source, plate)
-    if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
+    local src = source
+    local ok, err = Police.storeDutyVehicle(src, plate)
+    if not ok then TriggerClientEvent('QBCore:Notify', src, err, 'error') end
 end)

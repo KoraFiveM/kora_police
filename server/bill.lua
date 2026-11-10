@@ -101,8 +101,9 @@ function Police.payCitation(src, id)
 end
 
 RegisterNetEvent('kora_police:server:bill', function(target, amount, reason)
-    local ok, err = Police.bill(source, tonumber(target), amount, reason)
-    if not ok then Police.notify(source, Police.cuffRefusal(err)) end
+    local src = source -- only valid until the handler first yields
+    local ok, err = Police.bill(src, tonumber(target), amount, reason)
+    if not ok then Police.notify(src, Police.cuffRefusal(err)) end
 end)
 
 local cfg = Config.Citations or {}

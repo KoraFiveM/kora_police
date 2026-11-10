@@ -110,11 +110,15 @@ function Police.legacyTakeOutImpound(src, plate, garage)
     return Police.retrieveImpound(src, plate)
 end
 
+-- `source` is only valid until the handler first yields (getByPlate waits on
+-- kora_sql), so it is captured up front.
 RegisterNetEvent('kora_police:server:impound', function(plate, lotId)
-    local ok, err = Police.impound(source, plate, lotId)
-    if not ok then Police.notify(source, err) end
+    local src = source
+    local ok, err = Police.impound(src, plate, lotId)
+    if not ok then Police.notify(src, err) end
 end)
 RegisterNetEvent('kora_police:server:retrieveImpound', function(plate)
-    local ok, err = Police.retrieveImpound(source, plate)
-    if not ok then Police.notify(source, err) end
+    local src = source
+    local ok, err = Police.retrieveImpound(src, plate)
+    if not ok then Police.notify(src, err) end
 end)

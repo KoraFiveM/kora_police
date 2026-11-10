@@ -157,17 +157,21 @@ function Police.takeOutVehicle(officerSrc, targetSrc)
     return true
 end
 
+-- `source` is only valid until a handler first yields, so each captures it.
 RegisterNetEvent('kora_police:server:escort', function(target)
-    local ok, err = Police.escort(source, tonumber(target))
-    if not ok then Police.notify(source, err) end
+    local src = source
+    local ok, err = Police.escort(src, tonumber(target))
+    if not ok then Police.notify(src, err) end
 end)
 RegisterNetEvent('kora_police:server:deEscort', function(target)
-    local ok, err = Police.deEscort(source, tonumber(target))
-    if not ok then Police.notify(source, err) end
+    local src = source
+    local ok, err = Police.deEscort(src, tonumber(target))
+    if not ok then Police.notify(src, err) end
 end)
 RegisterNetEvent('kora_police:server:startDrag', function(target)
-    local ok, err = Police.startDrag(source, tonumber(target))
-    if not ok then Police.notify(source, err) end
+    local src = source
+    local ok, err = Police.startDrag(src, tonumber(target))
+    if not ok then Police.notify(src, err) end
 end)
 RegisterNetEvent('kora_police:server:stopDrag', function(target)
     local src = source
@@ -186,10 +190,12 @@ RegisterNetEvent('kora_police:server:stopDrag', function(target)
     Police.notify(src, err)
 end)
 RegisterNetEvent('kora_police:server:putInVehicle', function(target, netId, seat)
-    local ok, err = Police.putInVehicle(source, tonumber(target), tonumber(netId), seat and tonumber(seat) or nil)
-    if not ok then Police.notify(source, err) end
+    local src = source
+    local ok, err = Police.putInVehicle(src, tonumber(target), tonumber(netId), seat and tonumber(seat) or nil)
+    if not ok then Police.notify(src, err) end
 end)
 RegisterNetEvent('kora_police:server:takeOutVehicle', function(target)
-    local ok, err = Police.takeOutVehicle(source, tonumber(target))
-    if not ok then Police.notify(source, err) end
+    local src = source
+    local ok, err = Police.takeOutVehicle(src, tonumber(target))
+    if not ok then Police.notify(src, err) end
 end)
