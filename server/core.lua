@@ -1,6 +1,6 @@
 -- Shared server-side state for this resource. A bare global table, same
--- convention kora_admin's `Admin`/qbtarget's `ServerTarget`/qbinventory's
--- `QbInventory` use for cross-file organisation within one resource.
+-- convention kora_admin's `Admin`/kora_target's `ServerTarget`/kora_inventory's
+-- `KoraInventory` use for cross-file organisation within one resource.
 
 Police = Police or {}
 
@@ -155,22 +155,22 @@ AddEventHandler('playerDropped', function()
     -- Tell the surviving side so it does not keep a stale escort/drag state
     -- (a stale draggedTarget would hide the Drag option until relog).
     local officer = Police.escorted[src]
-    if officer then TriggerClientEvent('qbpolice:client:escortStopSelf', officer, src) end
+    if officer then TriggerClientEvent('kora_police:client:escortStopSelf', officer, src) end
     local dragger = Police.kidnapped[src]
-    if dragger then TriggerClientEvent('qbpolice:client:dragStopSelf', dragger, src) end
+    if dragger then TriggerClientEvent('kora_police:client:dragStopSelf', dragger, src) end
     Police.escorted[src] = nil
     Police.kidnapped[src] = nil
     Police.tracked[src] = nil
     for target, owner in pairs(Police.escorted) do
         if owner == src then
             Police.escorted[target] = nil
-            TriggerClientEvent('qbpolice:client:escortStop', target)
+            TriggerClientEvent('kora_police:client:escortStop', target)
         end
     end
     for target, owner in pairs(Police.kidnapped) do
         if owner == src then
             Police.kidnapped[target] = nil
-            TriggerClientEvent('qbpolice:client:dragStop', target)
+            TriggerClientEvent('kora_police:client:dragStop', target)
         end
     end
 end)

@@ -10,7 +10,7 @@ local core = handle.exportImpls.kora_core
 local definitions = { items = {}, weapons = {} }
 dofile('../kora_core/shared/items.lua')
 dofile('../kora_core/shared/weapons.lua')
-for kind, records in pairs({ items = QBCoreSeed.items, weapons = QBCoreSeed.weapons }) do
+for kind, records in pairs({ items = KoraCoreSeed.items, weapons = KoraCoreSeed.weapons }) do
     for _, item in ipairs(records) do definitions[kind][item.name] = item end
 end
 function core.getShared(kind, name) return definitions[kind] and definitions[kind][name] end
@@ -20,7 +20,7 @@ function core.setPath(src, path, value)
     local data = handle.players[src].data
     for index = 1, #path - 1 do data = data[path[index]] end
     data[path[#path]] = value
-    TriggerEvent('qbcore:server:inventoryChanged', src, path, value)
+    TriggerEvent('kora_core:server:inventoryChanged', src, path, value)
     return true
 end
 dofile('server/items.lua')
@@ -32,7 +32,7 @@ dofile('../kora_lib/modules/distancecheck/server.lua')
 Kora.resources = { serverRegistry = function() return { track = function() end } end }
 dofile('../kora_inventory/shared.lua')
 dofile('../kora_inventory/server.lua')
-local api, internal = QbInventory.api, QbInventory.internal
+local api, internal = KoraInventory.api, KoraInventory.internal
 for name, fn in pairs(api) do handle.exportImpls.kora_inventory[name] = fn end
 
 -- Model the callable table and fresh coroutine of a cross-resource function
@@ -56,8 +56,8 @@ dofile('server/core.lua')
 dofile(arg[1] or 'server/armory.lua')
 
 local patrol, sergeant, swat = table.unpack(Config.armory.shops)
-local open = Kora.callback.registry['qbinventory:server:open']
-local intent = Kora.callback.registry['qbinventory:server:intent']
+local open = Kora.callback.registry['kora_inventory:server:open']
+local intent = Kora.callback.registry['kora_inventory:server:intent']
 local nextSource = 0
 local function officer(shop, grade, onDuty, job)
     nextSource = nextSource + 1

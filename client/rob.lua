@@ -3,7 +3,7 @@
 -- The server validated the rob and granted inventory access; open the
 -- target's inventory as the secondary inventory (kora_inventory re-checks the
 -- grant server-side, so a forged event here opens nothing).
-RegisterNetEvent('qbpolice:client:openRob', function(targetServerId)
+RegisterNetEvent('kora_police:client:openRob', function(targetServerId)
     exports.kora_inventory:openInventory('player', targetServerId)
 end)
 
@@ -17,7 +17,7 @@ local function registerRobTargets()
                 return not Police.isOnDuty() and Police.isPedRestrained(entity)
             end,
             onSelect = function(entity)
-                TriggerServerEvent('qbpolice:server:rob', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
+                TriggerServerEvent('kora_police:server:rob', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
     }, Config.cuff.distance)

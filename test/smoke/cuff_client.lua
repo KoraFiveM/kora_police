@@ -192,7 +192,7 @@ local function setOwnBag(cuffed, soft)
 end
 
 local function cuffedEvent(cuffed, soft)
-    eventHandlers['qbpolice:client:cuffed'][1](cuffed, soft or false)
+    eventHandlers['kora_police:client:cuffed'][1](cuffed, soft or false)
 end
 
 local function runTimeouts()
@@ -503,7 +503,7 @@ end)
 -- animations, and the handcuffs prop on every cuffed player in view.
 
 local function cuffedEventBy(cuffed, actor)
-    eventHandlers['qbpolice:client:cuffed'][1](cuffed, false, actor)
+    eventHandlers['kora_police:client:cuffed'][1](cuffed, false, actor)
 end
 
 local function fireAll(name, ...)

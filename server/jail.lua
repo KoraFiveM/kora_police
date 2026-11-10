@@ -24,7 +24,7 @@ function Police.jailPlayer(officerSrc, targetSrc, minutes, reason)
     return true
 end
 
-RegisterNetEvent('qbpolice:server:jailPlayer', function(target, minutes, reason)
+RegisterNetEvent('kora_police:server:jailPlayer', function(target, minutes, reason)
     local ok, err = Police.jailPlayer(source, tonumber(target), minutes, reason)
     if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
 end)

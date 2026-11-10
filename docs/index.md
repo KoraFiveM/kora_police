@@ -12,14 +12,14 @@ fingerprinting, GPS tracker bracelets, and vehicle impound. Restraint and
 distance checks are server-authoritative `Police.*` Lua functions in
 `server/core.lua`; feature files stay thin nets around them. Ships legacy
 `police:*` event/callback compat (`server/compat/police.lua`) alongside the
-modern `qbpolice:*` surface.
+modern `kora_police:*` surface.
 
 ## Requirements
 
 - [kora_lib](https://qbcore2.github.io/kora_lib/)
-- [qbcore](https://qbcore2.github.io/kora_core/)
-- [qbinventory](https://qbcore2.github.io/kora_inventory/)
-- [qbtarget](https://qbcore2.github.io/kora_target/)
+- [kora_core](https://qbcore2.github.io/kora_core/)
+- [kora_inventory](https://qbcore2.github.io/kora_inventory/)
+- [kora_target](https://qbcore2.github.io/kora_target/)
 
 ## Installation
 
@@ -39,42 +39,42 @@ ensure kora_police
 ```lua
 -- client, e.g. a kora_target 'player' option
 local target = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
-TriggerServerEvent('qbpolice:server:cuff', target)
+TriggerServerEvent('kora_police:server:cuff', target)
 ```
 ```lua
 -- client, once the suspect is cuffed and in range (mirrors client/search.lua)
-TriggerServerEvent('qbpolice:server:search', target)
+TriggerServerEvent('kora_police:server:search', target)
 ```
-`qbpolice:server:search` tells the OFFICER's own client to open the target's
+`kora_police:server:search` tells the OFFICER's own client to open the target's
 inventory (`exports.kora_inventory:openInventory('player', targetServerId)`),
-via `qbinventory:registerInspectionAccess`.
+via `kora_inventory:registerInspectionAccess`.
 
 ### Seize cash and a driver's licence
 ```lua
 -- client, target must already be cuffed
-TriggerServerEvent('qbpolice:server:seizeCash', target)
-TriggerServerEvent('qbpolice:server:seizeDriverLicense', target)
+TriggerServerEvent('kora_police:server:seizeCash', target)
+TriggerServerEvent('kora_police:server:seizeDriverLicense', target)
 ```
 
 ### Escort a cuffed suspect, then load them into a vehicle
 ```lua
 -- client
-TriggerServerEvent('qbpolice:server:escort', target)
+TriggerServerEvent('kora_police:server:escort', target)
 -- later, next to a networked vehicle:
 local netId = NetworkGetNetworkIdFromEntity(vehicle)
-TriggerServerEvent('qbpolice:server:putInVehicle', target, netId, -1) -- -1 = driver seat
+TriggerServerEvent('kora_police:server:putInVehicle', target, netId, -1) -- -1 = driver seat
 ```
 
 ### Book a suspect into jail
 ```lua
 -- client, after cuffing -- also clears escort/drag state server-side
-TriggerServerEvent('qbpolice:server:jailPlayer', target, 15, 'Resisting arrest')
+TriggerServerEvent('kora_police:server:jailPlayer', target, 15, 'Resisting arrest')
 ```
 
 ### Raise a police call
 ```lua
 -- client -- the /backup command already does this for an on-duty officer:
-TriggerServerEvent('qbpolice:server:requestBackup', { message = 'Shots fired downtown' })
+TriggerServerEvent('kora_police:server:requestBackup', { message = 'Shots fired downtown' })
 ```
 
 Anything else wanting a police call (a robbery script, a drug lab) calls
@@ -100,10 +100,10 @@ see `kora_dispatch/docs/index.md`.
 ### Check restraint/armory access via a callback
 ```lua
 -- client -- Kora.callback.trigger blocks and returns the server's result
-local isCuffed = Kora.callback.trigger('qbpolice:server:getCuffed', target)
+local isCuffed = Kora.callback.trigger('kora_police:server:getCuffed', target)
 
-local canOpen = Kora.callback.trigger('qbpolice:server:canAccessArmory', 'pd-armory-sergeant')
-if canOpen then TriggerServerEvent('qbpolice:server:openArmory', 'pd-armory-sergeant') end
+local canOpen = Kora.callback.trigger('kora_police:server:canAccessArmory', 'pd-armory-sergeant')
+if canOpen then TriggerServerEvent('kora_police:server:openArmory', 'pd-armory-sergeant') end
 ```
 
 ## API reference
@@ -115,12 +115,12 @@ every net event below.
 
 ### Cuff / restrain
 ```lua
-TriggerServerEvent('qbpolice:server:cuff', target)
-TriggerServerEvent('qbpolice:server:uncuff', target)
-TriggerServerEvent('qbpolice:server:breakCuffsResult', success)   -- client reports a soft-cuff escape attempt's outcome
-Kora.callback.trigger('qbpolice:server:getCuffed', target)
+TriggerServerEvent('kora_police:server:cuff', target)
+TriggerServerEvent('kora_police:server:uncuff', target)
+TriggerServerEvent('kora_police:server:breakCuffsResult', success)   -- client reports a soft-cuff escape attempt's outcome
+Kora.callback.trigger('kora_police:server:getCuffed', target)
 ```
-Client: `RegisterNetEvent('qbpolice:client:cuffed', function(cuffed, soft, otherSrc) ... end)`
+Client: `RegisterNetEvent('kora_police:client:cuffed', function(cuffed, soft, otherSrc) ... end)`
 (`otherSrc` is the player who just cuffed or uncuffed them, nil for a re-cuff,
 an escape, a booking or a login clean-up),
 `RegisterNetEvent('kora_police:client:cuffAction', function(action, targetSrc) ... end)`
@@ -193,22 +193,22 @@ robber searching the inventory.
 
 ### Escort / drag / vehicle
 ```lua
-TriggerServerEvent('qbpolice:server:escort', target)
-TriggerServerEvent('qbpolice:server:deEscort', target)
-TriggerServerEvent('qbpolice:server:startDrag', target)
-TriggerServerEvent('qbpolice:server:stopDrag', target)
-TriggerServerEvent('qbpolice:server:putInVehicle', target, netId, seat)  -- seat: native VehicleSeat, -1 = driver
-TriggerServerEvent('qbpolice:server:takeOutVehicle', target)
+TriggerServerEvent('kora_police:server:escort', target)
+TriggerServerEvent('kora_police:server:deEscort', target)
+TriggerServerEvent('kora_police:server:startDrag', target)
+TriggerServerEvent('kora_police:server:stopDrag', target)
+TriggerServerEvent('kora_police:server:putInVehicle', target, netId, seat)  -- seat: native VehicleSeat, -1 = driver
+TriggerServerEvent('kora_police:server:takeOutVehicle', target)
 ```
 Client events fired to the affected players:
-`qbpolice:client:escortStart(Self)`, `escortStop(Self)`, `dragStart(Self)`,
+`kora_police:client:escortStart(Self)`, `escortStop(Self)`, `dragStart(Self)`,
 `dragStop(Self)`, `putInVehicle`, `takeOutVehicle`.
 
 ### Search / seize
 ```lua
-TriggerServerEvent('qbpolice:server:search', target)             -- opens target's inventory on the OFFICER's client
-TriggerServerEvent('qbpolice:server:seizeCash', target)           -- moves target's cash account to the officer
-TriggerServerEvent('qbpolice:server:seizeDriverLicense', target)  -- flags metadata.licences.driver = false
+TriggerServerEvent('kora_police:server:search', target)             -- opens target's inventory on the OFFICER's client
+TriggerServerEvent('kora_police:server:seizeCash', target)           -- moves target's cash account to the officer
+TriggerServerEvent('kora_police:server:seizeDriverLicense', target)  -- flags metadata.licences.driver = false
 ```
 
 ### Evidence
@@ -223,17 +223,17 @@ RegisterNetEvent('evidence:server:ClearInventory')
 A processed-evidence stash (`Config.evidence.lockerStashId`,
 `'police-evidence'` by default) is registered on `exports.kora_inventory:RegisterStash`
 at `Config.evidence.lockerCoords`, gated by `Config.evidence.minGradeToAccess`.
-Client: `RegisterNetEvent('qbpolice:client:worldEvidenceCreated', function(id, evType, coords) ... end)`.
+Client: `RegisterNetEvent('kora_police:client:worldEvidenceCreated', function(id, evType, coords) ... end)`.
 
 ### Armory
 ```lua
-TriggerServerEvent('qbpolice:server:openArmory', shopId)
-Kora.callback.trigger('qbpolice:server:canAccessArmory', shopId)
+TriggerServerEvent('kora_police:server:openArmory', shopId)
+Kora.callback.trigger('kora_police:server:canAccessArmory', shopId)
 ```
 Each `Config.armory.shops` entry is its own `exports.kora_inventory:RegisterShop`
 room with `groups = { [Config.police.job] = shop.minGrade }` — grade 1
 (Cadet) and up sees Patrol, grade 3+ Sergeant, grade 4+ SWAT. Client:
-`RegisterNetEvent('qbpolice:client:openArmory', function(shopId) ... end)`.
+`RegisterNetEvent('kora_police:client:openArmory', function(shopId) ... end)`.
 kora_inventory saves shop stock across restarts, so with `Config.armory.restockOnStart`
 (default `true`) every start of kora_police puts back configured items a saved room is
 missing and tops rows up to their `amount`; a kora_inventory restart mid-session does not.
@@ -242,7 +242,7 @@ casings, blood and fingerprints consumes.
 
 ### Jail
 ```lua
-TriggerServerEvent('qbpolice:server:jailPlayer', target, minutes, reason)
+TriggerServerEvent('kora_police:server:jailPlayer', target, minutes, reason)
 ```
 Thin wrapper over `exports.kora_core:jailPlayer`; also clears the target's
 escort/drag/cuff state on booking. `minutes` defaults to
@@ -250,10 +250,10 @@ escort/drag/cuff state on booking. `minutes` defaults to
 
 ### Dispatch / duty
 ```lua
-TriggerServerEvent('qbpolice:server:requestBackup', payload)   -- /backup command; payload: {title?, message?, coords?, ...}
-TriggerServerEvent('qbpolice:server:toggleDuty')
-TriggerServerEvent('qbpolice:server:spawnDutyVehicle', plate, coords, heading)
-TriggerServerEvent('qbpolice:server:storeDutyVehicle', plate)
+TriggerServerEvent('kora_police:server:requestBackup', payload)   -- /backup command; payload: {title?, message?, coords?, ...}
+TriggerServerEvent('kora_police:server:toggleDuty')
+TriggerServerEvent('kora_police:server:spawnDutyVehicle', plate, coords, heading)
+TriggerServerEvent('kora_police:server:storeDutyVehicle', plate)
 ```
 `Police.dispatch(payload)` (server Lua) raises a call through
 `exports.kora_dispatch:createCall`, defaulting the target to the `Config.police.jobType`
@@ -261,12 +261,12 @@ TriggerServerEvent('qbpolice:server:storeDutyVehicle', plate)
 sheriff or state-trooper job with `type = 'leo'` gets them on the same radio with
 no change here.
 
-Cop-count changes broadcast `qbpolice:client:updateCopCount` (and legacy
+Cop-count changes broadcast `kora_police:client:updateCopCount` (and legacy
 `police:client:UpdateCurrentCops`/`SetCopCount`), counted across the whole LEO
 service.
 
 **Panic button** — `Config.dispatch.panicKey` (default `F10`, rebindable) fires
-`qbpolice:server:panic`, which raises **two** calls: `10-99 Officer Down` to law
+`kora_police:server:panic`, which raises **two** calls: `10-99 Officer Down` to law
 enforcement and `10-52` to EMS.
 
 Rate-limited per officer by `Config.dispatch.panicCooldown` (default 60s),
@@ -294,17 +294,17 @@ whether that player may raise a call and re-anchors it to their real position.
 
 ### Spikes / plate flags / tracker / fingerprint / impound
 ```lua
-TriggerServerEvent('qbpolice:server:deploySpike', coords)   -- /spikestrip command
-TriggerServerEvent('qbpolice:server:removeSpike', netId)
-TriggerServerEvent('qbpolice:server:flagPlate', plate, reason)
-TriggerServerEvent('qbpolice:server:unflagPlate', plate)
-TriggerServerEvent('qbpolice:server:plateSpotted', plate)
-Kora.callback.trigger('qbpolice:server:isPlateFlagged', plate)
-TriggerServerEvent('qbpolice:server:setTracker', target, active)
-TriggerServerEvent('qbpolice:server:sendTrackerLocation')
-Kora.callback.trigger('qbpolice:server:getFingerprint', target)
-TriggerServerEvent('qbpolice:server:impound', plate, lotId)
-TriggerServerEvent('qbpolice:server:retrieveImpound', plate)
+TriggerServerEvent('kora_police:server:deploySpike', coords)   -- /spikestrip command
+TriggerServerEvent('kora_police:server:removeSpike', netId)
+TriggerServerEvent('kora_police:server:flagPlate', plate, reason)
+TriggerServerEvent('kora_police:server:unflagPlate', plate)
+TriggerServerEvent('kora_police:server:plateSpotted', plate)
+Kora.callback.trigger('kora_police:server:isPlateFlagged', plate)
+TriggerServerEvent('kora_police:server:setTracker', target, active)
+TriggerServerEvent('kora_police:server:sendTrackerLocation')
+Kora.callback.trigger('kora_police:server:getFingerprint', target)
+TriggerServerEvent('kora_police:server:impound', plate, lotId)
+TriggerServerEvent('kora_police:server:retrieveImpound', plate)
 ```
 
 ### MDT-ready callbacks (`server/callbacks.lua`)
@@ -312,7 +312,7 @@ No UI ships; these exist for a future MDT resource to consume directly:
 ```lua
 Kora.callback.trigger('police:GetDutyPlayers')
 Kora.callback.trigger('police:GetCops')                    -- stock: a NUMBER, any caller
-Kora.callback.trigger('qbpolice:server:getCops')           -- kora: list of on-duty officer sources (police callers only)
+Kora.callback.trigger('kora_police:server:getCops')           -- kora: list of on-duty officer sources (police callers only)
 Kora.callback.trigger('police:isPlayerDead', target)
 Kora.callback.trigger('police:IsSilencedWeapon', target)
 Kora.callback.trigger('police:IsPoliceForcePresent', coords, radius)
@@ -334,7 +334,7 @@ working unmodified.
 #### Stock qb-policejob parity
 
 *Callbacks.* `police:GetCops` returns the on-duty LEO **count** to any caller, as
-stock does; the old list lives at `qbpolice:server:getCops` (police only).
+stock does; the old list lives at `kora_police:server:getCops` (police only).
 `police:GetDutyPlayers` is open to any caller with the stock `{ source, label,
 job }` shape; `citizenid`/`name`/`grade` are added for police callers only.
 `police:server:isPlayerDead`, `police:server:IsPoliceForcePresent` and
@@ -350,7 +350,7 @@ read as the old target player id (police only).
 through kora_dispatch at the caller's **server-side** position; text is
 sanitised and capped (`Config.dispatch.legacyAlertMaxLength`), one per player per
 `Config.dispatch.legacyAlertCooldown`. kora_core's own local mirror of a dispatch
-alert (same event name) is recognised by its message (via `qbcore:server:dispatchAlert`,
+alert (same event name) is recognised by its message (via `kora_core:server:dispatchAlert`,
 1 s window) and dropped, so it never creates a duplicate call. `police:server:FlaggedPlateTriggered(coords, plate)`
 follows the stock argument order; the sender must be an on-duty officer and the
 plate must really be flagged (`coords` is ignored). `police:server:SetHandcuffStatus(bool)`
@@ -390,7 +390,7 @@ no kora equivalent — kora never lets a client set its own cuff/escort/seat sta
 - `evidence:server:Add{Blooddrop,Fingerprint,Casing}ToInventory` consume an empty bag and add a filled one with server-built metadata
   (client `info` ignored); `ClearBlooddrops` / `ClearCasings` remove nearby markers of that type (officers only);
   `UpdateStatus` keeps only ids in `Config.evidence.statuses`. `police:GetPlayerStatus` returns the stock list of texts (officer, in reach);
-  the old record is `qbpolice:server:getPlayerStatus`.
+  the old record is `kora_police:server:getPlayerStatus`.
 - `police:server:Impound(plate, fullImpound, price, ...)`: price becomes the fee (capped by `Config.impound.maxFee`); body/engine come from the
   vehicle, not the client. `TakeOutImpound(plate, lotIndex)` needs the caller at the lot and goes through the owner-only retrieval.
 - `police:server:RobPlayer` runs the same `Police.rob` flow as the kora rob key (`Config.rob`: cash, then the target's inventory through
@@ -435,9 +435,9 @@ Refused cuff / uncuff / citation actions (not on duty, too far, already cuffed, 
 Part of the [qbcore2](https://github.com/qbcore2) resource set:
 
 - [kora_lib](https://qbcore2.github.io/kora_lib/) — shared helper library
-- [qbsql](https://qbcore2.github.io/kora_sql/) — database driver
-- [qbcore](https://qbcore2.github.io/kora_core/) — framework core
-- [qbinventory](https://qbcore2.github.io/kora_inventory/) — headless inventory
-- [qbtarget](https://qbcore2.github.io/kora_target/) — targeting/interaction
-- [qbambulance](https://qbcore2.github.io/kora_ambulance/) — EMS/ambulance job
+- [kora_sql](https://qbcore2.github.io/kora_sql/) — database driver
+- [kora_core](https://qbcore2.github.io/kora_core/) — framework core
+- [kora_inventory](https://qbcore2.github.io/kora_inventory/) — headless inventory
+- [kora_target](https://qbcore2.github.io/kora_target/) — targeting/interaction
+- [kora_ambulance](https://qbcore2.github.io/kora_ambulance/) — EMS/ambulance job
 - [full resource list ↗](https://github.com/orgs/qbcore2/repositories)

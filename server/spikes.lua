@@ -41,7 +41,7 @@ function Police.deploySpike(officerSrc, coords)
     Police.spikes[netId] = { entity = obj, officer = officerSrc, coords = cleanCoords, deployedAt = GetGameTimer() }
     Police.spikesByOfficer[officerSrc] = (Police.spikesByOfficer[officerSrc] or 0) + 1
 
-    TriggerClientEvent('qbpolice:client:spikeDeployed', -1, netId, cleanCoords)
+    TriggerClientEvent('kora_police:client:spikeDeployed', -1, netId, cleanCoords)
     TriggerClientEvent('police:client:spawnObject', -1, netId, cleanCoords)
 
     SetTimeout(Config.spikes.lifetime, function() Police.removeSpike(netId) end)
@@ -55,18 +55,18 @@ function Police.removeSpike(netId)
     Police.spikes[netId] = nil
     Police.spikesByOfficer[entry.officer] = math.max(0, (Police.spikesByOfficer[entry.officer] or 1) - 1)
     if entry.entity and DoesEntityExist(entry.entity) then DeleteEntity(entry.entity) end
-    TriggerClientEvent('qbpolice:client:spikeRemoved', -1, netId)
+    TriggerClientEvent('kora_police:client:spikeRemoved', -1, netId)
     -- Legacy listeners still get lifecycle parity, but only after this
     -- server-owned registry has actually removed a known strip.
     TriggerClientEvent('police:client:SyncSpikes', -1, netId, false)
     return true
 end
 
-RegisterNetEvent('qbpolice:server:deploySpike', function(coords)
+RegisterNetEvent('kora_police:server:deploySpike', function(coords)
     local netId, err = Police.deploySpike(source, coords)
     if not netId then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
 end)
-RegisterNetEvent('qbpolice:server:removeSpike', function(netId)
+RegisterNetEvent('kora_police:server:removeSpike', function(netId)
     local entry = Police.spikes[tonumber(netId)]
     if entry and entry.officer == source then Police.removeSpike(tonumber(netId)) end
 end)

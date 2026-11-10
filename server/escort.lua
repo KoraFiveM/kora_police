@@ -16,8 +16,8 @@ function Police.escort(officerSrc, targetSrc)
     if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
 
     Police.escorted[targetSrc] = officerSrc
-    TriggerClientEvent('qbpolice:client:escortStart', targetSrc, officerSrc)
-    TriggerClientEvent('qbpolice:client:escortStartSelf', officerSrc, targetSrc)
+    TriggerClientEvent('kora_police:client:escortStart', targetSrc, officerSrc)
+    TriggerClientEvent('kora_police:client:escortStartSelf', officerSrc, targetSrc)
     return true
 end
 
@@ -30,8 +30,8 @@ function Police.deEscort(requesterSrc, targetSrc)
     if requesterSrc ~= officer and requesterSrc ~= targetSrc then return false, 'not authorised' end
 
     Police.escorted[targetSrc] = nil
-    TriggerClientEvent('qbpolice:client:escortStop', targetSrc)
-    TriggerClientEvent('qbpolice:client:escortStopSelf', officer, targetSrc)
+    TriggerClientEvent('kora_police:client:escortStop', targetSrc)
+    TriggerClientEvent('kora_police:client:escortStopSelf', officer, targetSrc)
     return true
 end
 
@@ -56,8 +56,8 @@ function Police.startDrag(draggerSrc, targetSrc)
     if not Police.isIncapacitated(targetSrc) then return false, 'target is not restrained or down' end
 
     Police.kidnapped[targetSrc] = draggerSrc
-    TriggerClientEvent('qbpolice:client:dragStart', targetSrc, draggerSrc)
-    TriggerClientEvent('qbpolice:client:dragStartSelf', draggerSrc, targetSrc)
+    TriggerClientEvent('kora_police:client:dragStart', targetSrc, draggerSrc)
+    TriggerClientEvent('kora_police:client:dragStartSelf', draggerSrc, targetSrc)
     return true
 end
 
@@ -70,8 +70,8 @@ function Police.stopDrag(requesterSrc, targetSrc)
     if requesterSrc ~= dragger and requesterSrc ~= targetSrc then return false, 'not authorised' end
 
     Police.kidnapped[targetSrc] = nil
-    TriggerClientEvent('qbpolice:client:dragStop', targetSrc)
-    TriggerClientEvent('qbpolice:client:dragStopSelf', dragger, targetSrc)
+    TriggerClientEvent('kora_police:client:dragStop', targetSrc)
+    TriggerClientEvent('kora_police:client:dragStopSelf', dragger, targetSrc)
     return true
 end
 
@@ -141,7 +141,7 @@ function Police.putInVehicle(officerSrc, targetSrc, netId, seat)
 
     Police.deEscort(officerSrc, targetSrc)
     Police.stopDrag(officerSrc, targetSrc)
-    TriggerClientEvent('qbpolice:client:putInVehicle', targetSrc, netId, seat or -1)
+    TriggerClientEvent('kora_police:client:putInVehicle', targetSrc, netId, seat or -1)
     return true
 end
 
@@ -153,23 +153,23 @@ function Police.takeOutVehicle(officerSrc, targetSrc)
     if not Police.isCuffed(targetSrc) then return false, 'target is not cuffed' end
     if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
 
-    TriggerClientEvent('qbpolice:client:takeOutVehicle', targetSrc)
+    TriggerClientEvent('kora_police:client:takeOutVehicle', targetSrc)
     return true
 end
 
-RegisterNetEvent('qbpolice:server:escort', function(target)
+RegisterNetEvent('kora_police:server:escort', function(target)
     local ok, err = Police.escort(source, tonumber(target))
     if not ok then Police.notify(source, err) end
 end)
-RegisterNetEvent('qbpolice:server:deEscort', function(target)
+RegisterNetEvent('kora_police:server:deEscort', function(target)
     local ok, err = Police.deEscort(source, tonumber(target))
     if not ok then Police.notify(source, err) end
 end)
-RegisterNetEvent('qbpolice:server:startDrag', function(target)
+RegisterNetEvent('kora_police:server:startDrag', function(target)
     local ok, err = Police.startDrag(source, tonumber(target))
     if not ok then Police.notify(source, err) end
 end)
-RegisterNetEvent('qbpolice:server:stopDrag', function(target)
+RegisterNetEvent('kora_police:server:stopDrag', function(target)
     local src = source
     target = tonumber(target)
     -- The client's idea of who it drags can be stale (or the server already
@@ -180,16 +180,16 @@ RegisterNetEvent('qbpolice:server:stopDrag', function(target)
     local ok, err = Police.stopDrag(src, target)
     if ok then return end
     if err == 'not being dragged' then
-        TriggerClientEvent('qbpolice:client:dragStopSelf', src, target)
+        TriggerClientEvent('kora_police:client:dragStopSelf', src, target)
         return
     end
     Police.notify(src, err)
 end)
-RegisterNetEvent('qbpolice:server:putInVehicle', function(target, netId, seat)
+RegisterNetEvent('kora_police:server:putInVehicle', function(target, netId, seat)
     local ok, err = Police.putInVehicle(source, tonumber(target), tonumber(netId), seat and tonumber(seat) or nil)
     if not ok then Police.notify(source, err) end
 end)
-RegisterNetEvent('qbpolice:server:takeOutVehicle', function(target)
+RegisterNetEvent('kora_police:server:takeOutVehicle', function(target)
     local ok, err = Police.takeOutVehicle(source, tonumber(target))
     if not ok then Police.notify(source, err) end
 end)

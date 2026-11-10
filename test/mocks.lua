@@ -207,7 +207,7 @@ function M.install()
         end,
     })
 
-    local qbcore = exportImpls.kora_core
+    local kora_core = exportImpls.kora_core
 
     -- Job types mirror kora_core/shared/jobs.lua. Dispatch alerts target the TYPE,
     -- so 'police' and a hypothetical 'sheriff' both answer to 'leo'.
@@ -217,13 +217,13 @@ function M.install()
     -- PlayerData.job (CoreInternal.player.buildJob copies it from the registry).
     -- A mock that omitted it would let a job.type check pass here and fail in
     -- game -- the exact mock-drift trap this codebase has been bitten by before.
-    function qbcore.getJob(src)
+    function kora_core.getJob(src)
         local p = players[src]
         if not p or not p.job then return nil end
         if p.job.type == nil then p.job.type = JOB_TYPES[p.job.name] or 'none' end
         return p.job
     end
-    function qbcore.getPlayerData(src, path)
+    function kora_core.getPlayerData(src, path)
         local p = players[src]
         if not p then return nil end
         if not path then return p.data end
@@ -234,23 +234,23 @@ function M.install()
         end
         return v
     end
-    function qbcore.getMetaData(src, key)
+    function kora_core.getMetaData(src, key)
         local p = players[src]
         if not p then return nil end
         if key == nil then return p.data.metadata end
         return p.data.metadata[key]
     end
-    function qbcore.setMetaData(src, key, value)
+    function kora_core.setMetaData(src, key, value)
         local p = players[src]; if not p then return false, 'no such player' end
         p.data.metadata[key] = value
         return true
     end
-    function qbcore.setJobDuty(src, onDuty)
+    function kora_core.setJobDuty(src, onDuty)
         local p = players[src]; if not p then return false, 'no such player' end
         p.job.onduty = onDuty == true
         return true
     end
-    function qbcore.incrementMetaData(src, key, delta, min, max)
+    function kora_core.incrementMetaData(src, key, delta, min, max)
         local p = players[src]; if not p then return nil, 'no such player' end
         local v = (tonumber(p.data.metadata[key]) or 0) + (tonumber(delta) or 0)
         if min and v < min then v = min end
@@ -258,35 +258,35 @@ function M.install()
         p.data.metadata[key] = v
         return v
     end
-    function qbcore.getMoney(src, account)
+    function kora_core.getMoney(src, account)
         local p = players[src]; return p and p.data.money[account]
     end
-    function qbcore.addMoney(src, account, amount)
+    function kora_core.addMoney(src, account, amount)
         local p = players[src]; if not p then return false, 'no such player' end
         p.data.money[account] = (p.data.money[account] or 0) + amount
         return true
     end
-    function qbcore.removeMoney(src, account, amount)
+    function kora_core.removeMoney(src, account, amount)
         local p = players[src]; if not p then return false, 'no such player' end
         local current = p.data.money[account] or 0
         if amount > current then return false, 'insufficient funds' end
         p.data.money[account] = current - amount
         return true
     end
-    function qbcore.transferMoney(fromSrc, toSrc, account, amount)
-        local removed, err = qbcore.removeMoney(fromSrc, account, amount)
+    function kora_core.transferMoney(fromSrc, toSrc, account, amount)
+        local removed, err = kora_core.removeMoney(fromSrc, account, amount)
         if not removed then return false, err end
-        local added, addErr = qbcore.addMoney(toSrc, account, amount)
-        if not added then qbcore.addMoney(fromSrc, account, amount); return false, addErr end
+        local added, addErr = kora_core.addMoney(toSrc, account, amount)
+        if not added then kora_core.addMoney(fromSrc, account, amount); return false, addErr end
         return true
     end
-    function qbcore.getPlayers()
+    function kora_core.getPlayers()
         local out = {}
         for src in pairs(players) do out[#out + 1] = src end
         table.sort(out)
         return out
     end
-    function qbcore.getPlayersByJob(name, onDutyOnly)
+    function kora_core.getPlayersByJob(name, onDutyOnly)
         local out = {}
         for src, p in pairs(players) do
             if p.job and p.job.name == name and (not onDutyOnly or p.job.onduty) then out[#out + 1] = src end
@@ -294,10 +294,10 @@ function M.install()
         table.sort(out)
         return out
     end
-    function qbcore.getDutyCount(name)
-        return #qbcore.getPlayersByJob(name, true)
+    function kora_core.getDutyCount(name)
+        return #kora_core.getPlayersByJob(name, true)
     end
-    function qbcore.getPlayersByJobType(jobType, onDutyOnly)
+    function kora_core.getPlayersByJobType(jobType, onDutyOnly)
         local out = {}
         for src, p in pairs(players) do
             if p.job and JOB_TYPES[p.job.name] == jobType and (not onDutyOnly or p.job.onduty) then
@@ -307,10 +307,10 @@ function M.install()
         table.sort(out)
         return out
     end
-    function qbcore.getDutyCountByType(jobType)
-        return #qbcore.getPlayersByJobType(jobType, true)
+    function kora_core.getDutyCountByType(jobType)
+        return #kora_core.getPlayersByJobType(jobType, true)
     end
-    function qbcore.getOnDutyRoster(filter)
+    function kora_core.getOnDutyRoster(filter)
         filter = filter or {}
         local out = {}
         for src, p in pairs(players) do
@@ -327,36 +327,36 @@ function M.install()
         table.sort(out, function(a, b) return a.src < b.src end)
         return out
     end
-    function qbcore.jailPlayer(src, minutes, reason)
+    function kora_core.jailPlayer(src, minutes, reason)
         if not players[src] then return false, 'no such player' end
         minutes = tonumber(minutes)
         if not minutes or minutes <= 0 then return false, 'minutes must be positive' end
         players[src].jailed = { minutes = minutes, reason = reason }
         return true
     end
-    function qbcore.createUseable() end
-    function qbcore.registerShared() end
-    function qbcore.alert(payload)
+    function kora_core.createUseable() end
+    function kora_core.registerShared() end
+    function kora_core.alert(payload)
         assert(type(payload) == 'table' and type(payload.jobs) == 'table' and #payload.jobs > 0,
             'alert requires payload.jobs as a non-empty array')
         local recipients = {}
         for _, jobName in ipairs(payload.jobs) do
-            for _, src in ipairs(qbcore.getPlayersByJob(jobName, true)) do recipients[src] = true end
+            for _, src in ipairs(kora_core.getPlayersByJob(jobName, true)) do recipients[src] = true end
         end
         local count = 0
         for src in pairs(recipients) do
-            TriggerClientEvent('qbcore:client:dispatchAlert', src, payload)
+            TriggerClientEvent('kora_core:client:dispatchAlert', src, payload)
             count = count + 1
         end
         return count
     end
-    function qbcore.getByPlate() return nil end
-    function qbcore.getByOwner() return {} end
-    function qbcore.impound() return true end
-    function qbcore.retrieveImpound() return true end
-    function qbcore.createVehicle() return true end
-    function qbcore.storeVehicle() return true end
-    function qbcore.spawnVehicle() return 1 end
+    function kora_core.getByPlate() return nil end
+    function kora_core.getByOwner() return {} end
+    function kora_core.impound() return true end
+    function kora_core.retrieveImpound() return true end
+    function kora_core.createVehicle() return true end
+    function kora_core.storeVehicle() return true end
+    function kora_core.spawnVehicle() return 1 end
 
     -- kora_dispatch owns the call lifecycle now; kora_police only raises calls through
     -- it. Recorded rather than simulated: what these tests care about is the
@@ -365,25 +365,25 @@ function M.install()
     local dispatchCalls = {}
     local playerAlertDefinitions = {}
     exportImpls.kora_dispatch = {}
-    local qbdispatch = exportImpls.kora_dispatch
-    function qbdispatch.createCall(payload)
+    local kora_dispatch = exportImpls.kora_dispatch
+    function kora_dispatch.createCall(payload)
         dispatchCalls[#dispatchCalls + 1] = payload
         local recipients = {}
         for _, jobName in ipairs(payload.jobs or {}) do
-            for _, src in ipairs(qbcore.getPlayersByJob(jobName, true)) do recipients[src] = true end
+            for _, src in ipairs(kora_core.getPlayersByJob(jobName, true)) do recipients[src] = true end
         end
         for _, jobType in ipairs(payload.jobTypes or {}) do
-            for _, src in ipairs(qbcore.getPlayersByJobType(jobType, true)) do recipients[src] = true end
+            for _, src in ipairs(kora_core.getPlayersByJobType(jobType, true)) do recipients[src] = true end
         end
         local count = 0
         for _ in pairs(recipients) do count = count + 1 end
         return #dispatchCalls, count
     end
-    function qbdispatch.registerPlayerAlert(key, definition)
+    function kora_dispatch.registerPlayerAlert(key, definition)
         playerAlertDefinitions[key] = definition
         return true
     end
-    function qbdispatch.createPlayerCall(src, key)
+    function kora_dispatch.createPlayerCall(src, key)
         local definition = playerAlertDefinitions[key]
         if not definition then return false, 'unknown player alert type' end
 
@@ -391,14 +391,14 @@ function M.install()
         for field, value in pairs(definition) do payload[field] = value end
         payload.coords = players[src] and players[src].coords or nil
         payload.data = { incident = key, reporter = src }
-        return qbdispatch.createCall(payload)
+        return kora_dispatch.createCall(payload)
     end
-    function qbdispatch.setTheme() return true end
+    function kora_dispatch.setTheme() return true end
 
-    local qbinventory = exportImpls.kora_inventory
-    function qbinventory.registerInspectionAccess() return 1 end
-    function qbinventory.RegisterStash() return 'stash:mock' end
-    function qbinventory.RegisterShop() return 'shop:mock' end
+    local kora_inventory = exportImpls.kora_inventory
+    function kora_inventory.registerInspectionAccess() return 1 end
+    function kora_inventory.RegisterStash() return 'stash:mock' end
+    function kora_inventory.RegisterShop() return 'shop:mock' end
 
     return {
         players = players,

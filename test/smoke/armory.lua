@@ -139,12 +139,12 @@ h.test('on a server boot the restock waits until kora_inventory has loaded its s
     h.assertEqual(writes, 0, 'no restock before the saved shops are loaded')
 
     loaded = true
-    TriggerEvent('qbinventory:server:ready', { ready = true })
+    TriggerEvent('kora_inventory:server:ready', { ready = true })
     h.assertEqual(writes, 1, 'restocked once the saved shops are loaded')
     h.assertEqual(saved[3].amount, patrol.items[3].amount, 'run-out kit topped up')
     h.assertEqual(saved[#patrol.items].name, Config.evidence.bagItem, 'missing kit put back')
 
-    TriggerEvent('qbinventory:server:ready', { ready = true })
+    TriggerEvent('kora_inventory:server:ready', { ready = true })
     h.assertEqual(writes, 1, 'a later kora_inventory load (its restart) does not restock again')
     inv.getPersistenceStatus, inv.GetShopItems, inv.SetShopItems = nil, nil, nil
 end)

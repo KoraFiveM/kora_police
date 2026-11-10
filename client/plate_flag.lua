@@ -19,7 +19,7 @@ local function registerPlateFlagTargets()
                     ('Flag %s'):format(plate)
                 )
                 if not result or not result.values then return end
-                TriggerServerEvent('qbpolice:server:flagPlate', plate, result.values.reason)
+                TriggerServerEvent('kora_police:server:flagPlate', plate, result.values.reason)
             end,
         },
         {
@@ -29,7 +29,7 @@ local function registerPlateFlagTargets()
                 return Police.isOnDuty()
             end,
             onSelect = function(entity)
-                TriggerServerEvent('qbpolice:server:unflagPlate', GetVehicleNumberPlateText(entity))
+                TriggerServerEvent('kora_police:server:unflagPlate', GetVehicleNumberPlateText(entity))
             end,
         },
     })
@@ -79,7 +79,7 @@ local function startScan()
                         local plate = GetVehicleNumberPlateText(other)
                         if not checked[plate] then
                             checked[plate] = true
-                            TriggerServerEvent('qbpolice:server:plateSpotted', plate)
+                            TriggerServerEvent('kora_police:server:plateSpotted', plate)
                         end
                     end
                 end
@@ -88,7 +88,7 @@ local function startScan()
 
         scanRunning = false
         if Config.performance.diagnostics then
-            print(('[qbpolice] ALPR scanner stopped after %d scans / %d vehicle checks'):format(scans, vehicles))
+            print(('[kora_police] ALPR scanner stopped after %d scans / %d vehicle checks'):format(scans, vehicles))
         end
     end)
 end
@@ -121,7 +121,7 @@ CreateThread(function()
     startScan()
 end)
 
-RegisterNetEvent('qbpolice:client:flaggedPlateTriggered', function(plate, reason)
+RegisterNetEvent('kora_police:client:flaggedPlateTriggered', function(plate, reason)
     Police.notify(('Flagged plate spotted: %s (%s)'):format(plate, reason), 'warning')
 end)
 RegisterNetEvent('police:client:FlaggedPlateTriggered', function(plate, reason)

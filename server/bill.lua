@@ -100,7 +100,7 @@ function Police.payCitation(src, id)
     return true
 end
 
-RegisterNetEvent('qbpolice:server:bill', function(target, amount, reason)
+RegisterNetEvent('kora_police:server:bill', function(target, amount, reason)
     local ok, err = Police.bill(source, tonumber(target), amount, reason)
     if not ok then Police.notify(source, Police.cuffRefusal(err)) end
 end)

@@ -63,10 +63,10 @@ end)
 h.test('escort and drag initiators release the current target instead', function()
     Police.escortedTarget, Police.draggedTarget = 12, 13
     local escort = fire('EscortPlayer')[1]
-    h.assertEqual(escort.name, 'qbpolice:server:deEscort')
+    h.assertEqual(escort.name, 'kora_police:server:deEscort')
     h.assertEqual(escort.args[1], 12)
     local drag = fire('KidnapPlayer')[1]
-    h.assertEqual(drag.name, 'qbpolice:server:stopDrag')
+    h.assertEqual(drag.name, 'kora_police:server:stopDrag')
     h.assertEqual(drag.args[1], 13)
     Police.escortedTarget, Police.draggedTarget = nil, nil
 end)

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Runs every qbpolice smoke test with plain Lua (no busted). Exits non-zero on
-# any failure. Follows qbcore's own test/run.sh convention (same relative-
+# Runs every kora_police smoke test with plain Lua (no busted). Exits non-zero on
+# any failure. Follows kora_core's own test/run.sh convention (same relative-
 # dofile-path style the smoke tests here use).
 set -uo pipefail
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

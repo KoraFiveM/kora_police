@@ -13,11 +13,11 @@ local h = dofile('test/harness.lua')
 -- here, so natives only referenced from inside those closures don't need
 -- mocking.
 local eventHandlers = {}
-local qbtargetCalls = 0
+local kora_targetCalls = 0
 local activeTargetIds, nextTargetId = {}, 0
 
 local function addTarget()
-    qbtargetCalls = qbtargetCalls + 1
+    kora_targetCalls = kora_targetCalls + 1
     nextTargetId = nextTargetId + 1
     activeTargetIds[nextTargetId] = true
     return nextTargetId
@@ -114,7 +114,7 @@ dofile('config.lua')
 dofile('client/core.lua')
 
 -- Every client file that owns a file-scope kora_target registration, per the
--- qbtarget-restart-safety refactor. All 16 register via
+-- kora_target-restart-safety refactor. All 16 register via
 -- AddEventHandler('onClientResourceStart', ...) so re-running the handler
 -- with resourceName == 'kora_target' re-registers.
 local targetFiles = {
@@ -128,17 +128,17 @@ for _, path in ipairs(targetFiles) do
     dofile(path)
 end
 
-h.test('every listed client file registers at least one qbtarget zone/type on initial load', function()
-    h.assertTrue(qbtargetCalls > 0, 'expected qbtarget registration calls during initial load')
+h.test('every listed client file registers at least one kora_target zone/type on initial load', function()
+    h.assertTrue(kora_targetCalls > 0, 'expected kora_target registration calls during initial load')
 end)
 
 -- Blips are NOT part of the re-registration contract, and that asymmetry is the
 -- point -- see the test at the bottom of this file.
 local blipsAfterInitialLoad = blipCalls
-local afterInitialLoad = qbtargetCalls
+local afterInitialLoad = kora_targetCalls
 local activeAfterInitialLoad = activeTargetCount()
 
-h.test('firing onClientResourceStart for qbtarget re-registers every zone/type from every file', function()
+h.test('firing onClientResourceStart for kora_target re-registers every zone/type from every file', function()
     TriggerEvent('onClientResourceStart', 'kora_target')
     -- Every one of the 16 files' registration functions is idempotent and
     -- makes the exact same kora_target calls it made on initial load, so a
@@ -146,17 +146,17 @@ h.test('firing onClientResourceStart for qbtarget re-registers every zone/type f
     -- total. A plain ">" check would still pass if even one file silently
     -- failed to re-register (as long as at least one of the other 15 did),
     -- so this asserts the precise count instead.
-    h.assertEqual(qbtargetCalls, afterInitialLoad * 2,
-        ('expected qbtarget call count to exactly double after a simulated qbtarget restart (was %d, expected %d, got %d)')
-            :format(afterInitialLoad, afterInitialLoad * 2, qbtargetCalls))
+    h.assertEqual(kora_targetCalls, afterInitialLoad * 2,
+        ('expected kora_target call count to exactly double after a simulated kora_target restart (was %d, expected %d, got %d)')
+            :format(afterInitialLoad, afterInitialLoad * 2, kora_targetCalls))
     h.assertEqual(activeTargetCount(), activeAfterInitialLoad,
         're-registration replaces every police target instead of duplicating menu options')
 end)
 
 h.test('firing onClientResourceStart for an unrelated resource does not re-register anything', function()
-    local before = qbtargetCalls
+    local before = kora_targetCalls
     TriggerEvent('onClientResourceStart', 'some-other-resource')
-    h.assertEqual(qbtargetCalls, before, 'onClientResourceStart for a non-qbtarget resource must be a no-op here')
+    h.assertEqual(kora_targetCalls, before, 'onClientResourceStart for a non-kora_target resource must be a no-op here')
 end)
 
 -- Runs last, so it observes the kora_target restarts the tests above already
@@ -165,13 +165,13 @@ end)
 --
 -- Blips are deliberately outside the re-registration contract: kora_target drops
 -- its own registrations when it stops, so those have to be re-made, but kora_lib's
--- blip registry only clears when QBPOLICE stops -- so re-making a blip stacks a
+-- blip registry only clears when kora_police stops -- so re-making a blip stacks a
 -- duplicate station marker on the map rather than replacing it. This is why
 -- client/duty.lua creates them in their own function, called once at load.
-h.test('station blips are created once at load, not per qbtarget restart', function()
+h.test('station blips are created once at load, not per kora_target restart', function()
     h.assertTrue(blipsAfterInitialLoad > 0, 'the station blip is created on initial load')
     h.assertEqual(blipCalls, blipsAfterInitialLoad,
-        'a qbtarget restart must not stack another station blip')
+        'a kora_target restart must not stack another station blip')
     h.assertEqual(stationBlips[1].category, 'Police',
         'station blips group beneath the canonical Police heading')
     h.assertEqual(stationBlips[1].name, nil, 'a generic station does not repeat its category as a name')

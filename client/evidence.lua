@@ -79,7 +79,7 @@ local function showWorldEvidence(id, evType, coords, displayOnly)
     registerWorldEvidenceTarget(id, marker)
 end
 
-RegisterNetEvent('qbpolice:client:worldEvidenceCreated', function(id, evType, coords)
+RegisterNetEvent('kora_police:client:worldEvidenceCreated', function(id, evType, coords)
     showWorldEvidence(id, evType, coords)
 end)
 
@@ -167,7 +167,7 @@ RegisterNetEvent('evidence:client:SetStatus', function(statusId, time)
 end)
 
 
-RegisterNetEvent('qbpolice:client:worldEvidenceRemoved', removeWorldEvidence)
+RegisterNetEvent('kora_police:client:worldEvidenceRemoved', removeWorldEvidence)
 
 AddEventHandler('onClientResourceStop', function(resourceName)
     if resourceName ~= 'kora_target' then return end

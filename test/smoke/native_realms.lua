@@ -41,7 +41,7 @@ h.test('spikes and suspect seating work without client-only server natives', fun
     h.assertFalse(Police.putInVehicle(1, 2, 'invalid'))
     h.assertFalse(Police.putInVehicle(1, 2, 9999))
     h.assertTrue(Police.putInVehicle(1, 2, id, 0))
-    local event = handle.lastClient('qbpolice:client:putInVehicle')
+    local event = handle.lastClient('kora_police:client:putInVehicle')
     h.assertEqual(event.target, 2)
     h.assertEqual(event.args[1], id)
     h.assertEqual(event.args[2], 0)

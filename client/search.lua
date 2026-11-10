@@ -3,7 +3,7 @@
 -- `openInventory` export lives in the client realm -- see server/seize.lua
 -- for why the round trip goes through this event instead of a direct call).
 
-RegisterNetEvent('qbpolice:client:openSearch', function(targetServerId)
+RegisterNetEvent('kora_police:client:openSearch', function(targetServerId)
     exports.kora_inventory:openInventory('player', targetServerId)
 end)
 
@@ -17,7 +17,7 @@ local function registerSearchTargets()
                 return Police.isOnDuty() and Police.isPedCuffed(entity)
             end,
             onSelect = function(entity)
-                TriggerServerEvent('qbpolice:server:search', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
+                TriggerServerEvent('kora_police:server:search', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
     }, Config.cuff.distance)

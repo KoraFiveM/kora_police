@@ -1,8 +1,8 @@
 -- GPS tracker: officer attaches one, then that suspect's own client answers
 -- periodic location pings; every on-duty officer receives the position.
 
-RegisterNetEvent('qbpolice:client:requestTrackerPing', function()
-    TriggerServerEvent('qbpolice:server:sendTrackerLocation')
+RegisterNetEvent('kora_police:client:requestTrackerPing', function()
+    TriggerServerEvent('kora_police:server:sendTrackerLocation')
 end)
 
 Police.trackerBlips = Police.trackerBlips or {}
@@ -30,7 +30,7 @@ local function upsertTrackerBlip(targetServerId, coords)
     if blip then Police.trackerBlips[targetServerId] = blip end
 end
 
-RegisterNetEvent('qbpolice:client:trackerLocation', function(targetServerId, coords)
+RegisterNetEvent('kora_police:client:trackerLocation', function(targetServerId, coords)
     upsertTrackerBlip(targetServerId, coords)
 end)
 -- Stock sends the tracked player a bare request id (they answer with
@@ -85,7 +85,7 @@ local function registerTrackerTargets()
                 return Police.isOnDuty() and Police.isPedCuffed(entity)
             end,
             onSelect = function(entity)
-                TriggerServerEvent('qbpolice:server:setTracker', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)), true)
+                TriggerServerEvent('kora_police:server:setTracker', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)), true)
             end,
         },
     }, Config.cuff.distance)

@@ -42,7 +42,7 @@ h.test('the configured robbery radius rides along on the call', function()
 end)
 
 h.test('backup uses its registered fixed presentation', function()
-    handle.Kora.events.registry['qbpolice:server:requestBackup'](COP1)
+    handle.Kora.events.registry['kora_police:server:requestBackup'](COP1)
 
     local call = handle.lastDispatchCall()
     h.assertEqual(call.code, '10-78', 'a backup request has its own code')
@@ -55,7 +55,7 @@ h.test('a civilian cannot request police backup', function()
     handle.addPlayer(9, { job = { name = 'unemployed', onduty = true, grade = { level = 1 } } })
     local before = #handle.dispatchCalls
 
-    handle.Kora.events.registry['qbpolice:server:requestBackup'](9)
+    handle.Kora.events.registry['kora_police:server:requestBackup'](9)
 
     h.assertEqual(#handle.dispatchCalls, before, 'no call should have been raised')
 end)
@@ -63,7 +63,7 @@ end)
 h.test('the panic button raises TWO calls, one per service', function()
     local before = #handle.dispatchCalls
     _G.source = COP1
-    TriggerEvent('qbpolice:server:panic')
+    TriggerEvent('kora_police:server:panic')
 
     h.assertEqual(#handle.dispatchCalls, before + 2, 'police and EMS are separate incidents')
 
@@ -85,7 +85,7 @@ h.test('panic coordinates come from the server, never the client', function()
     Police.clearPanicCooldown(COP1) -- the previous test just used the alarm
     handle.setCoords(COP1, 111.0, 222.0, 33.0)
     _G.source = COP1
-    TriggerEvent('qbpolice:server:panic')
+    TriggerEvent('kora_police:server:panic')
 
     local call = handle.dispatchCalls[#handle.dispatchCalls - 1]
     h.assertEqual(call.coords.x, 111.0, "read from the officer's own ped")
@@ -97,7 +97,7 @@ h.test('a mashed panic button raises one alarm, not one per press', function()
     local before = #handle.dispatchCalls
 
     _G.source = COP1
-    for _ = 1, 5 do TriggerEvent('qbpolice:server:panic') end
+    for _ = 1, 5 do TriggerEvent('kora_police:server:panic') end
 
     -- One press is already TWO calls (LEO + EMS). Without the gate, five
     -- presses would put ten duplicates across both services' feeds, at exactly
@@ -108,9 +108,9 @@ end)
 h.test('a suppressed press tells the officer their alarm is already out', function()
     Police.clearPanicCooldown(COP1)
     _G.source = COP1
-    TriggerEvent('qbpolice:server:panic')
+    TriggerEvent('kora_police:server:panic')
 
-    TriggerEvent('qbpolice:server:panic')
+    TriggerEvent('kora_police:server:panic')
 
     -- Silence would be the wrong answer here: somebody pressing this is having
     -- the worst moment of their shift and needs to know it was heard.
@@ -123,11 +123,11 @@ end)
 h.test('the alarm can be raised again once the cooldown elapses', function()
     Police.clearPanicCooldown(COP1)
     _G.source = COP1
-    TriggerEvent('qbpolice:server:panic')
+    TriggerEvent('kora_police:server:panic')
     local before = #handle.dispatchCalls
 
     handle.advanceClock(Config.dispatch.panicCooldown + 1)
-    TriggerEvent('qbpolice:server:panic')
+    TriggerEvent('kora_police:server:panic')
 
     -- An officer still down a minute later, in a new position, is raising a
     -- genuinely new alarm.
@@ -139,13 +139,13 @@ h.test('the cooldown is per officer, not global', function()
     Police.clearPanicCooldown(DEPUTY)
 
     _G.source = COP1
-    TriggerEvent('qbpolice:server:panic')
+    TriggerEvent('kora_police:server:panic')
     local before = #handle.dispatchCalls
 
     -- A sheriff's deputy, deliberately: dispatch targets the LEO service, so a
     -- deputy receives these calls and must be able to raise one too.
     _G.source = DEPUTY
-    TriggerEvent('qbpolice:server:panic')
+    TriggerEvent('kora_police:server:panic')
 
     h.assertEqual(#handle.dispatchCalls, before + 2,
         "one officer's alarm must never mute another officer's")
@@ -168,7 +168,7 @@ end)
 h.test('going off duty clears the cooldown', function()
     Police.clearPanicCooldown(COP1)
     _G.source = COP1
-    TriggerEvent('qbpolice:server:panic')
+    TriggerEvent('kora_police:server:panic')
 
     -- Off duty ends the shift the alarm belonged to; coming back on and
     -- immediately needing help is a new emergency, not a repeat of the old one.
@@ -180,7 +180,7 @@ end)
 
 h.test('a client-reported crime selects only a registered fixed incident', function()
     handle.setCoords(9, 500.0, 600.0, 20.0)
-    handle.Kora.events.registry['qbpolice:server:crimeDetected'](9, 'qbpolice:gunfire')
+    handle.Kora.events.registry['kora_police:server:crimeDetected'](9, 'kora_police:gunfire')
 
     local call = handle.lastDispatchCall()
     h.assertEqual(call.coords.x, 500.0, 'coordinates are derived from the reporter')
@@ -189,7 +189,7 @@ end)
 
 h.test('an unknown crime key is dropped rather than raising a call', function()
     local before = #handle.dispatchCalls
-    handle.Kora.events.registry['qbpolice:server:crimeDetected'](9, 'qbpolice:not-registered')
+    handle.Kora.events.registry['kora_police:server:crimeDetected'](9, 'kora_police:not-registered')
     h.assertEqual(#handle.dispatchCalls, before, 'nothing raised')
 end)
 
@@ -197,7 +197,7 @@ h.test('broadcastCopCount counts the whole LEO service and reaches only on-duty 
     Police.broadcastCopCount()
 
     local targets = {}
-    for _, e in ipairs(eventsFor('qbpolice:client:updateCopCount')) do targets[e.target] = e.args[1] end
+    for _, e in ipairs(eventsFor('kora_police:client:updateCopCount')) do targets[e.target] = e.args[1] end
 
     h.assertEqual(targets[COP1], 2, 'the officer sees both LEO units on duty')
     h.assertEqual(targets[DEPUTY], 2, 'and so does the deputy -- one shared count for the service')
@@ -207,11 +207,11 @@ end)
 
 h.test('going on duty triggers a fresh broadcast', function()
     handle.players[COP2].job.onduty = true
-    local before = #eventsFor('qbpolice:client:updateCopCount')
+    local before = #eventsFor('kora_police:client:updateCopCount')
 
     TriggerEvent('QBCore:Server:SetDuty', COP2, true)
 
-    local hits = eventsFor('qbpolice:client:updateCopCount')
+    local hits = eventsFor('kora_police:client:updateCopCount')
     h.assertTrue(#hits > before, 'a duty change re-broadcasts')
     h.assertEqual(hits[#hits].args[1], 3, 'all three LEO units are now counted')
 end)

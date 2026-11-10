@@ -26,7 +26,7 @@ local function impoundVehicle(entity)
         if not completed then return Police.notify('Impound cancelled.', 'warning') end
         if not DoesEntityExist(entity) then return end
     end
-    TriggerServerEvent('qbpolice:server:impound', plate)
+    TriggerServerEvent('kora_police:server:impound', plate)
     if DoesEntityExist(entity) then DeleteEntity(entity) end
 end
 
@@ -60,7 +60,7 @@ local function registerImpoundTargets()
                             'Retrieve Vehicle'
                         )
                         if result and result.values and result.values.plate then
-                            TriggerServerEvent('qbpolice:server:retrieveImpound', result.values.plate)
+                            TriggerServerEvent('kora_police:server:retrieveImpound', result.values.plate)
                         end
                     end,
                 },

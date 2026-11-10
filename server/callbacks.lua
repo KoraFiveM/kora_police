@@ -45,7 +45,7 @@ end)
 
 -- Kora's own list form of the old `police:GetCops`: the on-duty officer sources
 -- of the police job, for police callers only.
-Kora.callback.register('qbpolice:server:getCops', function(src)
+Kora.callback.register('kora_police:server:getCops', function(src)
     if not Police.isPolice(src) then return {} end
     return dutySrcList()
 end)
@@ -132,7 +132,7 @@ Kora.callback.register('police:GetPlayerStatus', function(src, target)
 end)
 
 -- Kora's own richer record, kept under a native name for kora callers.
-Kora.callback.register('qbpolice:server:getPlayerStatus', function(src, target)
+Kora.callback.register('kora_police:server:getPlayerStatus', function(src, target)
     if not Police.isPolice(src) then return nil end
     target = tonumber(target) or src
     local data = exports.kora_core:getPlayerData(target)

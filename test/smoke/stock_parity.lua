@@ -31,9 +31,9 @@ h.test('GetCops returns the on-duty LEO count to any caller', function()
 end)
 
 h.test('the old list form lives under a kora name and stays police-only', function()
-    local list = cb['qbpolice:server:getCops'](OFFICER)
+    local list = cb['kora_police:server:getCops'](OFFICER)
     h.assertEqual(#list, 2)
-    h.assertEqual(#cb['qbpolice:server:getCops'](CIVILIAN), 0)
+    h.assertEqual(#cb['kora_police:server:getCops'](CIVILIAN), 0)
 end)
 
 h.test('GetDutyPlayers is open to civilians with the stock shape and no identity', function()
@@ -129,7 +129,7 @@ h.test('SetHandcuffStatus(bool) never changes cuff state', function()
     h.assertTrue(Police.cuff(OFFICER, TARGET))
     handle.fireEvent('police:server:SetHandcuffStatus', TARGET, false)
     h.assertTrue(Police.isCuffed(TARGET))
-    local sync = handle.lastClient('qbpolice:client:cuffed')
+    local sync = handle.lastClient('kora_police:client:cuffed')
     h.assertEqual(sync.target, TARGET)
     h.assertEqual(sync.args[1], true)
     h.assertTrue(Police.uncuff(OFFICER, TARGET))
@@ -203,7 +203,7 @@ h.test('policeAlert ignores kora_core\'s local mirror even when it carries a pla
     -- Core.dispatch.alert order: server mirror event, then the legacy local event.
     local previous = _G.source
     _G.source = TARGET
-    _G.TriggerEvent('qbcore:server:dispatchAlert', { jobs = { 'police' }, message = 'Shop robbery' }, 1)
+    _G.TriggerEvent('kora_core:server:dispatchAlert', { jobs = { 'police' }, message = 'Shop robbery' }, 1)
     _G.TriggerEvent('police:server:policeAlert', 'Shop robbery')
     _G.source = previous
     h.assertEqual(#handle.dispatchCalls, before, 'mirror must not raise a duplicate call')
@@ -220,13 +220,13 @@ h.test('PutPlayerInVehicle(target) alone picks the nearest vehicle but keeps the
     local exists = _G.DoesEntityExist
     _G.DoesEntityExist = function(e) return e == 7 or exists(e) end
     _G.NetworkGetEntityFromNetworkId = function(netId) return netId - 1000 end
-    local before = #handle.clientEventsFor('qbpolice:client:putInVehicle')
+    local before = #handle.clientEventsFor('kora_police:client:putInVehicle')
     handle.fireEvent('police:server:PutPlayerInVehicle', OFFICER, TARGET)
-    h.assertEqual(#handle.clientEventsFor('qbpolice:client:putInVehicle'), before, 'uncuffed target is refused')
+    h.assertEqual(#handle.clientEventsFor('kora_police:client:putInVehicle'), before, 'uncuffed target is refused')
     Police.cuff(OFFICER, TARGET)
     handle.fireEvent('police:server:PutPlayerInVehicle', OFFICER, TARGET)
-    local event = handle.lastClient('qbpolice:client:putInVehicle')
-    h.assertEqual(#handle.clientEventsFor('qbpolice:client:putInVehicle'), before + 1)
+    local event = handle.lastClient('kora_police:client:putInVehicle')
+    h.assertEqual(#handle.clientEventsFor('kora_police:client:putInVehicle'), before + 1)
     h.assertEqual(event.args[1], 1007)
 end)
 

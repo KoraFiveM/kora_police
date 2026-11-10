@@ -1,5 +1,5 @@
 -- Tests the actual policy function this build added to
--- kora_inventory/config.lua's Config.qbinventory.containers.evidence.access --
+-- kora_inventory/config.lua's Config.kora_inventory.containers.evidence.access --
 -- the one kora_inventory file this resource is allowed to touch. Loads that
 -- real config.lua (not a copy) so a future edit to the policy is caught by
 -- this test too.
@@ -25,7 +25,7 @@ _G.exports = setmetatable({}, {
 local ok, err = pcall(dofile, '../kora_inventory/config.lua')
 h.assertTrue(ok, 'expected ../kora_inventory/config.lua to load: ' .. tostring(err))
 
-local access = Config.qbinventory.containers.evidence.access
+local access = Config.kora_inventory.containers.evidence.access
 h.assertTrue(type(access) == 'function', "evidence.access must be a function after this build's edit")
 
 h.test('an on-duty police officer is granted access', function()

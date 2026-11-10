@@ -22,28 +22,28 @@ PlaceObjectOnGroundProperly = function(entity) assert(entity == 42); grounded = 
 dofile('client/spikes.lua')
 
 h.test('only the network owner grounds a streamed strip, with a bounded wait', function()
-    events['qbpolice:client:spikeDeployed'](1042, { x = 0, y = 0, z = 0 })
+    events['kora_police:client:spikeDeployed'](1042, { x = 0, y = 0, z = 0 })
     threads[1]()
     h.assertEqual(clock, 200)
     h.assertEqual(grounded, 1)
     owner = false
     local before = #threads
-    events['qbpolice:client:spikeDeployed'](1043, { x = 0, y = 0, z = 0 })
+    events['kora_police:client:spikeDeployed'](1043, { x = 0, y = 0, z = 0 })
     local started = clock
     threads[before + 1]()
     h.assertEqual(clock - started, 5000)
     h.assertEqual(grounded, 1)
     before = #threads
-    events['qbpolice:client:spikeDeployed'](1044, { x = 0, y = 0, z = 0 })
-    events['qbpolice:client:spikeRemoved'](1044)
+    events['kora_police:client:spikeDeployed'](1044, { x = 0, y = 0, z = 0 })
+    events['kora_police:client:spikeRemoved'](1044)
     owner = true
     threads[before + 1]()
     h.assertEqual(grounded, 1, 'removed strips are never grounded')
 end)
 h.test('the deflate scan runs only while in a vehicle, started by the vehicle cache edge', function()
-    events['qbpolice:client:spikeDeployed'](2001, { x = 100, y = 100, z = 0 })
+    events['kora_police:client:spikeDeployed'](2001, { x = 100, y = 100, z = 0 })
     local before = #threads
-    events['qbpolice:client:spikeDeployed'](2002, { x = 0, y = 0, z = 0 })
+    events['kora_police:client:spikeDeployed'](2002, { x = 0, y = 0, z = 0 })
     h.assertEqual(#threads, before + 1, 'on foot: only the grounding thread starts, no scan')
 
     cachedVehicle = 77

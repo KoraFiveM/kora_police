@@ -31,13 +31,13 @@ RegisterNetEvent('police:client:deleteObject', function()
     local completed = progress('Removing object...', {
         dict = 'weapons@first_person@aim_rng@generic@projectile@thermal_charge@', clip = 'plant_floor', flag = 16,
     })
-    if completed then TriggerServerEvent('qbpolice:server:deleteNearestObject') end
+    if completed then TriggerServerEvent('kora_police:server:deleteNearestObject') end
 end)
 
 RegisterNetEvent('police:client:removeObject', function() end)
 
 -- Only the current network owner can ground a server-created prop.
-RegisterNetEvent('qbpolice:client:objectPlaced', function(_, netId)
+RegisterNetEvent('kora_police:client:objectPlaced', function(_, netId)
     CreateThread(function()
         local deadline = GetGameTimer() + 5000
         while GetGameTimer() < deadline do

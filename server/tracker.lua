@@ -84,19 +84,19 @@ function Police.getTracked()
     return out
 end
 
-RegisterNetEvent('qbpolice:server:setTracker', function(target, active)
+RegisterNetEvent('kora_police:server:setTracker', function(target, active)
     local ok, err = Police.setTracker(source, tonumber(target), active ~= false)
     if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
 end)
 
-RegisterNetEvent('qbpolice:server:sendTrackerLocation', function()
+RegisterNetEvent('kora_police:server:sendTrackerLocation', function()
     local src = source
     if not Police.tracked[src] then return end
     local ped = GetPlayerPed(src)
     if not ped or ped == 0 then return end
     local coords = GetEntityCoords(ped)
     for _, officer in ipairs(exports.kora_core:getPlayersByJob(Config.police.job, true)) do
-        TriggerClientEvent('qbpolice:client:trackerLocation', officer, src, coords)
+        TriggerClientEvent('kora_police:client:trackerLocation', officer, src, coords)
         TriggerClientEvent('police:client:SendTrackerLocation', officer, src, coords)
     end
 end)
@@ -104,6 +104,6 @@ end)
 CreateThread(function()
     while true do
         Wait(15000)
-        for src in pairs(Police.tracked) do TriggerClientEvent('qbpolice:client:requestTrackerPing', src) end
+        for src in pairs(Police.tracked) do TriggerClientEvent('kora_police:client:requestTrackerPing', src) end
     end
 end)

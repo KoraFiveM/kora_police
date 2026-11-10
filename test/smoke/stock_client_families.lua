@@ -94,7 +94,7 @@ h.test('radial prop events place objects through the server once the bar complet
     h.assertEqual(#fire('police:client:spawnCone'), 0)
     h.assertEqual(#fire('police:client:deleteObject'), 0)
     progressResult = true
-    h.assertEqual(fire('police:client:deleteObject')[1].name, 'qbpolice:server:deleteNearestObject')
+    h.assertEqual(fire('police:client:deleteObject')[1].name, 'kora_police:server:deleteNearestObject')
     onDuty = false
     h.assertEqual(#fire('police:client:spawnCone'), 0)
     onDuty = true
@@ -102,7 +102,7 @@ end)
 
 h.test('SpawnSpikeStrip asks the server to deploy, nothing is created locally', function()
     local sent = fire('police:client:SpawnSpikeStrip')
-    h.assertEqual(sent[1].name, 'qbpolice:server:deploySpike')
+    h.assertEqual(sent[1].name, 'kora_police:server:deploySpike')
 end)
 
 h.test('stock spawnObject payload does not corrupt the spike scanner', function()
@@ -137,10 +137,10 @@ h.test('policeAlert accepts both stock (coords, text) and kora_core (text, coord
 end)
 
 h.test('job events route onto kora flows', function()
-    h.assertEqual(fire('police:client:SendPoliceEmergencyAlert')[1].name, 'qbpolice:server:panic')
+    h.assertEqual(fire('police:client:SendPoliceEmergencyAlert')[1].name, 'kora_police:server:panic')
     h.assertEqual(fire('qb-police:client:scanFingerPrint')[1].name, 'police:server:showFingerprint')
     h.assertEqual(fire('police:client:CheckDistance')[1].name, 'police:server:SetTracker')
-    h.assertEqual(fire('qb-policejob:ToggleDuty')[1].name, 'qbpolice:server:toggleDuty')
+    h.assertEqual(fire('qb-policejob:ToggleDuty')[1].name, 'kora_police:server:toggleDuty')
     local impound = fire('police:client:ImpoundVehicle', true, 50)[1]
     h.assertEqual(impound.name, 'police:server:Impound')
     h.assertEqual(impound.args[1], 'PLATE1')

@@ -6,16 +6,16 @@
 -- scripts start on a FRESH BOOT -- it says nothing about a later kora_inventory
 -- RESTART mid-session, which wipes kora_inventory's own shop/stash tables
 -- without kora_police itself restarting. Mirrors test/smoke/target_restart.lua,
--- which proves the equivalent client-side qbtarget-restart safety.
+-- which proves the equivalent client-side kora_target-restart safety.
 local h = dofile('test/harness.lua')
 local mocks = dofile('test/mocks.lua'); local handle = mocks.install()
 dofile('config.lua')
 dofile('server/core.lua')
 
-local qbinventory = handle.exportImpls.kora_inventory
+local kora_inventory = handle.exportImpls.kora_inventory
 local shopCalls, stashCalls = 0, 0
-function qbinventory.RegisterShop(...) shopCalls = shopCalls + 1; return 'shop:mock' end
-function qbinventory.RegisterStash(...) stashCalls = stashCalls + 1; return 'stash:mock' end
+function kora_inventory.RegisterShop(...) shopCalls = shopCalls + 1; return 'shop:mock' end
+function kora_inventory.RegisterStash(...) stashCalls = stashCalls + 1; return 'stash:mock' end
 
 dofile('server/armory.lua')
 dofile('server/evidence.lua')
@@ -27,22 +27,22 @@ end)
 
 local shopsAfterLoad, stashAfterLoad = shopCalls, stashCalls
 
-h.test('firing onResourceStart for qbinventory re-registers both the armory shops and the evidence locker', function()
+h.test('firing onResourceStart for kora_inventory re-registers both the armory shops and the evidence locker', function()
     handle.fireEvent('onResourceStart', nil, 'kora_inventory')
 
     h.assertEqual(shopCalls, shopsAfterLoad * 2,
-        ('expected RegisterShop call count to exactly double after a simulated qbinventory restart (was %d, got %d)')
+        ('expected RegisterShop call count to exactly double after a simulated kora_inventory restart (was %d, got %d)')
             :format(shopsAfterLoad, shopCalls))
     h.assertEqual(stashCalls, stashAfterLoad * 2,
-        ('expected RegisterStash call count to exactly double after a simulated qbinventory restart (was %d, got %d)')
+        ('expected RegisterStash call count to exactly double after a simulated kora_inventory restart (was %d, got %d)')
             :format(stashAfterLoad, stashCalls))
 end)
 
 h.test('firing onResourceStart for an unrelated resource does not re-register anything', function()
     local shopsBefore, stashBefore = shopCalls, stashCalls
     handle.fireEvent('onResourceStart', nil, 'some-other-resource')
-    h.assertEqual(shopCalls, shopsBefore, 'onResourceStart for a non-qbinventory resource must be a no-op for armory')
-    h.assertEqual(stashCalls, stashBefore, 'onResourceStart for a non-qbinventory resource must be a no-op for evidence')
+    h.assertEqual(shopCalls, shopsBefore, 'onResourceStart for a non-kora_inventory resource must be a no-op for armory')
+    h.assertEqual(stashCalls, stashBefore, 'onResourceStart for a non-kora_inventory resource must be a no-op for evidence')
 end)
 
-h.report('qbinventory_restart')
+h.report('kora_inventory_restart')

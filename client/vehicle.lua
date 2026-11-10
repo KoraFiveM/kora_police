@@ -2,14 +2,14 @@
 -- vehicle, or take them back out. The seating itself is done on the
 -- SUSPECT's own client (server relay), same reasoning as escort/drag.
 
-RegisterNetEvent('qbpolice:client:putInVehicle', function(netId, seat)
+RegisterNetEvent('kora_police:client:putInVehicle', function(netId, seat)
     local vehicle = NetworkGetEntityFromNetworkId(netId)
     if not vehicle or vehicle == 0 then return end
     if IsEntityAttached(PlayerPedId()) then DetachEntity(PlayerPedId(), true, true) end
     TaskWarpPedIntoVehicle(PlayerPedId(), vehicle, seat or -1)
 end)
 
-RegisterNetEvent('qbpolice:client:takeOutVehicle', function()
+RegisterNetEvent('kora_police:client:takeOutVehicle', function()
     local ped = PlayerPedId()
     if IsPedInAnyVehicle(ped, false) then
         TaskLeaveVehicle(ped, GetVehiclePedIsIn(ped, false), 0)
@@ -29,7 +29,7 @@ local function registerVehicleTargets()
                 local target = Police.escortedTarget or Police.draggedTarget
                 if not target then return end
                 local netId = NetworkGetNetworkIdFromEntity(entity)
-                TriggerServerEvent('qbpolice:server:putInVehicle', target, netId, -1)
+                TriggerServerEvent('kora_police:server:putInVehicle', target, netId, -1)
             end,
         },
     })

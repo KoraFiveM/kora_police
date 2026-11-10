@@ -13,9 +13,9 @@ h.test('stock IsHandcuffed export uses the native cuff state and retains lowerca
     h.assertEqual(legacy, native.IsHandcuffed)
     h.assertEqual(legacy, native.isHandcuffed)
     h.assertFalse(legacy())
-    events['qbpolice:client:cuffed'](true, false, 1)
+    events['kora_police:client:cuffed'](true, false, 1)
     h.assertTrue(legacy())
-    events['qbpolice:client:cuffed'](false, false, 1)
+    events['kora_police:client:cuffed'](false, false, 1)
     h.assertFalse(legacy())
 end)
 

@@ -4,7 +4,7 @@
 -- Station blips. Deliberately NOT inside registerDutyZones below: that function
 -- re-runs on every kora_target restart (kora_target drops its own registrations when
 -- it stops, so they have to be re-made), while kora_lib's blip registry only clears
--- when QBPOLICE stops. Creating them there stacked a second station blip on the
+-- when kora_police stops. Creating them there stacked a second station blip on the
 -- map every time kora_target was restarted.
 --
 -- Coordinates come from the same Config.duty.points a zone is built from, so a
@@ -42,7 +42,7 @@ local function registerDutyZones()
                         return job ~= nil and job.name == Config.police.job
                     end,
                     onSelect = function()
-                        Kora.events.trigger('qbpolice:server:toggleDuty')
+                        Kora.events.trigger('kora_police:server:toggleDuty')
                     end,
                 },
             },
@@ -63,7 +63,7 @@ local function registerDutyZones()
                         return Police.isOnDuty()
                     end,
                     onSelect = function()
-                        TriggerServerEvent('qbpolice:server:spawnDutyVehicle', plate, veh.coords, veh.coords.w or 0.0)
+                        TriggerServerEvent('kora_police:server:spawnDutyVehicle', plate, veh.coords, veh.coords.w or 0.0)
                     end,
                 },
             },
@@ -79,7 +79,7 @@ local function registerDutyZones()
             end,
             onSelect = function(entity)
                 local plate = GetVehicleNumberPlateText(entity)
-                TriggerServerEvent('qbpolice:server:storeDutyVehicle', plate)
+                TriggerServerEvent('kora_police:server:storeDutyVehicle', plate)
                 DeleteEntity(entity)
             end,
         },

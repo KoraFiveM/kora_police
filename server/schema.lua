@@ -1,4 +1,4 @@
-QBPoliceSchema = {
+KoraPoliceSchema = {
     {
         name = 'kora_police_ballistic_casings',
         columns = {

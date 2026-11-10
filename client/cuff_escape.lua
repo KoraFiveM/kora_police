@@ -11,7 +11,7 @@ local function attemptBreak()
     if attempting or not Police.cuffed or not Police.soft then return end
     attempting = true
 
-    local authorization, beginErr = Kora.callback.trigger('qbpolice:server:beginBreakCuffs')
+    local authorization, beginErr = Kora.callback.trigger('kora_police:server:beginBreakCuffs')
     if not authorization then
         attempting = false
         Police.notify(beginErr or 'You cannot try to escape yet.', 'error')
@@ -23,10 +23,10 @@ local function attemptBreak()
 
     if result and result.success then
         Police.breakCuffAttempts = 0
-        TriggerServerEvent('qbpolice:server:breakCuffsResult', result.proof)
+        TriggerServerEvent('kora_police:server:breakCuffsResult', result.proof)
     else
         if not (result and result.cancelled) then Police.notify('You failed to break free.', 'error') end
-        TriggerServerEvent('qbpolice:server:breakCuffsResult', false)
+        TriggerServerEvent('kora_police:server:breakCuffsResult', false)
     end
 end
 
@@ -34,6 +34,6 @@ RegisterCommand('breakcuffs', function()
     attemptBreak()
 end, false)
 
-AddEventHandler('qbpolice:client:cuffStateChanged', function(cuffed, soft)
+AddEventHandler('kora_police:client:cuffStateChanged', function(cuffed, soft)
     if not (cuffed and soft) then Police.breakCuffAttempts = 0 end
 end)

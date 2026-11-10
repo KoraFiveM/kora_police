@@ -13,7 +13,7 @@ end
 local spikes = source('client/spikes.lua')
 h.test('spike scanning starts only after a deployed strip and stops with the last strip', function()
     h.assertTrue(spikes:find('local function startScan()', 1, true) ~= nil)
-    h.assertTrue(spikes:find("RegisterNetEvent('qbpolice:client:spikeDeployed'", 1, true) ~= nil)
+    h.assertTrue(spikes:find("RegisterNetEvent('kora_police:client:spikeDeployed'", 1, true) ~= nil)
     h.assertTrue(spikes:find('while next(activeStrips) do', 1, true) ~= nil)
     h.assertTrue(spikes:find("Kora.cache.onChange('vehicle'", 1, true) ~= nil)
     h.assertFalse(spikes:find('while true do', 1, true) ~= nil,

@@ -79,7 +79,7 @@ local function restrain(targetSrc, soft, cuffer)
     if not soft then state.officer = cuffer or state.officer end
     exports.kora_core:setMetaData(targetSrc, 'ishandcuffed', true)
     publish(targetSrc, true, state.soft)
-    TriggerClientEvent('qbpolice:client:cuffed', targetSrc, true, state.soft, actor)
+    TriggerClientEvent('kora_police:client:cuffed', targetSrc, true, state.soft, actor)
     if actor then
         TriggerClientEvent('kora_police:client:cuffAction', actor, 'cuff', targetSrc)
         notifyCuff(targetSrc, 'cuffed', 'warning')
@@ -94,7 +94,7 @@ local function release(targetSrc, actorSrc)
     exports.kora_core:setMetaData(targetSrc, 'ishandcuffed', false)
     Police.cuffState[targetSrc] = nil
     publish(targetSrc, false, false)
-    TriggerClientEvent('qbpolice:client:cuffed', targetSrc, false, false, actorSrc)
+    TriggerClientEvent('kora_police:client:cuffed', targetSrc, false, false, actorSrc)
     if actorSrc then
         TriggerClientEvent('kora_police:client:cuffAction', actorSrc, 'uncuff', targetSrc)
         notifyCuff(targetSrc, 'uncuffed', 'success')
@@ -240,15 +240,15 @@ function Police.beginBreakCuffs(src)
     return authorization
 end
 
-RegisterNetEvent('qbpolice:server:cuff', function(target)
+RegisterNetEvent('kora_police:server:cuff', function(target)
     local ok, err, info = Police.cuff(source, tonumber(target))
     if not ok then Police.notify(source, Police.cuffRefusal(err)) elseif info then Police.notify(source, Police.cuffRefusal(info), 'inform') end
 end)
-RegisterNetEvent('qbpolice:server:uncuff', function(target)
+RegisterNetEvent('kora_police:server:uncuff', function(target)
     local ok, err = Police.uncuff(source, tonumber(target))
     if not ok then Police.notify(source, Police.cuffRefusal(err)) end
 end)
-RegisterNetEvent('qbpolice:server:breakCuffsResult', function(proof)
+RegisterNetEvent('kora_police:server:breakCuffsResult', function(proof)
     local escaped = type(proof) == 'string' and Police.breakCuffs(source, proof)
     if escaped then
         Police.notify(source, 'You broke free!', 'success')
@@ -257,11 +257,11 @@ RegisterNetEvent('qbpolice:server:breakCuffsResult', function(proof)
     end
 end)
 
-Kora.callback.register('qbpolice:server:beginBreakCuffs', function(src)
+Kora.callback.register('kora_police:server:beginBreakCuffs', function(src)
     return Police.beginBreakCuffs(src)
 end)
 
-Kora.callback.register('qbpolice:server:getCuffed', function(src, target)
+Kora.callback.register('kora_police:server:getCuffed', function(src, target)
     return Police.isCuffed(target or src)
 end)
 
@@ -299,7 +299,7 @@ local function syncRunning(src)
     publish(src, false, false)
 end
 
-AddEventHandler('qbcore:server:playerLoaded', syncLogin)
+AddEventHandler('kora_core:server:playerLoaded', syncLogin)
 AddEventHandler('onResourceStart', function(resourceName)
     if resourceName ~= GetCurrentResourceName() then return end
     for _, src in ipairs(exports.kora_core:getPlayers()) do syncRunning(src) end
@@ -313,7 +313,7 @@ local function endSession(src)
     local wasCuffed = Police.cuffState[src] ~= nil
     Police.cuffState[src] = nil
     publish(src, false, false)
-    if wasCuffed then TriggerClientEvent('qbpolice:client:cuffed', src, false, false) end
+    if wasCuffed then TriggerClientEvent('kora_police:client:cuffed', src, false, false) end
 end
 
 AddEventHandler('QBCore:Server:OnPlayerUnload', function(src) endSession(tonumber(src) or source) end)

@@ -12,7 +12,7 @@ handle.addPlayer(officer, {
 })
 
 h.test('police duty event rejects a remote officer', function()
-    local toggle = handle.Kora.events.registry['qbpolice:server:toggleDuty']
+    local toggle = handle.Kora.events.registry['kora_police:server:toggleDuty']
     h.assertTrue(type(toggle) == 'function')
     toggle(officer)
     h.assertFalse(handle.players[officer].job.onduty)
@@ -21,7 +21,7 @@ end)
 h.test('police duty event accepts an officer at a configured duty point', function()
     local point = Config.duty.points[1].coords
     handle.setCoords(officer, point.x, point.y, point.z)
-    handle.Kora.events.registry['qbpolice:server:toggleDuty'](officer)
+    handle.Kora.events.registry['kora_police:server:toggleDuty'](officer)
     h.assertTrue(handle.players[officer].job.onduty)
 end)
 

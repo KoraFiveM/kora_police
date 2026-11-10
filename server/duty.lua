@@ -46,7 +46,7 @@ Kora.commands.add('police-duty', 'Toggle police duty at a police station', {}, f
     toggleDuty(source)
 end)
 
-Kora.events.register('qbpolice:server:toggleDuty', function(src)
+Kora.events.register('kora_police:server:toggleDuty', function(src)
     toggleDuty(src)
 end, { rateLimit = { max = 2, window = 3000 } })
 
@@ -103,11 +103,11 @@ function Police.storeDutyVehicle(src, plate)
     return true
 end
 
-RegisterNetEvent('qbpolice:server:spawnDutyVehicle', function(plate, coords, heading)
+RegisterNetEvent('kora_police:server:spawnDutyVehicle', function(plate, coords, heading)
     local networkId, err = Police.spawnDutyVehicle(source, plate)
     if not networkId then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
 end)
-RegisterNetEvent('qbpolice:server:storeDutyVehicle', function(plate)
+RegisterNetEvent('kora_police:server:storeDutyVehicle', function(plate)
     local ok, err = Police.storeDutyVehicle(source, plate)
     if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
 end)

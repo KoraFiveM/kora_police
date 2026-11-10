@@ -20,7 +20,7 @@ local function registerBillTargets()
                     { id = 'reason', label = 'Reason', type = 'text' },
                 }, 'Issue Citation')
                 if not result or not result.values then return end
-                TriggerServerEvent('qbpolice:server:bill', targetServerId, result.values.amount, result.values.reason)
+                TriggerServerEvent('kora_police:server:bill', targetServerId, result.values.amount, result.values.reason)
             end,
         },
     }, Config.cuff.distance)

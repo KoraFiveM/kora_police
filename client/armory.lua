@@ -3,7 +3,7 @@
 -- policy) -- canInteract here is purely a UX convenience so a
 -- non-qualifying officer doesn't even see the option.
 
-RegisterNetEvent('qbpolice:client:openArmory', function(shopId)
+RegisterNetEvent('kora_police:client:openArmory', function(shopId)
     exports.kora_inventory:openInventory('shop', shopId)
 end)
 
@@ -23,7 +23,7 @@ local function registerArmoryTargets()
                         return Police.isOnDuty() and Police.myGradeLevel() >= shop.minGrade
                     end,
                     onSelect = function()
-                        TriggerServerEvent('qbpolice:server:openArmory', shop.id)
+                        TriggerServerEvent('kora_police:server:openArmory', shop.id)
                     end,
                 },
             },

@@ -30,7 +30,7 @@ RegisterNetEvent('police:server:SetHandcuffStatus', function(target, cuffed)
     local src = source
     if type(target) == 'boolean' or target == nil then
         local state = Police.cuffState[src]
-        TriggerClientEvent('qbpolice:client:cuffed', src, Police.isCuffed(src), state ~= nil and state.soft or false)
+        TriggerClientEvent('kora_police:client:cuffed', src, Police.isCuffed(src), state ~= nil and state.soft or false)
         return
     end
     local targetSrc = tonumber(target)
@@ -152,12 +152,12 @@ RegisterNetEvent('police:server:UpdateBlips', throttledCopCount)
 -- kora_core fires that local TriggerEvent from inside Core.dispatch.alert, and
 -- when the alert was itself raised from a net-event handler `source` is still
 -- that player, so the missing source is not a reliable marker. Core.dispatch.alert
--- first fires the server-only `qbcore:server:dispatchAlert` with the same
+-- first fires the server-only `kora_core:server:dispatchAlert` with the same
 -- payload; its message is remembered here for MIRROR_WINDOW_MS and the next
 -- policeAlert carrying exactly that text is treated as the mirror and dropped.
 local MIRROR_WINDOW_MS = 1000
 local mirroredMessages = {}
-AddEventHandler('qbcore:server:dispatchAlert', function(payload)
+AddEventHandler('kora_core:server:dispatchAlert', function(payload)
     if type(payload) ~= 'table' then return end
     local message = payload.message or payload.title or ''
     if type(message) ~= 'string' then return end
@@ -195,7 +195,7 @@ RegisterNetEvent('police:server:policeAlert', function(text)
         data = { reporter = src, legacy = true },
     })
     raisingLegacyAlert = false
-    if not ok then print(('^3[qbpolice]^7 police:server:policeAlert failed: %s'):format(err)) end
+    if not ok then print(('^3[kora_police]^7 police:server:policeAlert failed: %s'):format(err)) end
 end)
 AddEventHandler('playerDropped', function() lastLegacyAlertAt[source] = nil end)
 

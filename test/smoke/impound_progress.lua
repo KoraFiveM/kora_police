@@ -18,7 +18,7 @@ h.test('impound waits for the progress bar with an animation', function()
     Police.impoundOption.onSelect(1)
     h.assertEqual(started.duration, Config.impound.progress.duration)
     h.assertTrue(started.canCancel); h.assertTrue(started.anim ~= nil and started.anim.dict ~= nil)
-    h.assertEqual(sent[1].name, 'qbpolice:server:impound')
+    h.assertEqual(sent[1].name, 'kora_police:server:impound')
 end)
 
 h.test('cancelling the progress bar does not impound', function()

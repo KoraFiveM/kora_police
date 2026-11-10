@@ -10,10 +10,10 @@ RegisterNetEvent('police:client:SearchPlayer', function(targetServerId)
 end)
 
 RegisterNetEvent('police:client:SyncSpikes', function(netId, active)
-    if active == false then TriggerEvent('qbpolice:client:spikeRemoved', tonumber(netId)) end
+    if active == false then TriggerEvent('kora_police:client:spikeRemoved', tonumber(netId)) end
 end)
 RegisterNetEvent('police:client:spawnObject', function(netId, coords)
-    if type(coords) == 'table' then TriggerEvent('qbpolice:client:spikeDeployed', tonumber(netId), coords) end
+    if type(coords) == 'table' then TriggerEvent('kora_police:client:spikeDeployed', tonumber(netId), coords) end
 end)
 
 -- `GetEscorted`/`GetKidnappedTarget`/`GetKidnappedDragger` are server
@@ -58,7 +58,7 @@ RegisterNetEvent('police:client:SetPlayerOutVehicle', onNearest('police:server:S
 -- Stock fires the escort/drag initiators again to release.
 RegisterNetEvent('police:client:EscortPlayer', function()
     if Police.escortedTarget then
-        TriggerServerEvent('qbpolice:server:deEscort', Police.escortedTarget)
+        TriggerServerEvent('kora_police:server:deEscort', Police.escortedTarget)
         return
     end
     local target = nearestTarget()
@@ -66,7 +66,7 @@ RegisterNetEvent('police:client:EscortPlayer', function()
 end)
 RegisterNetEvent('police:client:KidnapPlayer', function()
     if Police.draggedTarget then
-        TriggerServerEvent('qbpolice:server:stopDrag', Police.draggedTarget)
+        TriggerServerEvent('kora_police:server:stopDrag', Police.draggedTarget)
         return
     end
     local target = nearestTarget()
@@ -98,7 +98,7 @@ end)
 -- Stock "victim side" events. In stock the server tells the affected player's
 -- client to cuff / attach / seat itself and the client then reports back. Kora
 -- never lets a client set those states: the server validates, then drives the
--- native `qbpolice:client:*` events. Honouring these would let any script (or
+-- native `kora_police:client:*` events. Honouring these would let any script (or
 -- cheat) cuff, drag or seat the local player without a server check, so they
 -- only tell the player they are unsupported (at most once every 5s per event).
 local lastUnsupportedAt = {}
@@ -138,7 +138,7 @@ end)
 -- The panic button: kora raises the officer-down call to LEO and EMS server-side.
 RegisterNetEvent('police:client:SendPoliceEmergencyAlert', function()
     if not Police.isOnDuty() then return end
-    TriggerServerEvent('qbpolice:server:panic')
+    TriggerServerEvent('kora_police:server:panic')
 end)
 
 -- Stock arguments are (coords, text); kora_core's legacy dispatch fan-out sends (text, coords).
@@ -169,7 +169,7 @@ RegisterNetEvent('qb-police:client:scanFingerPrint', function()
 end)
 
 RegisterNetEvent('qb-policejob:ToggleDuty', function()
-    Kora.events.trigger('qbpolice:server:toggleDuty')
+    Kora.events.trigger('kora_police:server:toggleDuty')
 end)
 
 RegisterNetEvent('police:client:ImpoundVehicle', function(fullImpound, price)

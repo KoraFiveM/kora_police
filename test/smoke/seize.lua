@@ -64,7 +64,7 @@ for _, case in ipairs({ 'distant', 'different instance' }) do
         money.transferMoney = function(...) transfers = transfers + 1; return transfer(...) end
         local ok, err = Police.seizeCash(OFFICER, SUSPECT)
         local reasons = {}
-        for _, name in ipairs({ 'qbpolice:server:seizeCash', 'police:server:SeizeCash' }) do
+        for _, name in ipairs({ 'kora_police:server:seizeCash', 'police:server:SeizeCash' }) do
             handle.fireEvent(name, OFFICER, tostring(SUSPECT))
             reasons[#reasons + 1] = handle.lastClient('QBCore:Notify').args[1]
         end

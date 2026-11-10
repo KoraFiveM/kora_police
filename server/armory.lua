@@ -79,7 +79,7 @@ end
 -- after this resource has registered them, and that load replaces the
 -- registered stock with the saved one, so restocking at registration was
 -- undone straight away. The restock therefore waits for kora_inventory's
--- 'qbinventory:server:ready' (saved inventories loaded) unless it has
+-- 'kora_inventory:server:ready' (saved inventories loaded) unless it has
 -- already loaded them.
 local restockPending = Config.armory.restockOnStart ~= false
 
@@ -103,7 +103,7 @@ CreateThread(function()
     if restockPending and not awaitingInventoryLoad() then restockArmories() end
 end)
 
-AddEventHandler('qbinventory:server:ready', function()
+AddEventHandler('kora_inventory:server:ready', function()
     -- Only the load that follows this resource starting: a later
     -- kora_inventory restart keeps what was taken this session.
     if not restockPending or not next(Police.armoryShops) then return end
@@ -132,13 +132,13 @@ function Police.canAccessArmory(src, shopId)
     return true
 end
 
-RegisterNetEvent('qbpolice:server:openArmory', function(shopId)
+RegisterNetEvent('kora_police:server:openArmory', function(shopId)
     local src = source
     local ok, err = Police.canAccessArmory(src, shopId)
     if not ok then TriggerClientEvent('QBCore:Notify', src, err, 'error'); return end
-    TriggerClientEvent('qbpolice:client:openArmory', src, shopId)
+    TriggerClientEvent('kora_police:client:openArmory', src, shopId)
 end)
 
-Kora.callback.register('qbpolice:server:canAccessArmory', function(src, shopId)
+Kora.callback.register('kora_police:server:canAccessArmory', function(src, shopId)
     return Police.canAccessArmory(src, shopId)
 end)

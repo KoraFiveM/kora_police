@@ -17,7 +17,7 @@ local function registerJailTargets()
                     { id = 'reason', label = 'Reason', type = 'text' },
                 }, 'Book Suspect')
                 if not result or not result.values then return end
-                TriggerServerEvent('qbpolice:server:jailPlayer', targetServerId, result.values.minutes, result.values.reason)
+                TriggerServerEvent('kora_police:server:jailPlayer', targetServerId, result.values.minutes, result.values.reason)
             end,
         },
     }, Config.cuff.distance)

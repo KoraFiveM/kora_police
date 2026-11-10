@@ -11,7 +11,7 @@ h.test('escort command releases the current escorted target', function()
         'client escort command must be registered')
     h.assertTrue(command:find('Police%.escortedTarget') ~= nil,
         'escort command must inspect the active escorted target')
-    h.assertTrue(command:find("qbpolice:server:deEscort") ~= nil,
+    h.assertTrue(command:find("kora_police:server:deEscort") ~= nil,
         'escort command must send the server-validated stop event')
 end)
 

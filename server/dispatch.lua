@@ -15,28 +15,28 @@
 local lastPanicAt = {}
 
 local playerAlerts = {
-    ['qbpolice:backup'] = {
+    ['kora_police:backup'] = {
         jobTypes = { Config.police.jobType }, code = '10-78', title = 'Backup Requested',
         message = 'An on-duty officer is requesting backup.', priority = 2, icon = 'radio',
         cooldown = Config.dispatch.backupCooldown,
         requiredJobType = Config.police.jobType,
     },
-    ['qbpolice:gunfire'] = {
+    ['kora_police:gunfire'] = {
         jobTypes = { Config.police.jobType }, code = '10-31', title = 'Shots Fired',
         message = 'Gunfire was reported nearby.', priority = 1, icon = 'crosshair',
         cooldown = Config.dispatch.shotsFiredCooldown,
     },
-    ['qbpolice:gunfire:suppressed'] = {
+    ['kora_police:gunfire:suppressed'] = {
         jobTypes = { Config.police.jobType }, code = '10-31', title = 'Suppressed Gunfire',
         message = 'Possible suppressed gunfire was reported nearby.', priority = 2, icon = 'crosshair',
         cooldown = Config.dispatch.shotsFiredCooldown,
     },
-    ['qbpolice:vehicle-theft'] = {
+    ['kora_police:vehicle-theft'] = {
         jobTypes = { Config.police.jobType }, code = '10-16', title = 'Vehicle Theft',
         message = 'A vehicle theft was reported nearby.', priority = 2, icon = 'car',
         cooldown = Config.dispatch.vehicleTheftCooldown,
     },
-    ['qbpolice:melee'] = {
+    ['kora_police:melee'] = {
         jobTypes = { Config.police.jobType }, code = '10-10', title = 'Fight in Progress',
         message = 'A fight was reported nearby.', priority = 3, icon = 'person',
         cooldown = Config.dispatch.meleeCooldown,
@@ -45,7 +45,7 @@ local playerAlerts = {
 
 for key, definition in pairs(playerAlerts) do
     local ok, err = exports.kora_dispatch:registerPlayerAlert(key, definition)
-    if not ok then print(('^3[qbpolice]^7 could not register dispatch alert %s: %s'):format(key, err)) end
+    if not ok then print(('^3[kora_police]^7 could not register dispatch alert %s: %s'):format(key, err)) end
 end
 
 ---Raises a law-enforcement call. Defaults target the whole LEO service (police,
@@ -66,7 +66,7 @@ end
 local function broadcastCopCount()
     local count = exports.kora_core:getDutyCountByType(Config.police.jobType)
     for _, src in ipairs(exports.kora_core:getPlayersByJobType(Config.police.jobType, true)) do
-        TriggerClientEvent('qbpolice:client:updateCopCount', src, count)
+        TriggerClientEvent('kora_police:client:updateCopCount', src, count)
         -- Legacy names, both fired so either style of listener keeps working.
         TriggerClientEvent('police:client:UpdateCurrentCops', src, count)
         TriggerClientEvent('police:client:SetCopCount', src, count)
@@ -126,10 +126,10 @@ end
 -- Officer-requested backup. Only for the calling PLAYER's own request; anything
 -- else wanting a police call (a robbery script, a drug lab) calls
 -- exports.kora_dispatch:createCall directly.
-Kora.events.register('qbpolice:server:requestBackup', function(src)
+Kora.events.register('kora_police:server:requestBackup', function(src)
     if not Police.isLeo(src) then return end
 
-    local callId, reason, remaining = exports.kora_dispatch:createPlayerCall(src, 'qbpolice:backup')
+    local callId, reason, remaining = exports.kora_dispatch:createPlayerCall(src, 'kora_police:backup')
     if not callId then
         Kora.notify.send(src, {
             message = remaining
@@ -165,7 +165,7 @@ function Police.clearPanicCooldown(src)
     lastPanicAt[src] = nil
 end
 
-RegisterNetEvent('qbpolice:server:panic', function()
+RegisterNetEvent('kora_police:server:panic', function()
     local src = source
     if not Police.isLeo(src) then return end
 
@@ -220,7 +220,7 @@ end)
 -- decides WHEN, the server decides whether that player is allowed to generate a
 -- call and what it may contain -- a client cannot hand over a priority, a
 -- service, or anyone else's coordinates.
-Kora.events.register('qbpolice:server:crimeDetected', function(src, incident)
-    if playerAlerts[incident] == nil or incident == 'qbpolice:backup' then return end
+Kora.events.register('kora_police:server:crimeDetected', function(src, incident)
+    if playerAlerts[incident] == nil or incident == 'kora_police:backup' then return end
     exports.kora_dispatch:createPlayerCall(src, incident)
 end, { rateLimit = { max = 8, window = 5000 } })

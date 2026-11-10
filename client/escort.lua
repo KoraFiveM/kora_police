@@ -29,19 +29,19 @@ local function detach()
     DetachEntity(PlayerPedId(), true, true)
 end
 
-RegisterNetEvent('qbpolice:client:escortStart', function(officerServerId)
+RegisterNetEvent('kora_police:client:escortStart', function(officerServerId)
     Police.escortOfficer = officerServerId
     attachTo(officerServerId, ESCORT_OFFSET)
 end)
-RegisterNetEvent('qbpolice:client:escortStop', function()
+RegisterNetEvent('kora_police:client:escortStop', function()
     Police.escortOfficer = nil
     detach()
 end)
 
-RegisterNetEvent('qbpolice:client:escortStartSelf', function(targetServerId)
+RegisterNetEvent('kora_police:client:escortStartSelf', function(targetServerId)
     Police.escortedTarget = targetServerId
 end)
-RegisterNetEvent('qbpolice:client:escortStopSelf', function()
+RegisterNetEvent('kora_police:client:escortStopSelf', function()
     Police.escortedTarget = nil
 end)
 
@@ -77,12 +77,12 @@ RegisterCommand('escort', function()
     end
 
     if Police.escortedTarget then
-        TriggerServerEvent('qbpolice:server:deEscort', Police.escortedTarget)
+        TriggerServerEvent('kora_police:server:deEscort', Police.escortedTarget)
         return
     end
 
     if Police.draggedTarget then
-        TriggerServerEvent('qbpolice:server:stopDrag', Police.draggedTarget)
+        TriggerServerEvent('kora_police:server:stopDrag', Police.draggedTarget)
         return
     end
 
@@ -91,7 +91,7 @@ RegisterCommand('escort', function()
         Police.notify('No player nearby.', 'error')
         return
     end
-    TriggerServerEvent('qbpolice:server:escort', target)
+    TriggerServerEvent('kora_police:server:escort', target)
 end, false)
 
 -- Release the player being dragged without having to aim the target eye at
@@ -112,7 +112,7 @@ local function releaseDrag()
     local now = GetGameTimer()
     if now - lastReleaseAt < 750 then return end
     lastReleaseAt = now
-    TriggerServerEvent('qbpolice:server:stopDrag', Police.draggedTarget)
+    TriggerServerEvent('kora_police:server:stopDrag', Police.draggedTarget)
 end
 
 local releaseBinding
@@ -182,7 +182,7 @@ end
 -- The dragger's ped may not be streamed in on this client yet when the server
 -- relays dragStart, so retry the attach for a few seconds instead of silently
 -- leaving the dragged player unattached.
-RegisterNetEvent('qbpolice:client:dragStart', function(draggerServerId)
+RegisterNetEvent('kora_police:client:dragStart', function(draggerServerId)
     Police.dragger = draggerServerId
     local offset, rotation, bone = dragSettings()
     if attachTo(draggerServerId, offset, rotation, bone) then return end
@@ -194,12 +194,12 @@ RegisterNetEvent('qbpolice:client:dragStart', function(draggerServerId)
         end
     end)
 end)
-RegisterNetEvent('qbpolice:client:dragStop', function()
+RegisterNetEvent('kora_police:client:dragStop', function()
     Police.dragger = nil
     detach()
 end)
 
-RegisterNetEvent('qbpolice:client:dragStartSelf', function(targetServerId)
+RegisterNetEvent('kora_police:client:dragStartSelf', function(targetServerId)
     Police.draggedTarget = targetServerId
     if (Config.drag or {}).releaseHint ~= false then
         Police.notify('Dragging a player. Release with /' .. tostring((Config.drag or {}).releaseCommand or 'releasedrag') .. ' or the Release option.', 'info')
@@ -208,7 +208,7 @@ RegisterNetEvent('qbpolice:client:dragStartSelf', function(targetServerId)
     startReleasePoll()
     showReleasePrompt()
 end)
-RegisterNetEvent('qbpolice:client:dragStopSelf', function()
+RegisterNetEvent('kora_police:client:dragStopSelf', function()
     Police.draggedTarget = nil
     setReleaseKeyActive(false)
     hideReleasePrompt()
@@ -224,7 +224,7 @@ local function registerEscortTargets()
                 return Police.isOnDuty() and Police.isPedCuffed(entity) and not Police.escortedTarget
             end,
             onSelect = function(entity)
-                TriggerServerEvent('qbpolice:server:escort', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
+                TriggerServerEvent('kora_police:server:escort', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
         {
@@ -234,7 +234,7 @@ local function registerEscortTargets()
                 return Police.escortedTarget ~= nil and GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)) == Police.escortedTarget
             end,
             onSelect = function()
-                TriggerServerEvent('qbpolice:server:deEscort', Police.escortedTarget)
+                TriggerServerEvent('kora_police:server:deEscort', Police.escortedTarget)
             end,
         },
         {
@@ -244,7 +244,7 @@ local function registerEscortTargets()
                 return not Police.draggedTarget and Police.isPedRestrained(entity)
             end,
             onSelect = function(entity)
-                TriggerServerEvent('qbpolice:server:startDrag', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
+                TriggerServerEvent('kora_police:server:startDrag', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
     }, Config.cuff.distance)

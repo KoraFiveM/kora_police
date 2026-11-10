@@ -14,7 +14,7 @@ local function mdtMirrorEnabled()
 end
 
 local function mdtWarn(action, err)
-    print(('^3[qbpolice:plateFlag]^7 could not %s the kora_mdt BOLO: %s'):format(action, tostring(err)))
+    print(('^3[kora_police:plateFlag]^7 could not %s the kora_mdt BOLO: %s'):format(action, tostring(err)))
 end
 
 ---Plates read from a vehicle come space-padded and mixed case; the MDT looks plates up trimmed and upper-case.
@@ -99,7 +99,7 @@ function Police.triggerFlaggedPlate(spotterSrc, plate)
     local flagged, entry = Police.isPlateFlagged(plate)
     if not flagged then return end
     for _, src in ipairs(exports.kora_core:getPlayersByJob(Config.police.job, true)) do
-        TriggerClientEvent('qbpolice:client:flaggedPlateTriggered', src, plate, entry.reason)
+        TriggerClientEvent('kora_police:client:flaggedPlateTriggered', src, plate, entry.reason)
         TriggerClientEvent('police:client:FlaggedPlateTriggered', src, plate, entry.reason)
     end
 end
@@ -123,7 +123,7 @@ function Police.legacyFlaggedPlate(spotterSrc, first, second)
     return true
 end
 
-RegisterNetEvent('qbpolice:server:flagPlate', function(plate, reason)
+RegisterNetEvent('kora_police:server:flagPlate', function(plate, reason)
     local ok, err = Police.flagPlate(source, plate, reason)
     if ok then
         Police.notify(source, 'Plate flagged.', 'success')
@@ -131,7 +131,7 @@ RegisterNetEvent('qbpolice:server:flagPlate', function(plate, reason)
         Police.notify(source, err)
     end
 end)
-RegisterNetEvent('qbpolice:server:unflagPlate', function(plate)
+RegisterNetEvent('kora_police:server:unflagPlate', function(plate)
     local ok, err = Police.unflagPlate(source, plate)
     if ok then
         Police.notify(source, 'Plate unflagged.', 'success')
@@ -139,10 +139,10 @@ RegisterNetEvent('qbpolice:server:unflagPlate', function(plate)
         Police.notify(source, err)
     end
 end)
-RegisterNetEvent('qbpolice:server:plateSpotted', function(plate)
+RegisterNetEvent('kora_police:server:plateSpotted', function(plate)
     Police.triggerFlaggedPlate(source, plate)
 end)
 
-Kora.callback.register('qbpolice:server:isPlateFlagged', function(src, plate)
+Kora.callback.register('kora_police:server:isPlateFlagged', function(src, plate)
     return Police.isPlateFlagged(plate)
 end)

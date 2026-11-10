@@ -1,4 +1,4 @@
--- Dispatch presentation now belongs entirely to qbdispatch: the call feed, the
+-- Dispatch presentation now belongs entirely to kora_dispatch: the call feed, the
 -- map, history, the response state machine and the route blip all live there.
 --
 -- What remains is the police-specific side: the officer-facing commands that
@@ -9,7 +9,7 @@ local function requestBackup()
         return Police.notify('You must be on duty to request backup.', 'error')
     end
 
-    Kora.events.trigger('qbpolice:server:requestBackup')
+    Kora.events.trigger('kora_police:server:requestBackup')
 end
 
 RegisterCommand('backup', requestBackup, false)
@@ -22,7 +22,7 @@ RegisterCommand('backup', requestBackup, false)
 -- service's point of view, and separate histories to clear -- which is exactly
 -- why dispatch refuses to bundle services into a single call.
 Kora.keybind.add({
-    name = 'qbpolice_panic',
+    name = 'kora_police_panic',
     description = 'Police: panic button (officer down)',
     defaultKey = Config.dispatch.panicKey,
     onPressed = function()
@@ -30,11 +30,11 @@ Kora.keybind.add({
         -- No coordinates sent: the server reads them from the officer's own
         -- ped, so a modified client cannot fire the alarm at a location of its
         -- choosing and pull every unit on the server there.
-        TriggerServerEvent('qbpolice:server:panic')
+        TriggerServerEvent('kora_police:server:panic')
     end,
 })
 
-RegisterNetEvent('qbpolice:client:updateCopCount', function(count)
+RegisterNetEvent('kora_police:client:updateCopCount', function(count)
     Police.copCount = count
 end)
 RegisterNetEvent('police:client:UpdateCurrentCops', function(count)

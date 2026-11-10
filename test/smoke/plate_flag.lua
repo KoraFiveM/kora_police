@@ -49,7 +49,7 @@ h.test('triggerFlaggedPlate notifies only on-duty officers', function()
     Police.flagPlate(OFFICER, 'BOLO001', 'wanted')
     Police.triggerFlaggedPlate(OFFICER, 'BOLO001')
 
-    local hits = handle.clientEventsFor('qbpolice:client:flaggedPlateTriggered')
+    local hits = handle.clientEventsFor('kora_police:client:flaggedPlateTriggered')
     local targets = {}
     for _, e in ipairs(hits) do targets[e.target] = true end
     h.assertTrue(targets[OFFICER], 'on-duty officer should be notified')
@@ -57,9 +57,9 @@ h.test('triggerFlaggedPlate notifies only on-duty officers', function()
 end)
 
 h.test('triggerFlaggedPlate is a no-op for an unflagged plate', function()
-    local before = #handle.clientEventsFor('qbpolice:client:flaggedPlateTriggered')
+    local before = #handle.clientEventsFor('kora_police:client:flaggedPlateTriggered')
     Police.triggerFlaggedPlate(OFFICER, 'NOTFLAGGED')
-    local after = #handle.clientEventsFor('qbpolice:client:flaggedPlateTriggered')
+    local after = #handle.clientEventsFor('kora_police:client:flaggedPlateTriggered')
     h.assertEqual(after, before)
 end)
 

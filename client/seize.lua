@@ -10,7 +10,7 @@ local function registerSeizeTargets()
                 return Police.isOnDuty() and Police.isPedCuffed(entity)
             end,
             onSelect = function(entity)
-                TriggerServerEvent('qbpolice:server:seizeCash', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
+                TriggerServerEvent('kora_police:server:seizeCash', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
         {
@@ -20,7 +20,7 @@ local function registerSeizeTargets()
                 return Police.isOnDuty() and Police.isPedCuffed(entity)
             end,
             onSelect = function(entity)
-                TriggerServerEvent('qbpolice:server:seizeDriverLicense', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
+                TriggerServerEvent('kora_police:server:seizeDriverLicense', GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)))
             end,
         },
     }, Config.cuff.distance)

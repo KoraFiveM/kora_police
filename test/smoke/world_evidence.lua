@@ -140,7 +140,7 @@ h.test('collection waits for authority and clears both observers, including a fo
     flush(); h.assertEqual(Police.worldEvidence[id], nil); assertView(0)
     h.assertEqual(success(a), before + 1)
     h.assertEqual(Police.collectedEvidence.CID1[id], true)
-    local removed = mock.clientEventsFor('qbpolice:client:worldEvidenceRemoved')
+    local removed = mock.clientEventsFor('kora_police:client:worldEvidenceRemoved')
     h.assertEqual(removed[#removed].target, -1)
     mock.players[2].job = { name = 'police', onduty = true }
 end)
@@ -184,14 +184,14 @@ end)
 
 h.test('duplicate events and provider restart preserve current handles without touching reused IDs', function()
     local id = create(); local marker = Police.worldEvidence[id]
-    a.fire('qbpolice:client:worldEvidenceCreated', id, marker.type, marker.coords); assertView(1)
+    a.fire('kora_police:client:worldEvidenceCreated', id, marker.type, marker.coords); assertView(1)
     a.stop(); local other = a.start(); assertView(1)
     a.fire('onClientResourceStart', 'kora_target'); assertView(1)
     collect(1, id); assertView(0); h.assertTrue(a.targets[other])
-    a.fire('qbpolice:client:worldEvidenceRemoved', id); h.assertTrue(a.targets[other])
+    a.fire('kora_police:client:worldEvidenceRemoved', id); h.assertTrue(a.targets[other])
 end)
 
-h.test('creation and deletion while qbtarget is down keep only live markers for its return', function()
+h.test('creation and deletion while kora_target is down keep only live markers for its return', function()
     a.stop()
     local id = create('CreateFingerDrop'); h.assertEqual(zones(a), 0); h.assertEqual(count(a.blips), 1)
     collect(1, id); h.assertEqual(count(a.blips), 0)

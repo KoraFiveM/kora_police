@@ -300,7 +300,7 @@ local function applyCuffedVisuals(cuffed, _, actorSrc)
     if not shown then confirmWithServer() end
 end
 
-AddEventHandler('qbpolice:client:cuffStateChanged', applyCuffedVisuals)
+AddEventHandler('kora_police:client:cuffStateChanged', applyCuffedVisuals)
 
 -- A new ped (joining, respawn, model change) has no cuff animation.
 Kora.cache.onChange('ped', function()
@@ -374,7 +374,7 @@ if type(uncuffCommand) == 'string' and uncuffCommand ~= '' then
     RegisterCommand(uncuffCommand, function()
         local target = nearestCuffedServerId()
         if not target then return Police.notify('No cuffed player nearby.', 'error') end
-        TriggerServerEvent('qbpolice:server:uncuff', target)
+        TriggerServerEvent('kora_police:server:uncuff', target)
     end, false)
 end
 
@@ -392,7 +392,7 @@ local function registerCuffTargets()
                 if not targetServerId or targetServerId <= 0 then
                     return Police.notify('No player to cuff.', 'error')
                 end
-                TriggerServerEvent('qbpolice:server:cuff', targetServerId)
+                TriggerServerEvent('kora_police:server:cuff', targetServerId)
             end,
         },
         {
@@ -406,7 +406,7 @@ local function registerCuffTargets()
                 if not targetServerId or targetServerId <= 0 then
                     return Police.notify('No player to uncuff.', 'error')
                 end
-                TriggerServerEvent('qbpolice:server:uncuff', targetServerId)
+                TriggerServerEvent('kora_police:server:uncuff', targetServerId)
             end,
         },
     }, Config.cuff.distance)

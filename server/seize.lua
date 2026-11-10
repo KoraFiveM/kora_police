@@ -19,7 +19,7 @@ end)
 
 ---Validates the search request, then tells the OFFICER's own client to open
 ---the target's inventory -- `exports.kora_inventory:openInventory` is a
----client-realm export (it just fires the `qbinventory:server:open` net
+---client-realm export (it just fires the `kora_inventory:server:open` net
 ---event), so this can't be called from here; kora_inventory's own
 ---`registerInspectionAccess` policy above re-checks the same conditions
 ---server-side regardless of what the client requests.
@@ -30,7 +30,7 @@ function Police.search(officerSrc, targetSrc)
     if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
     if not Police.isCuffed(targetSrc) then return false, 'target is not restrained' end
     if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
-    TriggerClientEvent('qbpolice:client:openSearch', officerSrc, targetSrc)
+    TriggerClientEvent('kora_police:client:openSearch', officerSrc, targetSrc)
     TriggerClientEvent('police:client:SearchPlayer', officerSrc, targetSrc)
     return true
 end
@@ -70,16 +70,16 @@ function Police.seizeDriverLicense(officerSrc, targetSrc)
     return true
 end
 
-RegisterNetEvent('qbpolice:server:search', function(target)
+RegisterNetEvent('kora_police:server:search', function(target)
     local ok, err = Police.search(source, tonumber(target))
     if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
 end)
-RegisterNetEvent('qbpolice:server:seizeCash', function(target)
+RegisterNetEvent('kora_police:server:seizeCash', function(target)
     local ok, err, amount = Police.seizeCash(source, tonumber(target))
     if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error')
     else TriggerClientEvent('QBCore:Notify', source, ('Seized $%d in cash.'):format(amount), 'success') end
 end)
-RegisterNetEvent('qbpolice:server:seizeDriverLicense', function(target)
+RegisterNetEvent('kora_police:server:seizeDriverLicense', function(target)
     local ok, err = Police.seizeDriverLicense(source, tonumber(target))
     if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
 end)

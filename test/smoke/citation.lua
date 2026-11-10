@@ -56,13 +56,13 @@ end)
 
 h.test('refused cuff/citation actions notify the officer', function()
     handle.players[OFFICER].job.onduty = false
-    handle.fireEvent('qbpolice:server:cuff', OFFICER, CIVILIAN)
+    handle.fireEvent('kora_police:server:cuff', OFFICER, CIVILIAN)
     h.assertEqual(lastMessage(OFFICER), 'You must be an on-duty police officer to do that.')
-    handle.fireEvent('qbpolice:server:bill', OFFICER, CIVILIAN, 10, 'x')
+    handle.fireEvent('kora_police:server:bill', OFFICER, CIVILIAN, 10, 'x')
     h.assertEqual(lastMessage(OFFICER), 'You must be an on-duty police officer to do that.')
     handle.players[OFFICER].job.onduty = true
     handle.setCoords(CIVILIAN, 500.0, 0.0, 0.0)
-    handle.fireEvent('qbpolice:server:cuff', OFFICER, CIVILIAN)
+    handle.fireEvent('kora_police:server:cuff', OFFICER, CIVILIAN)
     h.assertEqual(lastMessage(OFFICER), 'You are too far away.')
 end)
 

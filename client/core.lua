@@ -32,8 +32,8 @@ function Police.target.reset(group)
 end
 
 ---@param group string
----@param entityType QBTargetGlobalType
----@param options QBTargetOption[]
+---@param entityType KoraTargetGlobalType
+---@param options KoraTargetOption[]
 ---@param distance? number
 ---@return integer id
 function Police.target.global(group, entityType, options, distance)
@@ -43,7 +43,7 @@ function Police.target.global(group, entityType, options, distance)
 end
 
 ---@param group string
----@param options QBTargetBoxZoneOptions
+---@param options KoraTargetBoxZoneOptions
 ---@return integer id
 function Police.target.box(group, options)
     return trackTarget(group, exports.kora_target:addBoxZone(options), function(id)
@@ -52,7 +52,7 @@ function Police.target.box(group, options)
 end
 
 ---@param group string
----@param options QBTargetSphereZoneOptions
+---@param options KoraTargetSphereZoneOptions
 ---@return integer id
 function Police.target.sphere(group, options)
     return trackTarget(group, exports.kora_target:addSphereZone(options), function(id)
@@ -85,10 +85,10 @@ end
 -- (`koraCuffed`, `koraCuffedSoft`, written only by server/cuff.lua) and also
 -- sends this event. Either one lands here; the event always re-applies the
 -- visuals (a re-cuff refreshes them), the bag only on a change.
-RegisterNetEvent('qbpolice:client:cuffed', function(cuffed, soft, otherSrc)
+RegisterNetEvent('kora_police:client:cuffed', function(cuffed, soft, otherSrc)
     Police.cuffed = cuffed == true
     Police.soft = soft == true
-    TriggerEvent('qbpolice:client:cuffStateChanged', Police.cuffed, Police.soft, otherSrc)
+    TriggerEvent('kora_police:client:cuffStateChanged', Police.cuffed, Police.soft, otherSrc)
 end)
 
 ---@param cuffed boolean|nil
@@ -97,7 +97,7 @@ function Police.syncCuffState(cuffed, soft)
     cuffed, soft = cuffed == true, soft == true
     if cuffed == Police.cuffed and soft == Police.soft then return end
     Police.cuffed, Police.soft = cuffed, soft
-    TriggerEvent('qbpolice:client:cuffStateChanged', cuffed, soft)
+    TriggerEvent('kora_police:client:cuffStateChanged', cuffed, soft)
 end
 
 ---Replicated state bag of the player that owns `ped`, nil for anything else.

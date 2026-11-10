@@ -8,7 +8,7 @@ function Police.requestSpikeStrip()
     local coords = Kora.cache.coords()
     local forward = GetEntityForwardVector(ped)
     local deployAt = coords + forward * 2.0
-    TriggerServerEvent('qbpolice:server:deploySpike', { x = deployAt.x, y = deployAt.y, z = deployAt.z })
+    TriggerServerEvent('kora_police:server:deploySpike', { x = deployAt.x, y = deployAt.y, z = deployAt.z })
 end
 
 RegisterCommand('spikestrip', Police.requestSpikeStrip, false)
@@ -51,12 +51,12 @@ local function startScan()
 
         scanRunning = false
         if Config.performance.diagnostics then
-            print(('[qbpolice] spike scanner stopped after %d vehicle scans'):format(scans))
+            print(('[kora_police] spike scanner stopped after %d vehicle scans'):format(scans))
         end
     end)
 end
 
-RegisterNetEvent('qbpolice:client:spikeDeployed', function(netId, coords)
+RegisterNetEvent('kora_police:client:spikeDeployed', function(netId, coords)
     activeStrips[netId] = coords
     -- Only the current network owner grounds the server-created object.
     CreateThread(function()
@@ -72,7 +72,7 @@ RegisterNetEvent('qbpolice:client:spikeDeployed', function(netId, coords)
     end)
     startScan()
 end)
-RegisterNetEvent('qbpolice:client:spikeRemoved', function(netId)
+RegisterNetEvent('kora_police:client:spikeRemoved', function(netId)
     activeStrips[netId] = nil
 end)
 

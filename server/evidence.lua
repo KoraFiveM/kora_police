@@ -1,13 +1,13 @@
 -- Evidence storage. Two separate mechanisms, both reusing kora_inventory as-is:
 --
--- 1. The dedicated `QbInventory.evidence`/`.confiscation` seize/open/release
+-- 1. The dedicated `KoraInventory.evidence`/`.confiscation` seize/open/release
 --    API (server/containers.lua) is a genuine "headless core" seam: it has no
 --    exports() registration and no net event, only bare Lua functions on a
 --    table private to kora_inventory's own resource VM (verified by grepping
 --    kora_inventory's own source -- nothing outside server/containers.lua itself
---    ever reaches QbInventory.evidence). It is therefore NOT callable from
+--    ever reaches KoraInventory.evidence). It is therefore NOT callable from
 --    this resource. Per the plan, kora_police still supplies its access-policy
---    callback (Config.qbinventory.containers.evidence.access, additively
+--    callback (Config.kora_inventory.containers.evidence.access, additively
 --    edited directly in kora_inventory/config.lua -- Config is a resource-local
 --    global with no cross-resource setter export for this one field) so that
 --    boundary is genuinely ready for whatever in-VM caller kora_inventory itself
@@ -55,7 +55,7 @@ local function removeWorldEvidence(id)
     if not Police.worldEvidence[id] then return end
     Police.worldEvidence[id] = nil
     -- Former observers may have gone off duty since the marker was created.
-    TriggerClientEvent('qbpolice:client:worldEvidenceRemoved', -1, id)
+    TriggerClientEvent('kora_police:client:worldEvidenceRemoved', -1, id)
 end
 
 local function markerCount()
@@ -95,7 +95,7 @@ local function createWorldEvidence(src, evType, ballistic, suppliedCoords)
     }
 
     for _, officer in ipairs(exports.kora_core:getPlayersByJob(Config.police.job, true)) do
-        TriggerClientEvent('qbpolice:client:worldEvidenceCreated', officer, id, evType, coords)
+        TriggerClientEvent('kora_police:client:worldEvidenceCreated', officer, id, evType, coords)
     end
     return id
 end
@@ -142,14 +142,14 @@ function Police.createBallisticCasing(src, round)
             caseId, round.id, round.weaponSerial, round.weapon, round.ammoType, round.lot,
             coords.x, coords.y, coords.z, GetPlayerRoutingBucket(src),
         })
-        if err then print(('^1[qbpolice:ballistics]^7 could not save casing %s: %s'):format(caseId, tostring(err))) end
+        if err then print(('^1[kora_police:ballistics]^7 could not save casing %s: %s'):format(caseId, tostring(err))) end
     end)
     return caseId
 end
 
 -- kora_inventory is the only producer and has already server-validated the
 -- equipped weapon and consumed the exact round before it emits this event.
-AddEventHandler('qbinventory:server:weaponRoundFired', function(src, round)
+AddEventHandler('kora_inventory:server:weaponRoundFired', function(src, round)
     Police.createBallisticCasing(tonumber(src), round)
 end)
 
@@ -207,7 +207,7 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
         CreateThread(function()
             local _, err = Kora.sql.execute('UPDATE `kora_police_ballistic_casings` SET `collected_by` = ?, `collected_at` = CURRENT_TIMESTAMP WHERE `case_id` = ?',
                 { cid, marker.ballistic.caseId })
-            if err then print(('^1[qbpolice:ballistics]^7 could not mark collected casing: %s'):format(tostring(err))) end
+            if err then print(('^1[kora_police:ballistics]^7 could not mark collected casing: %s'):format(tostring(err))) end
         end)
     end
     Police.collectedEvidence[cid] = Police.collectedEvidence[cid] or {}

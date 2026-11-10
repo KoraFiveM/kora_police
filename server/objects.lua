@@ -55,7 +55,7 @@ function Police.spawnObject(officerSrc, objectType)
     Police.objectsByOfficer[officerSrc] = (Police.objectsByOfficer[officerSrc] or 0) + 1
 
     TriggerClientEvent('police:client:spawnObject', officerSrc, id, objectType, officerSrc)
-    TriggerClientEvent('qbpolice:client:objectPlaced', officerSrc, id, netId, heading)
+    TriggerClientEvent('kora_police:client:objectPlaced', officerSrc, id, netId, heading)
     SetTimeout(Config.objects.lifetime, function() Police.removeObject(id) end)
     return id
 end
@@ -93,7 +93,7 @@ function Police.deleteNearestObject(officerSrc)
     return Police.removeObject(bestId)
 end
 
-RegisterNetEvent('qbpolice:server:deleteNearestObject', function()
+RegisterNetEvent('kora_police:server:deleteNearestObject', function()
     local ok, err = Police.deleteNearestObject(source)
     if not ok then TriggerClientEvent('QBCore:Notify', source, err, 'error') end
 end)

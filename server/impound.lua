@@ -110,11 +110,11 @@ function Police.legacyTakeOutImpound(src, plate, garage)
     return Police.retrieveImpound(src, plate)
 end
 
-RegisterNetEvent('qbpolice:server:impound', function(plate, lotId)
+RegisterNetEvent('kora_police:server:impound', function(plate, lotId)
     local ok, err = Police.impound(source, plate, lotId)
     if not ok then Police.notify(source, err) end
 end)
-RegisterNetEvent('qbpolice:server:retrieveImpound', function(plate)
+RegisterNetEvent('kora_police:server:retrieveImpound', function(plate)
     local ok, err = Police.retrieveImpound(source, plate)
     if not ok then Police.notify(source, err) end
 end)

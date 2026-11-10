@@ -128,12 +128,12 @@ function Police.rob(robberSrc, targetSrc)
             expires = GetGameTimer() + (tonumber(cfg.accessSeconds) or 120) * 1000,
             opened = previous ~= nil and previous.target == targetSrc and previous.opened or false,
         }
-        TriggerClientEvent('qbpolice:client:openRob', robberSrc, targetSrc)
+        TriggerClientEvent('kora_police:client:openRob', robberSrc, targetSrc)
     end
     return true, nil, amount, waitSeconds
 end
 
-RegisterNetEvent('qbpolice:server:rob', function(target)
+RegisterNetEvent('kora_police:server:rob', function(target)
     local src = source
     local ok, err, amount, waitSeconds = Police.rob(src, tonumber(target))
     if not ok then
@@ -150,13 +150,13 @@ end)
 -- Track whether the grant has an open player-inventory session so the sweep
 -- only closes an inventory the rob opened. A 'replaced' close is the open
 -- request itself (kora_inventory closes the previous session first).
-AddEventHandler('qbinventory:server:sessionOpened', function(src, payload)
+AddEventHandler('kora_inventory:server:sessionOpened', function(src, payload)
     local grant = Police.robGrants[src]
     if not grant then return end
     local secondary = type(payload) == 'table' and payload.secondary or nil
     grant.opened = type(secondary) == 'table' and secondary.type == 'player'
 end)
-AddEventHandler('qbinventory:server:sessionClosed', function(src, _, reason)
+AddEventHandler('kora_inventory:server:sessionClosed', function(src, _, reason)
     if reason ~= 'replaced' then Police.robGrants[src] = nil end
 end)
 

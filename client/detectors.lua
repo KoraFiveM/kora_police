@@ -1,6 +1,6 @@
 -- Automatic crime detection.
 --
--- These live in kora_police, not in qbdispatch: dispatch has no idea what a crime
+-- These live in kora_police, not in kora_dispatch: dispatch has no idea what a crime
 -- is, and should not. It transports and presents calls; deciding that a gunshot
 -- in a public street is a police matter is police-resource business. The same
 -- rule puts a bank robbery's alert inside the robbery script.
@@ -12,21 +12,21 @@
 local function alert(incident)
     -- The incident key is the entire client payload. Wording, service,
     -- priority and coordinates all come from the server-owned registration.
-    Kora.events.trigger('qbpolice:server:crimeDetected', incident)
+    Kora.events.trigger('kora_police:server:crimeDetected', incident)
 end
 
 local reportShots = Kora.timers.throttle(function(silenced)
     -- A suppressed weapon is quieter, not silent: fewer witnesses would place
     -- it precisely, so it is a distinct lower-priority allowlisted incident.
-    alert(silenced and 'qbpolice:gunfire:suppressed' or 'qbpolice:gunfire')
+    alert(silenced and 'kora_police:gunfire:suppressed' or 'kora_police:gunfire')
 end, Config.dispatch.shotsFiredCooldown)
 
 local reportTheft = Kora.timers.throttle(function()
-    alert('qbpolice:vehicle-theft')
+    alert('kora_police:vehicle-theft')
 end, Config.dispatch.vehicleTheftCooldown)
 
 local reportMelee = Kora.timers.throttle(function()
-    alert('qbpolice:melee')
+    alert('kora_police:melee')
 end, Config.dispatch.meleeCooldown)
 
 -- One loop for every detector rather than one thread each. It runs at 500ms,
@@ -71,6 +71,6 @@ CreateThread(function()
         -- is the worst failure mode for a reporting system, so the error is
         -- surfaced instead of ending the thread.
         local ok, err = pcall(tick)
-        if not ok then Kora.print.error('qbpolice detector tick failed:', err) end
+        if not ok then Kora.print.error('kora_police detector tick failed:', err) end
     end
 end)

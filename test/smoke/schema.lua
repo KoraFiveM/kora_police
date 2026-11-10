@@ -14,7 +14,7 @@ dofile('server/migrate.lua')
 for _, fn in ipairs(threads) do fn() end
 
 h.test('schema declares the ballistic casings table', function()
-    local spec = QBPoliceSchema[1]
+    local spec = KoraPoliceSchema[1]
     h.assertEqual(spec.name, 'kora_police_ballistic_casings')
     h.assertEqual(spec.primary[1], 'case_id')
     h.assertEqual(#spec.columns, 13)
@@ -22,7 +22,7 @@ h.test('schema declares the ballistic casings table', function()
 end)
 
 h.test('migrate applies the schema via ensureTables', function()
-    h.assertTrue(captured == QBPoliceSchema)
+    h.assertTrue(captured == KoraPoliceSchema)
 end)
 
 h.report('schema')

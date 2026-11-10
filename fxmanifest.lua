@@ -3,8 +3,6 @@ game 'gta5'
 lua54 'yes'
 
 name 'kora_police'
--- Keep the legacy resource name resolvable for exports['qbpolice'] callers.
-provide 'qbpolice'
 author 'qbcore2'
 version '0.1.0'
 description 'Police/LEO job -- cuff/escort/search/evidence/armory/jail/dispatch on top of kora_core+kora_lib+kora_inventory+kora_target'
@@ -27,7 +25,7 @@ shared_scripts {
 }
 
 -- Explicit, non-globbed list -- matches every sibling resource's own
--- rationale (kora_core/kora_admin/qbinventory): alphabetic glob order would not
+-- rationale (kora_core/kora_admin/kora_inventory): alphabetic glob order would not
 -- respect the real load-order dependencies between these files. core.lua
 -- defines the shared `Police` table and its distance/duty helpers and must
 -- load first; compat/police.lua calls into nearly every other file's
