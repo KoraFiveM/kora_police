@@ -9,14 +9,23 @@ sidebar_position: 1
 
 Current version: see `version` in `fxmanifest.lua`.
 
-## Pages
+## Documentation map
 
+- [Installation](./installation.md) - requirements, start order, manifest load order, schema and items summary, first-run setup
+- [How to use](./how-to-use.md) - permission model, grade ladder, fingerprints, evidence, dispatch, armory, cuffing, escort, search and seizure
+- [Commands and keybinds](./commands.md) - every chat command with arguments, access and results, plus keybinds
+- [API reference](./api/index.md) - module overview and the resource exports
+  - [Restraint, escort & transport](./api/restraint-escort-transport.md) - cuff, escort, drag and vehicle functions
+  - [Search, seizure & robbery](./api/search-seizure-robbery.md) - search, seize and rob functions
+  - [Evidence & forensics](./api/evidence-forensics.md) - evidence, ballistic casings and fingerprints
+  - [Dispatch & crime detection](./api/dispatch-crime-detection.md) - dispatch calls, panic and detectors
+  - [Duty, fleet, armory & armour](./api/duty-fleet-armory.md) - duty toggle, patrol fleet, armory and armour
+  - [Jail, citations, impound & plate flags](./api/jail-citations-impound.md) - jail booking, citations, impound and plate flags
+  - [Field tools](./api/field-tools.md) - spike strips, road props, trackers and cameras
+  - [MDT readiness & legacy compatibility](./api/legacy-mdt.md) - MDT callbacks and the legacy event surface
 - [Features](./features.md) - what each feature does and how it behaves
-- [Installation](./installation.md) - requirements, start order, first-run setup
 - [Configuration](./configuration.md) - every `Config` table in `config.lua`
-- [Commands and keybinds](./commands.md) - chat commands and key bindings
 - [Player interactions](./ui.md) - `kora_target` options and dialogs
-- [Exports](./exports.md) - server and client exports, `Police.*` helpers
 - [Events](./events.md) - `kora_police:*` net events, local events, callbacks
 - [Legacy compatibility](./compatibility.md) - `qb-policejob` and `police:*` events and callbacks
 - [Items](./items.md) - items registered and items used
