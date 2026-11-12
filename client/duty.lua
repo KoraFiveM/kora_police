@@ -57,7 +57,7 @@ local function registerDutyZones()
             distance = 3.0,
             options = {
                 {
-                    label = ('Take Out %s'):format(veh.label),
+                    label = (Kora.lang('Menu.take_out_vehicle')):format(veh.label),
                     icon = 'car',
                     canInteract = function()
                         return Police.isOnDuty()
@@ -72,7 +72,7 @@ local function registerDutyZones()
 
     Police.target.global('duty', 'vehicle', {
         {
-            label = 'Store Patrol Vehicle',
+            label = Kora.lang('Menu.store_patrol_vehicle'),
             icon = 'car',
             canInteract = function(entity)
                 return Police.isOnDuty() and GetPedInVehicleSeat(entity, -1) == Kora.cache.ped()

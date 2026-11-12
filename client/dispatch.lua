@@ -6,7 +6,7 @@
 
 local function requestBackup()
     if not Police.isOnDuty() then
-        return Police.notify('You must be on duty to request backup.', 'error')
+        return Police.notify(Kora.lang('Notify.on_duty_for_backup'), 'error')
     end
 
     Kora.events.trigger('kora_police:server:requestBackup')
@@ -23,7 +23,7 @@ RegisterCommand('backup', requestBackup, false)
 -- why dispatch refuses to bundle services into a single call.
 Kora.keybind.add({
     name = 'kora_police_panic',
-    description = 'Police: panic button (officer down)',
+    description = Kora.lang('Dispatch.panic_button'),
     defaultKey = Config.dispatch.panicKey,
     onPressed = function()
         if not Police.isOnDuty() then return end

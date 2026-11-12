@@ -11,7 +11,7 @@ local function registerRobTargets()
     Police.target.reset('rob')
     Police.target.global('rob', 'player', {
         {
-            label = 'Rob',
+            label = Kora.lang('Menu.rob'),
             icon = 'hand-coins',
             canInteract = function(entity)
                 return not Police.isOnDuty() and Police.isPedRestrained(entity)

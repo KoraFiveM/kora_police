@@ -16,14 +16,14 @@ end
 
 local function setDuty(src, onDuty)
     local job = exports.kora_core:getJob(src)
-    if not job or job.name ~= Config.police.job then return false, 'You are not employed by this police service.' end
-    if not nearDutyPoint(src) then return false, 'Use a police duty point to change duty status.' end
+    if not job or job.name ~= Config.police.job then return false, Kora.lang('Notify.not_employed') end
+    if not nearDutyPoint(src) then return false, Kora.lang('Notify.use_duty_point') end
     onDuty = onDuty == true
     if job.onduty == onDuty then return true end
 
     local current = GetGameTimer()
     if lastDutyChange[src] and current - lastDutyChange[src] < Config.duty.actionCooldown then
-        return false, 'Wait before changing duty status again.'
+        return false, Kora.lang('Notify.wait_before_duty_change')
     end
     local changed, err = exports.kora_core:setJobDuty(src, onDuty)
     if changed then lastDutyChange[src] = current end
@@ -35,8 +35,8 @@ local function toggleDuty(src)
     local onDuty = job ~= nil and not job.onduty
     local changed, err = setDuty(src, onDuty)
     Kora.notify.send(src, {
-        message = changed and (onDuty and 'You are now on duty.' or 'You are now off duty.')
-            or (err or 'Duty status could not be changed.'),
+        message = changed and (onDuty and Kora.lang('Notify.now_on_duty') or Kora.lang('Notify.now_off_duty'))
+            or (err or Kora.lang('Notify.duty_change_failed')),
         type = changed and 'success' or 'error',
     })
     return changed
@@ -73,15 +73,15 @@ CreateThread(ensureFleet)
 ---@return integer|false networkId
 ---@return string|nil error
 function Police.spawnDutyVehicle(src, plate)
-    if not Police.isPolice(src) then return false, 'not an on-duty officer' end
+    if not Police.isPolice(src) then return false, Kora.lang('Notify.on_duty_police') end
     local row = exports.kora_core:getByPlate(plate)
-    if not row or row.job ~= Config.police.job then return false, 'not a fleet vehicle' end
+    if not row or row.job ~= Config.police.job then return false, Kora.lang('Notify.not_fleet_vehicle') end
     local index = tonumber(tostring(plate):match('^POLICE(%d+)$'))
     local configured = index and Config.duty.vehicles[index]
-    if not configured then return false, 'unknown fleet spawn' end
+    if not configured then return false, Kora.lang('Notify.unknown_fleet_spawn') end
     local ped = GetPlayerPed(src)
     if not ped or ped == 0 or #(GetEntityCoords(ped) - vector3(configured.coords.x, configured.coords.y, configured.coords.z)) > Config.duty.vehicleSpawnDistance then
-        return false, 'too far from the fleet garage'
+        return false, Kora.lang('Notify.too_far_from_garage')
     end
     return exports.kora_core:spawnVehicle(src, plate, configured.coords, configured.coords.w or 0.0)
 end
@@ -90,12 +90,12 @@ end
 ---@param plate string
 ---@return boolean, string|nil
 function Police.storeDutyVehicle(src, plate)
-    if not Police.isPolice(src) then return false, 'not an on-duty officer' end
+    if not Police.isPolice(src) then return false, Kora.lang('Notify.on_duty_police') end
     local row = exports.kora_core:getByPlate(plate)
-    if not row or row.job ~= Config.police.job then return false, 'not a fleet vehicle' end
+    if not row or row.job ~= Config.police.job then return false, Kora.lang('Notify.not_fleet_vehicle') end
     local vehicle = Police.findVehicleByPlate(plate)
     if not vehicle or Police.distanceToEntity(src, vehicle) > Config.cuff.distance + 2.0 then
-        return false, 'fleet vehicle is not nearby'
+        return false, Kora.lang('Notify.fleet_vehicle_not_nearby')
     end
     local ok, err = exports.kora_core:storeVehicle(plate, {})
     if not ok then return false, err end

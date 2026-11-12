@@ -20,6 +20,10 @@ shared_scripts {
     '@kora_lib/init.lua',
 }
 
+files {
+    'locales/*.lua',
+}
+
 shared_scripts {
     'config.lua'
 }

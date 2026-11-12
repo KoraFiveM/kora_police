@@ -11,8 +11,8 @@ CreateThread(function()
         -- A successful Police.rob (server/rob.lua) grants the robber access
         -- while the target stays restrained/downed and in range.
         if Police.hasRobAccess and Police.hasRobAccess(src, target) then return true end
-        if not Police.isPolice(src) then return false, 'not an on-duty officer' end
-        if not Police.isCuffed(target) then return false, 'target is not restrained' end
+        if not Police.isPolice(src) then return false, Kora.lang('Notify.on_duty_police') end
+        if not Police.isCuffed(target) then return false, Kora.lang('Notify.target_is_not_restrained') end
         return true
     end)
 end)
@@ -27,9 +27,9 @@ end)
 ---@param targetSrc integer
 ---@return boolean, string|nil
 function Police.search(officerSrc, targetSrc)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if not Police.isCuffed(targetSrc) then return false, 'target is not restrained' end
-    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if not Police.isCuffed(targetSrc) then return false, Kora.lang('Notify.target_is_not_restrained') end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
     TriggerClientEvent('kora_police:client:openSearch', officerSrc, targetSrc)
     TriggerClientEvent('police:client:SearchPlayer', officerSrc, targetSrc)
     return true
@@ -41,12 +41,12 @@ end
 ---@param targetSrc integer
 ---@return boolean, string|nil, number|nil seized
 function Police.seizeCash(officerSrc, targetSrc)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if not Police.isCuffed(targetSrc) then return false, 'target is not restrained' end
-    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if not Police.isCuffed(targetSrc) then return false, Kora.lang('Notify.target_is_not_restrained') end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
 
     local amount = exports.kora_core:getMoney(targetSrc, 'cash') or 0
-    if amount <= 0 then return false, 'target has no cash' end
+    if amount <= 0 then return false, Kora.lang('Notify.target_has_no_cash') end
 
     local transferred, transferErr = exports.kora_core:transferMoney(targetSrc, officerSrc, 'cash', amount, 'evidence-cash-seizure')
     if not transferred then return false, transferErr or 'could not seize cash' end
@@ -59,9 +59,9 @@ end
 ---@param targetSrc integer
 ---@return boolean, string|nil
 function Police.seizeDriverLicense(officerSrc, targetSrc)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if not Police.isCuffed(targetSrc) then return false, 'target is not restrained' end
-    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if not Police.isCuffed(targetSrc) then return false, Kora.lang('Notify.target_is_not_restrained') end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
 
     local licences = exports.kora_core:getMetaData(targetSrc, 'licences') or {}
     licences = type(licences) == 'table' and licences or {}

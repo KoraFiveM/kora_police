@@ -89,12 +89,12 @@ end
 function Police.rob(robberSrc, targetSrc)
     local cfg = robConfig()
     local takeCash, openInventory = cfg.takeCash ~= false, cfg.openInventory ~= false
-    if not takeCash and not openInventory then return false, 'robbing is disabled' end
-    if robberSrc == targetSrc then return false, 'cannot rob yourself' end
-    if Police.isCuffed(robberSrc) then return false, 'you are restrained' end
-    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
-    if Police.distanceBetween(robberSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
-    if not Police.isIncapacitated(targetSrc) then return false, 'target is not restrained or down' end
+    if not takeCash and not openInventory then return false, Kora.lang('Notify.robbing_is_disabled') end
+    if robberSrc == targetSrc then return false, Kora.lang('Notify.cannot_rob_yourself') end
+    if Police.isCuffed(robberSrc) then return false, Kora.lang('Notify.restrained_action') end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, Kora.lang('Notify.player_not_found') end
+    if Police.distanceBetween(robberSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
+    if not Police.isIncapacitated(targetSrc) then return false, Kora.lang('Notify.target_not_restrained') end
 
     local amount = 0
     local waitSeconds
@@ -109,7 +109,7 @@ function Police.rob(robberSrc, targetSrc)
     if takeCash then
         local available = exports.kora_core:getMoney(targetSrc, 'cash') or 0
         amount = math.min(available, MAX_ROB_AMOUNT)
-        if amount <= 0 and not openInventory then return false, 'target has no cash' end
+        if amount <= 0 and not openInventory then return false, Kora.lang('Notify.target_has_no_cash') end
         if amount > 0 then
             local transferred, transferErr = exports.kora_core:transferMoney(targetSrc, robberSrc, 'cash', amount, 'robbery')
             if not transferred then

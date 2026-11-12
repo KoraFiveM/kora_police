@@ -58,9 +58,9 @@ end
 ---@param reason string|nil
 ---@return boolean, string|nil
 function Police.flagPlate(officerSrc, plate, reason)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
     plate = normalizePlate(plate)
-    if not plate then return false, 'invalid plate' end
+    if not plate then return false, Kora.lang('Notify.invalid_plate') end
     if type(reason) ~= 'string' or reason:match('^%s*$') then reason = 'BOLO' end
     Police.plateFlags[plate] = { reason = reason, flaggedBy = officerSrc, flaggedAt = os.time() }
     mdtFlag(officerSrc, plate, reason)
@@ -71,13 +71,13 @@ end
 ---@param plate string
 ---@return boolean, string|nil
 function Police.unflagPlate(officerSrc, plate)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
     plate = normalizePlate(plate)
-    if not plate then return false, 'invalid plate' end
+    if not plate then return false, Kora.lang('Notify.invalid_plate') end
     -- Flags live in memory, so one set before a restart (or raised in the MDT
     -- itself) is only still known to the MDT: closing it there counts too.
     local resolved = mdtUnflag(plate)
-    if not Police.plateFlags[plate] and resolved == 0 then return false, 'plate is not flagged' end
+    if not Police.plateFlags[plate] and resolved == 0 then return false, Kora.lang('Notify.plate_is_not_flagged') end
     Police.plateFlags[plate] = nil
     return true
 end
@@ -117,8 +117,8 @@ end
 function Police.legacyFlaggedPlate(spotterSrc, first, second)
     local plate = second
     if type(plate) ~= 'string' and type(first) == 'string' then plate = first end
-    if type(plate) ~= 'string' or #plate == 0 or #plate > 16 then return false, 'invalid plate' end
-    if not Police.isPolice(spotterSrc) then return false, 'not an on-duty officer' end
+    if type(plate) ~= 'string' or #plate == 0 or #plate > 16 then return false, Kora.lang('Notify.invalid_plate') end
+    if not Police.isPolice(spotterSrc) then return false, Kora.lang('Notify.on_duty_police') end
     Police.triggerFlaggedPlate(spotterSrc, plate:upper())
     return true
 end

@@ -28,11 +28,11 @@ end
 ---@param reason string|nil
 ---@return boolean, string|nil
 function Police.bill(officerSrc, targetSrc, amount, reason)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
     amount = tonumber(amount)
-    if not amount or amount ~= math.floor(amount) or amount <= 0 or amount > MAX_FINE then return false, 'invalid fine amount' end
-    if not targetSrc or not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
-    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
+    if not amount or amount ~= math.floor(amount) or amount <= 0 or amount > MAX_FINE then return false, Kora.lang('Notify.invalid_fine_amount') end
+    if not targetSrc or not exports.kora_core:getPlayerData(targetSrc) then return false, Kora.lang('Notify.player_not_found') end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
     if type(reason) ~= 'string' or reason == '' then reason = nil end
     if reason then reason = reason:sub(1, 120) end
 
@@ -80,7 +80,7 @@ end
 ---@return boolean, string|nil
 function Police.payCitation(src, id)
     local list = readCitations(src)
-    if #list == 0 then return false, 'You have no unpaid citations.' end
+    if #list == 0 then return false, Kora.lang('Notify.you_have_no_unpaid_citations') end
     local index
     if id == nil then
         index = 1
@@ -89,7 +89,7 @@ function Police.payCitation(src, id)
             if tonumber(citation.id) == tonumber(id) then index = i; break end
         end
     end
-    if not index then return false, 'No unpaid citation with that number.' end
+    if not index then return false, Kora.lang('Notify.no_unpaid_citation_with_that_number') end
 
     local citation = list[index]
     local removed, err = exports.kora_core:removeMoney(src, Config.fine.account, citation.amount, 'citation-payment')

@@ -12,17 +12,17 @@ Police.spikesByOfficer = Police.spikesByOfficer or {}  -- officerSrc -> count
 ---@return integer|false netId
 ---@return string|nil error
 function Police.deploySpike(officerSrc, coords)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
     if type(coords) ~= 'table' or not Kora.util.isFiniteNumber(coords.x)
         or not Kora.util.isFiniteNumber(coords.y) or not Kora.util.isFiniteNumber(coords.z) then
-        return false, 'invalid coords'
+        return false, Kora.lang('Notify.invalid_coords')
     end
     if (Police.spikesByOfficer[officerSrc] or 0) >= Config.spikes.maxDeployed then
-        return false, 'too many strips deployed'
+        return false, Kora.lang('Notify.too_many_strips_deployed')
     end
 
     local ped = GetPlayerPed(officerSrc)
-    if not ped or ped == 0 then return false, 'no ped' end
+    if not ped or ped == 0 then return false, Kora.lang('Notify.no_ped') end
 
     -- Coordinates originate at the client because only it knows the camera's
     -- forward vector. The server still owns where a networked object may be
@@ -30,12 +30,12 @@ function Police.deploySpike(officerSrc, coords)
     -- arbitrary world positions or non-finite native arguments.
     local requested = vector3(coords.x, coords.y, coords.z)
     if #(GetEntityCoords(ped) - requested) > Config.spikes.deployDistance then
-        return false, 'deployment position is too far away'
+        return false, Kora.lang('Notify.deployment_position_is_too_far_away')
     end
 
     local cleanCoords = { x = coords.x, y = coords.y, z = coords.z }
     local obj = CreateObject(joaat(Config.spikes.model), cleanCoords.x, cleanCoords.y, cleanCoords.z, true, true, false)
-    if not obj or obj == 0 then return false, 'failed to create strip' end
+    if not obj or obj == 0 then return false, Kora.lang('Notify.failed_to_create_strip') end
 
     local netId = NetworkGetNetworkIdFromEntity(obj)
     Police.spikes[netId] = { entity = obj, officer = officerSrc, coords = cleanCoords, deployedAt = GetGameTimer() }

@@ -20,9 +20,9 @@ local function upsertTrackerBlip(targetServerId, coords)
         category = 'Vehicle Tracking',
         name = tostring(targetServerId),
         info = {
-            title = 'Active tracker',
+            title = Kora.lang('Notify.active_tracker'),
             rows = {
-                { kind = 'name', label = 'Target ID', value = targetServerId },
+                { kind = 'name', label = Kora.lang('Notify.target_id'), value = targetServerId },
                 { kind = 'wrappedText', value = 'Location updates as the tracked target moves.' },
             },
         },
@@ -49,8 +49,8 @@ local function flashTrackerBlip(coords, message)
     Police.notify(message, 'info')
     if type(coords) ~= 'table' then return end
     local blip = Kora.blips.create(coords, {
-        sprite = 458, color = 1, scale = 1.0, category = 'Vehicle Tracking', name = 'Anklet location',
-        info = { title = 'Anklet location', rows = { { kind = 'wrappedText', value = message } } },
+        sprite = 458, color = 1, scale = 1.0, category = 'Vehicle Tracking', name = Kora.lang('Notify.anklet_location'),
+        info = { title = Kora.lang('Notify.anklet_location'), rows = { { kind = 'wrappedText', value = message } } },
     })
     if blip then SetTimeout(60000, function() Kora.blips.remove(blip) end) end
 end
@@ -66,7 +66,7 @@ end)
 
 RegisterNetEvent('police:client:CheckDistance', function()
     local target = Police.closestPlayerServerId(Config.cuff.distance)
-    if target then TriggerServerEvent('police:server:SetTracker', target) else Police.notify('No player nearby.', 'error') end
+    if target then TriggerServerEvent('police:server:SetTracker', target) else Police.notify(Kora.lang('Notify.no_player_nearby'), 'error') end
 end)
 
 RegisterNetEvent('police:client:SetTracker', function(active)
@@ -79,7 +79,7 @@ local function registerTrackerTargets()
     Police.target.reset('tracker')
     Police.target.global('tracker', 'player', {
         {
-            label = 'Attach Tracker',
+            label = Kora.lang('Menu.attach_tracker'),
             icon = 'radar',
             canInteract = function(entity)
                 return Police.isOnDuty() and Police.isPedCuffed(entity)

@@ -15,7 +15,7 @@ end
 local function placeObject(objectType)
     return function()
         if not Police.isOnDuty() then return end
-        local completed = progress('Placing object...', { dict = 'anim@narcotics@trash', clip = 'drop_front', flag = 16 })
+        local completed = progress(Kora.lang('Progress.placing_object'), { dict = 'anim@narcotics@trash', clip = 'drop_front', flag = 16 })
         if completed then TriggerServerEvent('police:server:spawnObject', objectType) end
     end
 end
@@ -28,7 +28,7 @@ RegisterNetEvent('police:client:spawnLight', placeObject('light'))
 
 RegisterNetEvent('police:client:deleteObject', function()
     if not Police.isOnDuty() then return end
-    local completed = progress('Removing object...', {
+    local completed = progress(Kora.lang('Progress.removing_object'), {
         dict = 'weapons@first_person@aim_rng@generic@projectile@thermal_charge@', clip = 'plant_floor', flag = 16,
     })
     if completed then TriggerServerEvent('kora_police:server:deleteNearestObject') end

@@ -52,7 +52,7 @@ end
 
 local function open(id)
     local definition = camera(id)
-    if not definition then return Police.notify('Camera does not exist.', 'error') end
+    if not definition then return Police.notify(Kora.lang('Notify.camera_missing'), 'error') end
     if not isOnline(id) then return Police.notify(('%s is offline.'):format(definition.label), 'error') end
     close()
     DoScreenFadeOut(250)

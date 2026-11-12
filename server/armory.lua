@@ -118,16 +118,16 @@ end)
 ---@param shopId string
 ---@return boolean, string|nil
 function Police.canAccessArmory(src, shopId)
-    if not Police.isPolice(src) then return false, 'not an on-duty officer' end
+    if not Police.isPolice(src) then return false, Kora.lang('Notify.on_duty_police') end
     local shop = Police.armoryShops[shopId]
-    if not shop then return false, 'unknown armory' end
-    if Police.gradeLevel(src) < shop.config.minGrade then return false, 'insufficient rank' end
+    if not shop then return false, Kora.lang('Notify.unknown_armory') end
+    if Police.gradeLevel(src) < shop.config.minGrade then return false, Kora.lang('Notify.insufficient_rank') end
 
     local ped = GetPlayerPed(src)
     local coords = shop.config.coords
     if ped and ped ~= 0 and coords then
         local dist = #(GetEntityCoords(ped) - vector3(coords.x, coords.y, coords.z))
-        if dist > (shop.config.distance or 2.0) then return false, 'too far away' end
+        if dist > (shop.config.distance or 2.0) then return false, Kora.lang('Notify.too_far_away') end
     end
     return true
 end

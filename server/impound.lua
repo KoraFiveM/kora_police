@@ -12,11 +12,11 @@ Police.impoundedPlates = Police.impoundedPlates or {}  -- plate -> { lot, fee, i
 ---@param opts table|nil { fee = number, full = boolean }
 ---@return boolean, string|nil
 function Police.impound(officerSrc, plate, lotId, opts)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if type(plate) ~= 'string' or plate == '' then return false, 'invalid plate' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if type(plate) ~= 'string' or plate == '' then return false, Kora.lang('Notify.invalid_plate') end
     local vehicle = Police.findVehicleByPlate(plate)
     if not vehicle or Police.distanceToEntity(officerSrc, vehicle) > Config.cuff.distance + 2.0 then
-        return false, 'vehicle is not nearby'
+        return false, Kora.lang('Notify.vehicle_is_not_nearby')
     end
     local lot = lotId
     if not lot then
@@ -42,13 +42,13 @@ end
 ---@return boolean, string|nil
 function Police.retrieveImpound(src, plate)
     local row = exports.kora_core:getByPlate(plate)
-    if not row then return false, 'unknown vehicle' end
-    if row.state ~= 'impounded' then return false, 'vehicle is not impounded' end
+    if not row then return false, Kora.lang('Notify.unknown_vehicle') end
+    if row.state ~= 'impounded' then return false, Kora.lang('Notify.vehicle_is_not_impounded') end
 
     local fee = tonumber(row.impound_fee) or Config.impound.fee
     if fee > 0 then
         local paid = exports.kora_core:removeMoney(src, 'cash', fee, 'impound-fee')
-        if not paid then return false, 'cannot afford the impound fee' end
+        if not paid then return false, Kora.lang('Notify.cannot_afford_the_impound_fee') end
     end
 
     local ok, err = exports.kora_core:retrieveImpound(src, plate)
@@ -98,14 +98,14 @@ end
 ---that lot and be the owner (kora_core's retrieveImpound), paying the fee.
 ---@return boolean, string|nil
 function Police.legacyTakeOutImpound(src, plate, garage)
-    if type(plate) ~= 'string' or plate == '' or #plate > 16 then return false, 'invalid plate' end
+    if type(plate) ~= 'string' or plate == '' or #plate > 16 then return false, Kora.lang('Notify.invalid_plate') end
     local lot = Config.impound.lots[tonumber(garage) or 1]
-    if not lot then return false, 'unknown impound lot' end
+    if not lot then return false, Kora.lang('Notify.unknown_impound_lot') end
     local ped = GetPlayerPed(src)
-    if not ped or ped == 0 then return false, 'no ped' end
+    if not ped or ped == 0 then return false, Kora.lang('Notify.no_ped') end
     local position = GetEntityCoords(ped)
     if #(position - vector3(lot.coords.x, lot.coords.y, lot.coords.z)) > Config.impound.takeOutDistance then
-        return false, 'too far from the impound lot'
+        return false, Kora.lang('Notify.too_far_from_the_impound_lot')
     end
     return Police.retrieveImpound(src, plate)
 end

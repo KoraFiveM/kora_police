@@ -4,7 +4,7 @@ local function registerSeizeTargets()
     Police.target.reset('seize')
     Police.target.global('seize', 'player', {
         {
-            label = 'Seize Cash',
+            label = Kora.lang('Menu.seize_cash'),
             icon = 'banknote',
             canInteract = function(entity)
                 return Police.isOnDuty() and Police.isPedCuffed(entity)
@@ -14,7 +14,7 @@ local function registerSeizeTargets()
             end,
         },
         {
-            label = "Seize Driver's License",
+            label = Kora.lang('Menu.seize_license'),
             icon = 'id-card',
             canInteract = function(entity)
                 return Police.isOnDuty() and Police.isPedCuffed(entity)

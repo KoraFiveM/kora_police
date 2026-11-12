@@ -5,7 +5,7 @@ local function registerBillTargets()
     Police.target.reset('bill')
     Police.target.global('bill', 'player', {
         {
-            label = 'Issue Citation',
+            label = Kora.lang('Menu.issue_citation'),
             icon = 'receipt',
             canInteract = function()
                 return Police.isOnDuty()
@@ -13,12 +13,12 @@ local function registerBillTargets()
             onSelect = function(entity)
                 local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
                 if not targetServerId or targetServerId <= 0 then
-                    return Police.notify('No player to cite.', 'error')
+                    return Police.notify(Kora.lang('Notify.no_player_to_cite'), 'error')
                 end
                 local result = Kora.nui.openInputDialog({
-                    { id = 'amount', label = 'Fine Amount', type = 'number', default = Config.fine.tiers[1][1], min = 1, required = true },
-                    { id = 'reason', label = 'Reason', type = 'text' },
-                }, 'Issue Citation')
+                    { id = 'amount', label = Kora.lang('Menu.fine_amount'), type = 'number', default = Config.fine.tiers[1][1], min = 1, required = true },
+                    { id = 'reason', label = Kora.lang('Menu.reason'), type = 'text' },
+                }, Kora.lang('Menu.issue_citation'))
                 if not result or not result.values then return end
                 TriggerServerEvent('kora_police:server:bill', targetServerId, result.values.amount, result.values.reason)
             end,

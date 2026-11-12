@@ -32,7 +32,7 @@ end)
 
 local function nearestTarget()
     local target = Police.closestPlayerServerId(Config.cuff.distance)
-    if not target then Police.notify('No player nearby.', 'error') end
+    if not target then Police.notify(Kora.lang('Notify.no_player_nearby'), 'error') end
     return target
 end
 
@@ -77,8 +77,8 @@ RegisterNetEvent('police:client:JailPlayer', function()
     local target = nearestTarget()
     if not target then return end
     local result = Kora.nui.openInputDialog({
-        { id = 'minutes', label = 'Minutes', type = 'number', default = Config.jail.defaultMinutes, min = 1, required = true },
-        { id = 'reason', label = 'Reason', type = 'text' },
+        { id = 'minutes', label = Kora.lang('Menu.minutes'), type = 'number', default = Config.jail.defaultMinutes, min = 1, required = true },
+        { id = 'reason', label = Kora.lang('Menu.reason'), type = 'text' },
     }, 'Book Suspect')
     if not result or not result.values then return end
     TriggerServerEvent('police:server:JailPlayer', target, result.values.minutes, result.values.reason)
@@ -88,9 +88,9 @@ RegisterNetEvent('police:client:BillPlayer', function()
     local target = nearestTarget()
     if not target then return end
     local result = Kora.nui.openInputDialog({
-        { id = 'amount', label = 'Fine Amount', type = 'number', default = Config.fine.tiers[1][1], min = 1, required = true },
-        { id = 'reason', label = 'Reason', type = 'text' },
-    }, 'Issue Citation')
+        { id = 'amount', label = Kora.lang('Menu.fine_amount'), type = 'number', default = Config.fine.tiers[1][1], min = 1, required = true },
+        { id = 'reason', label = Kora.lang('Menu.reason'), type = 'text' },
+    }, Kora.lang('Menu.issue_citation'))
     if not result or not result.values then return end
     TriggerServerEvent('police:server:BillPlayer', target, result.values.amount, result.values.reason)
 end)
@@ -150,7 +150,7 @@ RegisterNetEvent('police:client:policeAlert', function(first, second)
     if type(coords) ~= 'table' then return end
     local blip = Kora.blips.create(coords, {
         sprite = 60, color = 1, scale = 0.8, category = 'Police', name = text,
-        info = { title = 'Police alert', rows = { { kind = 'wrappedText', value = text } } },
+        info = { title = Kora.lang('Evidence.police_alert'), rows = { { kind = 'wrappedText', value = text } } },
     })
     if blip then SetTimeout(60000, function() Kora.blips.remove(blip) end) end
 end)
@@ -158,14 +158,14 @@ end)
 RegisterNetEvent('police:client:CheckStatus', function()
     if not Police.isOnDuty() then return end
     local target = Police.closestPlayerServerId(5.0)
-    if not target then return Police.notify('No player nearby.', 'error') end
+    if not target then return Police.notify(Kora.lang('Notify.no_player_nearby'), 'error') end
     local statuses = Kora.callback.trigger('police:GetPlayerStatus', target)
     for _, text in ipairs(type(statuses) == 'table' and statuses or {}) do Police.notify(text, 'info') end
 end)
 
 RegisterNetEvent('qb-police:client:scanFingerPrint', function()
     local target = Police.closestPlayerServerId(Config.cuff.distance)
-    if target then TriggerServerEvent('police:server:showFingerprint', target) else Police.notify('No player nearby.', 'error') end
+    if target then TriggerServerEvent('police:server:showFingerprint', target) else Police.notify(Kora.lang('Notify.no_player_nearby'), 'error') end
 end)
 
 RegisterNetEvent('qb-policejob:ToggleDuty', function()
@@ -178,15 +178,15 @@ RegisterNetEvent('police:client:ImpoundVehicle', function(fullImpound, price)
     if IsPedInAnyVehicle(ped, false) then return end
     local origin = GetEntityCoords(ped)
     local vehicle = GetClosestVehicle(origin.x, origin.y, origin.z, 5.0, 0, 71)
-    if not vehicle or vehicle == 0 then return Police.notify('No vehicle nearby.', 'error') end
+    if not vehicle or vehicle == 0 then return Police.notify(Kora.lang('Notify.no_vehicle_nearby'), 'error') end
     local completed = Kora.progressbar.start({
-        label = 'Impounding...',
+        label = Kora.lang('Progress.impounding'),
         duration = 5000,
         canCancel = true,
         disable = { move = true, car = true, combat = true },
         anim = { dict = 'missheistdockssetup1clipboard@base', clip = 'base', flag = 1 },
     })
-    if not completed then return Police.notify('Cancelled.', 'error') end
+    if not completed then return Police.notify(Kora.lang('Notify.cancelled'), 'error') end
     local plate = (GetVehicleNumberPlateText(vehicle) or ''):gsub('^%s+', ''):gsub('%s+$', '')
     TriggerServerEvent('police:server:Impound', plate, fullImpound, price)
 end)
@@ -213,7 +213,7 @@ RegisterNetEvent('police:client:EvidenceStashDrawer', function()
     end
     if not room then return end
     local result = Kora.nui.openInputDialog({
-        { id = 'slot', label = 'Slot no. (1,2,3)', type = 'number', min = 1, max = Config.evidence.drawers.maxDrawer, required = true },
+        { id = 'slot', label = Kora.lang('Menu.slot_number'), type = 'number', min = 1, max = Config.evidence.drawers.maxDrawer, required = true },
     }, ('Evidence Stash | %d'):format(room))
     local slot = result and result.values and tonumber(result.values.slot)
     if slot then TriggerServerEvent('qb-policejob:server:evidence', ('%d | Drawer %d'):format(room, slot)) end

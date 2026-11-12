@@ -220,7 +220,7 @@ end)
 ---row, particularly not `weapon_serial`; investigation stages decide when it
 ---may be shown to an officer.
 function Police.getBallisticCasing(caseId)
-    if type(caseId) ~= 'string' or #caseId > 64 then return nil, 'invalid case id' end
+    if type(caseId) ~= 'string' or #caseId > 64 then return nil, Kora.lang('Notify.invalid_case_id') end
     return Kora.sql.single('SELECT * FROM `kora_police_ballistic_casings` WHERE `case_id` = ?', { caseId })
 end
 

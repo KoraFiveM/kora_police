@@ -11,7 +11,7 @@ local function registerSearchTargets()
     Police.target.reset('search')
     Police.target.global('search', 'player', {
         {
-            label = 'Search',
+            label = Kora.lang('Menu.search'),
             icon = 'search',
             canInteract = function(entity)
                 return Police.isOnDuty() and Police.isPedCuffed(entity)
