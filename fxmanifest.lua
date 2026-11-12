@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'kora_police'
 author 'qbcore2'
-version '0.1.0'
+version '0.2.0'
 description 'Police/LEO job -- cuff/escort/search/evidence/armory/jail/dispatch on top of kora_core+kora_lib+kora_inventory+kora_target'
 
 provide 'qb-policejob'
