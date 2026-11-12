@@ -1,11 +1,24 @@
 ---
-title: Exports
-sidebar_position: 7
+title: "API reference"
+sidebar_position: 1
 ---
 
-# Exports
+# API reference
 
-## Server
+| Module | Namespace | Realms |
+| --- | --- | --- |
+| [Restraint, escort & transport](./restraint-escort-transport.md) | `Police.* (server), net events kora_police:server:*` | server, client |
+| [Search, seizure & robbery](./search-seizure-robbery.md) | `Police.* (server)` | server |
+| [Evidence & forensics](./evidence-forensics.md) | `Police.* (server)` | server, client |
+| [Dispatch & crime detection](./dispatch-crime-detection.md) | `Police.* (server), kora_police:server:* events` | server, client |
+| [Duty, fleet, armory & armour](./duty-fleet-armory.md) | `Police.* (server)` | server |
+| [Jail, citations, impound & plate flags](./jail-citations-impound.md) | `Police.* (server)` | server |
+| [Field tools](./field-tools.md) | `Police.* (server)` | server, client |
+| [MDT readiness & legacy compatibility](./legacy-mdt.md) | `Kora.callback / RegisterNetEvent (server)` | server |
+
+## Resource exports
+
+### Server
 
 | Export | Available when | Description |
 | --- | --- | --- |
@@ -16,16 +29,16 @@ sidebar_position: 7
 
 `CreateBallisticCasing` is called by this resource's own listener for `kora_inventory:server:weaponRoundFired`; call it yourself only if you need casings from another source.
 
-## Client
+### Client
 
 | Export | Description |
 | --- | --- |
 | `isHandcuffed()` and `IsHandcuffed()` | `true` when the local player is cuffed. The capitalised form is also provided as `exports['qb-policejob']:IsHandcuffed` |
 
-## Server Lua helpers (not exports)
+### Server Lua helpers (not exports)
 
 The `Police` table is global inside this resource only. Notable functions, all returning `ok, err` unless noted: `Police.cuff`, `Police.uncuff`, `Police.softCuffNearby`, `Police.escort`, `Police.deEscort`, `Police.startDrag`, `Police.stopDrag`, `Police.putInVehicle`, `Police.takeOutVehicle`, `Police.search`, `Police.seizeCash`, `Police.seizeDriverLicense`, `Police.rob`, `Police.bill`, `Police.jailPlayer`, `Police.canAccessArmory`, `Police.impound`, `Police.retrieveImpound`, `Police.flagPlate`, `Police.unflagPlate`, `Police.isPlateFlagged`, `Police.deploySpike`, `Police.spawnObject`, `Police.dispatch(payload)`, plus `Police.isPolice(src, onDutyOnly)`, `Police.isLeo(src)`, `Police.isCuffed(src)`, `Police.isDowned(src)`, `Police.gradeLevel(src)` and `Police.distanceBetween(a, b)`.
 
-## Used from other resources
+### Used from other resources
 
 The resource calls `kora_core` (player data, metadata, money, items, jail, garage), `kora_inventory` (`RegisterShop`, `RegisterStash`, `OpenInventory`, `registerInspectionAccess`, `AddItem`, `RemoveItem`, `GetEquippedWeapon`, and related), `kora_dispatch` (`createCall`, `createPlayerCall`, `registerPlayerAlert`, `setTheme`) and `kora_target` (zones, global options, `setEnabled`, `getState`). Their exact signatures are documented by those resources.
