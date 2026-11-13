@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'kora_police'
-author 'qbcore2'
+author 'Kora'
 version '0.2.1'
 description 'Police/LEO job -- cuff/escort/search/evidence/armory/jail/dispatch on top of kora_core+kora_lib+kora_inventory+kora_target'
 
@@ -20,8 +20,12 @@ shared_scripts {
     '@kora_lib/init.lua',
 }
 
+files {
+    'locales/*.lua',
+}
+
 shared_scripts {
-    'config.lua'
+    'shared/config.lua'
 }
 
 -- Explicit, non-globbed list -- matches every sibling resource's own

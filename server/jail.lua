@@ -10,8 +10,8 @@
 ---@param reason string|nil
 ---@return boolean, string|nil
 function Police.jailPlayer(officerSrc, targetSrc, minutes, reason)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, Kora.lang('Notify.player_not_found') end
 
     minutes = tonumber(minutes) or Config.jail.defaultMinutes
     local ok, err = exports.kora_core:jailPlayer(targetSrc, minutes, reason)

@@ -7,7 +7,7 @@ local function registerPlateFlagTargets()
     Police.target.reset('plateFlag')
     Police.target.global('plateFlag', 'vehicle', {
         {
-            label = 'Flag Plate',
+            label = Kora.lang('Menu.flag_plate'),
             icon = 'flag',
             canInteract = function()
                 return Police.isOnDuty()
@@ -15,7 +15,7 @@ local function registerPlateFlagTargets()
             onSelect = function(entity)
                 local plate = GetVehicleNumberPlateText(entity)
                 local result = Kora.nui.openInputDialog(
-                    { { id = 'reason', label = 'Reason', type = 'text', default = 'BOLO' } },
+                    { { id = 'reason', label = Kora.lang('Menu.reason'), type = 'text', default = 'BOLO' } },
                     ('Flag %s'):format(plate)
                 )
                 if not result or not result.values then return end
@@ -23,7 +23,7 @@ local function registerPlateFlagTargets()
             end,
         },
         {
-            label = 'Unflag Plate',
+            label = Kora.lang('Menu.unflag_plate'),
             icon = 'flag-off',
             canInteract = function()
                 return Police.isOnDuty()
@@ -122,8 +122,8 @@ CreateThread(function()
 end)
 
 RegisterNetEvent('kora_police:client:flaggedPlateTriggered', function(plate, reason)
-    Police.notify(('Flagged plate spotted: %s (%s)'):format(plate, reason), 'warning')
+    Police.notify((Kora.lang('Notify.flagged_plate_spotted')):format(plate, reason), 'warning')
 end)
 RegisterNetEvent('police:client:FlaggedPlateTriggered', function(plate, reason)
-    Police.notify(('Flagged plate spotted: %s (%s)'):format(plate, reason), 'warning')
+    Police.notify((Kora.lang('Notify.flagged_plate_spotted')):format(plate, reason), 'warning')
 end)

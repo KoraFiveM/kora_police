@@ -18,12 +18,12 @@ end)
 local function attemptBreach(door)
     local result = Kora.minigames.play(Config.minigames.breach.type, Config.minigames.breach.opts)
     if not (result and result.success) then
-        Police.notify('Breach failed.', 'error')
+        Police.notify(Kora.lang('Notify.breach_failed'), 'error')
         return
     end
 
     DoorSystemSetDoorState(door.hash, 0, false, false)  -- unlocked
-    Police.notify('Door breached.', 'success')
+    Police.notify(Kora.lang('Notify.door_breached'), 'success')
     SetTimeout(door.unlockedFor or 30000, function()
         DoorSystemSetDoorState(door.hash, 1, false, false)
     end)
@@ -39,7 +39,7 @@ local function registerBreachDoorTargets()
             distance = 2.0,
             options = {
                 {
-                    label = 'Breach Door',
+                    label = Kora.lang('Menu.breach_door'),
                     icon = 'door-open',
                     canInteract = function()
                         return Police.isOnDuty()

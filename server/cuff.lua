@@ -16,21 +16,21 @@ local STATE_KEY, SOFT_KEY = 'koraCuffed', 'koraCuffedSoft'
 
 -- Player-facing wording for a refused cuff/uncuff, so a refusal is never silent.
 local REFUSALS = {
-    ['not an on-duty officer'] = 'You must be an on-duty police officer to do that.',
-    ['cannot cuff yourself'] = 'You cannot cuff yourself.',
-    ['target not found'] = 'That player could not be found.',
-    ['already cuffed'] = 'They are already cuffed.',
-    ['refreshed'] = 'They were already cuffed -- the restraints were re-applied.',
-    ['too far away'] = 'You are too far away.',
-    ['not cuffed'] = 'They are not cuffed.',
-    ['not authorised'] = 'You are not allowed to do that.',
-    ['you are restrained'] = 'You cannot do that while restrained.',
-    ['handcuffs required'] = 'You need handcuffs.',
+    ['not an on-duty officer'] = Kora.lang('Notify.on_duty_police'),
+    ['cannot cuff yourself'] = Kora.lang('Notify.cuff_self_refused'),
+    ['target not found'] = Kora.lang('Notify.player_not_found'),
+    ['already cuffed'] = Kora.lang('Notify.already_cuffed_notice'),
+    ['refreshed'] = Kora.lang('Notify.cuffs_refreshed_notice'),
+    ['too far away'] = Kora.lang('Notify.too_far_away'),
+    ['not cuffed'] = Kora.lang('Notify.target_not_cuffed'),
+    ['not authorised'] = Kora.lang('Notify.not_allowed'),
+    ['you are restrained'] = Kora.lang('Notify.restrained_action'),
+    ['handcuffs required'] = Kora.lang('Notify.need_handcuffs'),
 }
 ---@param err string|nil
 ---@return string
 function Police.cuffRefusal(err)
-    return REFUSALS[err] or err or 'That did not work.'
+    return REFUSALS[err] or err or Kora.lang('Notify.action_failed')
 end
 
 ---@param src integer
@@ -111,13 +111,13 @@ end
 ---@return string|nil err
 ---@return string|nil info `refreshed` when the target was already cuffed and the restraint was re-applied.
 function Police.cuff(officerSrc, targetSrc)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if officerSrc == targetSrc then return false, 'cannot cuff yourself' end
-    if Police.isCuffed(officerSrc) then return false, 'you are restrained' end
-    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if officerSrc == targetSrc then return false, Kora.lang('Notify.cuff_self_refused') end
+    if Police.isCuffed(officerSrc) then return false, Kora.lang('Notify.restrained_action') end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, Kora.lang('Notify.player_not_found') end
     local already = Police.isCuffed(targetSrc)
-    if already and Config.cuff.recuffRefreshes == false then return false, 'already cuffed' end
-    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
+    if already and Config.cuff.recuffRefreshes == false then return false, Kora.lang('Notify.already_cuffed_notice') end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
 
     restrain(targetSrc, false, officerSrc)
     return true, nil, already and 'refreshed' or nil
@@ -135,12 +135,12 @@ function Police.uncuff(requesterSrc, targetSrc, opts)
         -- Nothing to release server-side, but a client that still believes it is
         -- cuffed (stale bag, missed event) is freed so the two never disagree.
         if (isOfficer or isSelf) and exports.kora_core:getPlayerData(targetSrc) then release(targetSrc) end
-        return false, 'not cuffed'
+        return false, Kora.lang('Notify.target_not_cuffed')
     end
     local isCuffer = state ~= nil and state.soft and state.cuffer == requesterSrc and Config.cuff.cufferCanUncuff ~= false
-    if not (isSelf or isOfficer or isCuffer) then return false, 'not authorised' end
-    if isSelf and not (state and state.soft) then return false, 'cannot self-release a hard cuff' end
-    if not isSelf and Police.distanceBetween(requesterSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
+    if not (isSelf or isOfficer or isCuffer) then return false, Kora.lang('Notify.not_allowed') end
+    if isSelf and not (state and state.soft) then return false, Kora.lang('Notify.cannot_self_release_a_hard_cuff') end
+    if not isSelf and Police.distanceBetween(requesterSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
 
     release(targetSrc, not (opts and opts.silent) and requesterSrc or nil)
     return true
@@ -157,9 +157,9 @@ end
 ---@return string|nil err
 ---@return string|nil info
 function Police.softCuffNearby(src)
-    if not exports.kora_core:hasItem(src, 'handcuffs') then return false, 'handcuffs required' end
+    if not exports.kora_core:hasItem(src, 'handcuffs') then return false, Kora.lang('Notify.need_handcuffs') end
     local srcPed = GetPlayerPed(src)
-    if not srcPed or srcPed == 0 then return false, 'no ped' end
+    if not srcPed or srcPed == 0 then return false, Kora.lang('Notify.no_ped') end
 
     local free, restrained = {}, {}
     for _, other in ipairs(exports.kora_core:getPlayers()) do
@@ -171,11 +171,11 @@ function Police.softCuffNearby(src)
 
     local candidates = free
     if #free == 0 and #restrained > 0 then
-        if Config.cuff.recuffRefreshes == false then return false, 'already cuffed' end
+        if Config.cuff.recuffRefreshes == false then return false, Kora.lang('Notify.already_cuffed_notice') end
         candidates = restrained
     end
-    if #candidates == 0 then return false, 'no one nearby to cuff' end
-    if #candidates > 1 then return false, 'too many people nearby -- move closer to just one target' end
+    if #candidates == 0 then return false, Kora.lang('Notify.no_one_to_cuff') end
+    if #candidates > 1 then return false, Kora.lang('Notify.too_many_targets') end
 
     local target = candidates[1]
     local already = Police.isCuffed(target)
@@ -197,14 +197,14 @@ end)
 ---@return boolean, string|nil
 function Police.breakCuffs(src, proof)
     local state = Police.cuffState[src]
-    if not state or not state.soft then return false, 'not soft-cuffed' end
-    if GetGameTimer() < state.cooldownUntil then return false, 'on cooldown' end
-    if state.attemptsUsed >= Config.cuff.breakCuffsAttempts then return false, 'no attempts remaining' end
+    if not state or not state.soft then return false, Kora.lang('Notify.not_soft_cuffed') end
+    if GetGameTimer() < state.cooldownUntil then return false, Kora.lang('Notify.on_cooldown') end
+    if state.attemptsUsed >= Config.cuff.breakCuffsAttempts then return false, Kora.lang('Notify.no_attempts_remaining') end
     local authorization = state.breakAuthorization
     state.breakAuthorization = nil
     if not authorization or not Kora.minigames.consumeProof(src, proof,
         Config.minigames.breakCuffs.type, authorization) then
-        return false, 'invalid minigame proof'
+        return false, Kora.lang('Notify.invalid_minigame_proof')
     end
 
     state.attemptsUsed = state.attemptsUsed + 1
@@ -226,16 +226,16 @@ end
 ---@return string|nil reason
 function Police.beginBreakCuffs(src)
     local state = Police.cuffState[src]
-    if not state or not state.soft then return nil, 'not soft-cuffed' end
-    if state.breakAuthorization then return nil, 'attempt already in progress' end
-    if GetGameTimer() < state.cooldownUntil then return nil, 'on cooldown' end
-    if state.attemptsUsed >= Config.cuff.breakCuffsAttempts then return nil, 'no attempts remaining' end
+    if not state or not state.soft then return nil, Kora.lang('Notify.not_soft_cuffed') end
+    if state.breakAuthorization then return nil, Kora.lang('Notify.attempt_in_progress') end
+    if GetGameTimer() < state.cooldownUntil then return nil, Kora.lang('Notify.on_cooldown') end
+    if state.attemptsUsed >= Config.cuff.breakCuffsAttempts then return nil, Kora.lang('Notify.no_attempts_remaining') end
 
     local attempt = state.attemptsUsed + 1
     local difficulty = Config.cuff.breakCuffsDifficulty[math.min(attempt, #Config.cuff.breakCuffsDifficulty)]
     local opts = Config.minigames.breakCuffs.opts[difficulty] or Config.minigames.breakCuffs.opts.medium
     local authorization = Kora.minigames.authorizeProof(src, Config.minigames.breakCuffs.type, opts)
-    if not authorization then return nil, 'could not authorize escape attempt' end
+    if not authorization then return nil, Kora.lang('Notify.escape_not_authorized') end
     state.breakAuthorization = authorization
     return authorization
 end

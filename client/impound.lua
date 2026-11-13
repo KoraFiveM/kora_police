@@ -14,7 +14,7 @@ local function impoundVehicle(entity)
         impounding = true
         local props = progress.prop and { progress.prop } or nil
         local ok, completed = pcall(Kora.progressbar.start, {
-            label = progress.label or 'Impounding vehicle...',
+            label = progress.label or Kora.lang('Progress.impounding_vehicle'),
             duration = tonumber(progress.duration) or 5000,
             canCancel = progress.canCancel ~= false,
             anim = progress.anim,
@@ -22,8 +22,8 @@ local function impoundVehicle(entity)
             disable = { move = true, combat = true, car = true },
         })
         impounding = false
-        if not ok then return Police.notify('Impound progress could not start: ' .. tostring(completed), 'error') end
-        if not completed then return Police.notify('Impound cancelled.', 'warning') end
+        if not ok then return Police.notify(Kora.lang('Progress.impound_progress_failed') .. ': ' .. tostring(completed), 'error') end
+        if not completed then return Police.notify(Kora.lang('Notify.impound_cancelled'), 'warning') end
         if not DoesEntityExist(entity) then return end
     end
     TriggerServerEvent('kora_police:server:impound', plate)
@@ -34,7 +34,7 @@ local function registerImpoundTargets()
     Police.target.reset('impound')
     Police.target.global('impound', 'vehicle', {
         {
-            label = 'Impound Vehicle',
+            label = Kora.lang('Menu.impound_vehicle'),
             icon = 'lock',
             canInteract = function()
                 return Police.isOnDuty()
@@ -52,11 +52,11 @@ local function registerImpoundTargets()
             distance = 3.0,
             options = {
                 {
-                    label = ('Retrieve From %s ($%d)'):format(lot.label, Config.impound.fee),
+                    label = (Kora.lang('Vehicle.retrieve_vehicle')):format(lot.label, Config.impound.fee),
                     icon = 'car',
                     onSelect = function()
                         local result = Kora.nui.openInputDialog(
-                            { { id = 'plate', label = 'Plate', type = 'text', required = true } },
+                            { { id = 'plate', label = Kora.lang('Menu.plate'), type = 'text', required = true } },
                             'Retrieve Vehicle'
                         )
                         if result and result.values and result.values.plate then

@@ -14,7 +14,7 @@ local function attemptBreak()
     local authorization, beginErr = Kora.callback.trigger('kora_police:server:beginBreakCuffs')
     if not authorization then
         attempting = false
-        Police.notify(beginErr or 'You cannot try to escape yet.', 'error')
+        Police.notify(beginErr or Kora.lang('Notify.cannot_escape_yet'), 'error')
         return
     end
 
@@ -25,7 +25,7 @@ local function attemptBreak()
         Police.breakCuffAttempts = 0
         TriggerServerEvent('kora_police:server:breakCuffsResult', result.proof)
     else
-        if not (result and result.cancelled) then Police.notify('You failed to break free.', 'error') end
+        if not (result and result.cancelled) then Police.notify(Kora.lang('Notify.failed_to_break_free'), 'error') end
         TriggerServerEvent('kora_police:server:breakCuffsResult', false)
     end
 end

@@ -46,7 +46,7 @@ local function registerWorldEvidenceTarget(id, marker)
         distance = 2.0,
         options = {
             {
-                label = ('Collect %s evidence'):format(marker.type),
+                label = (Kora.lang('Progress.collect_evidence')):format(marker.type),
                 icon = 'search',
                 canInteract = function() return Police.isOnDuty() end,
                 onSelect = function()
@@ -67,9 +67,9 @@ local function showWorldEvidence(id, evType, coords, displayOnly)
         category = 'Evidence',
         name = evType,
         info = {
-            title = 'Evidence marker',
+            title = Kora.lang('Evidence.evidence_marker'),
             rows = {
-                { kind = 'name', label = 'Type', value = evType },
+                { kind = 'name', label = Kora.lang('Evidence.type'), value = evType },
                 { kind = 'wrappedText', value = 'On-duty officers can collect this evidence at the scene.' },
             },
         },
@@ -113,7 +113,7 @@ local function clearArea(evType, serverEvent, label)
         canCancel = true,
         disable = { combat = true },
     })
-    if not completed then return Police.notify('Cancelled.', 'error') end
+    if not completed then return Police.notify(Kora.lang('Notify.cancelled'), 'error') end
     local position = GetEntityCoords(PlayerPedId())
     local list = {}
     for id, marker in pairs(markers) do

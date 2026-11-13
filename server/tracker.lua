@@ -5,12 +5,12 @@
 ---@param targetSrc integer
 ---@return boolean, string|nil
 function Police.setTracker(officerSrc, targetSrc, active)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, Kora.lang('Notify.player_not_found') end
     if active == false then
         Police.tracked[targetSrc] = nil
     else
-        if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
+        if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
         Police.tracked[targetSrc] = true
     end
     exports.kora_core:setMetaData(targetSrc, 'tracker', active ~= false)
@@ -32,10 +32,10 @@ end
 ---@param targetSrc integer
 ---@return boolean, string|nil, boolean|nil active
 function Police.toggleTracker(officerSrc, targetSrc)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if type(targetSrc) ~= 'number' or targetSrc == officerSrc then return false, 'target not found' end
-    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
-    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if type(targetSrc) ~= 'number' or targetSrc == officerSrc then return false, Kora.lang('Notify.player_not_found') end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, Kora.lang('Notify.player_not_found') end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
     local active = not isTracked(targetSrc)
     Police.tracked[targetSrc] = active or nil
     exports.kora_core:setMetaData(targetSrc, 'tracker', active)

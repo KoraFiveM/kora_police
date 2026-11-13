@@ -72,7 +72,7 @@ Police.closestPlayerServerId = closestPlayerServerId
 
 RegisterCommand('escort', function()
     if not Police.isOnDuty() then
-        Police.notify('You must be on duty to escort a player.', 'error')
+        Police.notify(Kora.lang('Notify.on_duty_to_escort'), 'error')
         return
     end
 
@@ -88,7 +88,7 @@ RegisterCommand('escort', function()
 
     local target = closestPlayerServerId()
     if not target then
-        Police.notify('No player nearby.', 'error')
+        Police.notify(Kora.lang('Notify.no_player_nearby'), 'error')
         return
     end
     TriggerServerEvent('kora_police:server:escort', target)
@@ -129,7 +129,7 @@ do
     if type(cfg.releaseKey) == 'string' and cfg.releaseKey ~= '' then
         releaseBinding = Kora.keybind.add({
             name = 'kora_police_releasedrag',
-            description = 'Police: release dragged player',
+            description = Kora.lang('Dispatch.release_dragged_player'),
             defaultKey = cfg.releaseKey,
             disabled = true,
             onPressed = function()
@@ -175,7 +175,7 @@ local function showReleasePrompt()
     if cfg.releasePrompt == false then return end
     hideReleasePrompt()
     local key = type(cfg.releaseKey) == 'string' and cfg.releaseKey ~= '' and cfg.releaseKey or nil
-    local ok, id = pcall(Kora.textui.show, 'Release drag', { key = key, icon = 'hand', position = 'right-center' })
+    local ok, id = pcall(Kora.textui.show, Kora.lang('Dispatch.release_drag'), { key = key, icon = 'hand', position = 'right-center' })
     if ok then releasePromptId = id end
 end
 
@@ -202,7 +202,7 @@ end)
 RegisterNetEvent('kora_police:client:dragStartSelf', function(targetServerId)
     Police.draggedTarget = targetServerId
     if (Config.drag or {}).releaseHint ~= false then
-        Police.notify('Dragging a player. Release with /' .. tostring((Config.drag or {}).releaseCommand or 'releasedrag') .. ' or the Release option.', 'info')
+        Police.notify(Kora.lang('Notify.dragging_player', tostring((Config.drag or {}).releaseCommand or 'releasedrag')), 'info')
     end
     setReleaseKeyActive(true)
     startReleasePoll()
@@ -218,7 +218,7 @@ local function registerEscortTargets()
     Police.target.reset('escort')
     Police.target.global('escort', 'player', {
         {
-            label = 'Escort',
+            label = Kora.lang('Menu.escort'),
             icon = 'footprints',
             canInteract = function(entity)
                 return Police.isOnDuty() and Police.isPedCuffed(entity) and not Police.escortedTarget
@@ -228,7 +228,7 @@ local function registerEscortTargets()
             end,
         },
         {
-            label = 'Stop Escorting',
+            label = Kora.lang('Menu.stop_escorting'),
             icon = 'footprints',
             canInteract = function(entity)
                 return Police.escortedTarget ~= nil and GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity)) == Police.escortedTarget
@@ -238,7 +238,7 @@ local function registerEscortTargets()
             end,
         },
         {
-            label = 'Drag',
+            label = Kora.lang('Menu.drag'),
             icon = 'move',
             canInteract = function(entity)
                 return not Police.draggedTarget and Police.isPedRestrained(entity)
@@ -255,7 +255,7 @@ local function registerEscortTargets()
     for _, entityType in ipairs({ 'player', 'ped', 'vehicle' }) do
         Police.target.global('escort', entityType, {
             {
-                label = 'Release',
+                label = Kora.lang('Menu.release'),
                 icon = 'hand',
                 canInteract = function()
                     return Police.draggedTarget ~= nil

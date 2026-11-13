@@ -9,11 +9,11 @@
 ---@param targetSrc integer
 ---@return boolean, string|nil
 function Police.escort(officerSrc, targetSrc)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if not Police.isCuffed(targetSrc) then return false, 'target is not cuffed' end
-    if Police.escorted[targetSrc] then return false, 'already being escorted' end
-    if Police.kidnapped[targetSrc] then return false, 'target is being dragged' end
-    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if not Police.isCuffed(targetSrc) then return false, Kora.lang('Notify.target_is_not_cuffed') end
+    if Police.escorted[targetSrc] then return false, Kora.lang('Notify.already_escorted') end
+    if Police.kidnapped[targetSrc] then return false, Kora.lang('Notify.target_being_dragged') end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
 
     Police.escorted[targetSrc] = officerSrc
     TriggerClientEvent('kora_police:client:escortStart', targetSrc, officerSrc)
@@ -26,8 +26,8 @@ end
 ---@return boolean, string|nil
 function Police.deEscort(requesterSrc, targetSrc)
     local officer = Police.escorted[targetSrc]
-    if not officer then return false, 'not being escorted' end
-    if requesterSrc ~= officer and requesterSrc ~= targetSrc then return false, 'not authorised' end
+    if not officer then return false, Kora.lang('Notify.not_escorted') end
+    if requesterSrc ~= officer and requesterSrc ~= targetSrc then return false, Kora.lang('Notify.not_allowed') end
 
     Police.escorted[targetSrc] = nil
     TriggerClientEvent('kora_police:client:escortStop', targetSrc)
@@ -47,13 +47,13 @@ end
 ---@param targetSrc integer
 ---@return boolean, string|nil
 function Police.startDrag(draggerSrc, targetSrc)
-    if draggerSrc == targetSrc then return false, 'cannot drag yourself' end
-    if Police.isCuffed(draggerSrc) then return false, 'you are restrained' end
-    if not exports.kora_core:getPlayerData(targetSrc) then return false, 'target not found' end
-    if Police.kidnapped[targetSrc] then return false, 'already being dragged' end
-    if Police.escorted[targetSrc] then return false, 'target is being escorted' end
-    if Police.distanceBetween(draggerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
-    if not Police.isIncapacitated(targetSrc) then return false, 'target is not restrained or down' end
+    if draggerSrc == targetSrc then return false, Kora.lang('Notify.cannot_drag_self') end
+    if Police.isCuffed(draggerSrc) then return false, Kora.lang('Notify.restrained_action') end
+    if not exports.kora_core:getPlayerData(targetSrc) then return false, Kora.lang('Notify.player_not_found') end
+    if Police.kidnapped[targetSrc] then return false, Kora.lang('Notify.already_dragged') end
+    if Police.escorted[targetSrc] then return false, Kora.lang('Notify.target_being_escorted') end
+    if Police.distanceBetween(draggerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
+    if not Police.isIncapacitated(targetSrc) then return false, Kora.lang('Notify.target_not_restrained') end
 
     Police.kidnapped[targetSrc] = draggerSrc
     TriggerClientEvent('kora_police:client:dragStart', targetSrc, draggerSrc)
@@ -66,8 +66,8 @@ end
 ---@return boolean, string|nil
 function Police.stopDrag(requesterSrc, targetSrc)
     local dragger = Police.kidnapped[targetSrc]
-    if not dragger then return false, 'not being dragged' end
-    if requesterSrc ~= dragger and requesterSrc ~= targetSrc then return false, 'not authorised' end
+    if not dragger then return false, Kora.lang('Notify.not_dragged') end
+    if requesterSrc ~= dragger and requesterSrc ~= targetSrc then return false, Kora.lang('Notify.not_allowed') end
 
     Police.kidnapped[targetSrc] = nil
     TriggerClientEvent('kora_police:client:dragStop', targetSrc)
@@ -132,12 +132,12 @@ end
 ---@param seat integer|nil
 ---@return boolean, string|nil
 function Police.putInVehicle(officerSrc, targetSrc, netId, seat)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if not Police.isCuffed(targetSrc) then return false, 'target is not cuffed' end
-    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
-    if type(netId) ~= 'number' or netId <= 0 or netId % 1 ~= 0 then return false, 'vehicle not found' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if not Police.isCuffed(targetSrc) then return false, Kora.lang('Notify.target_is_not_cuffed') end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
+    if type(netId) ~= 'number' or netId <= 0 or netId % 1 ~= 0 then return false, Kora.lang('Notify.vehicle_not_found') end
     local vehicle = NetworkGetEntityFromNetworkId(netId)
-    if vehicle == 0 or not DoesEntityExist(vehicle) then return false, 'vehicle not found' end
+    if vehicle == 0 or not DoesEntityExist(vehicle) then return false, Kora.lang('Notify.vehicle_not_found') end
 
     Police.deEscort(officerSrc, targetSrc)
     Police.stopDrag(officerSrc, targetSrc)
@@ -149,9 +149,9 @@ end
 ---@param targetSrc integer
 ---@return boolean, string|nil
 function Police.takeOutVehicle(officerSrc, targetSrc)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
-    if not Police.isCuffed(targetSrc) then return false, 'target is not cuffed' end
-    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, 'too far away' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
+    if not Police.isCuffed(targetSrc) then return false, Kora.lang('Notify.target_is_not_cuffed') end
+    if Police.distanceBetween(officerSrc, targetSrc) > Config.cuff.distance then return false, Kora.lang('Notify.too_far_away') end
 
     TriggerClientEvent('kora_police:client:takeOutVehicle', targetSrc)
     return true

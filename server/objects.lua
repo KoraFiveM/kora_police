@@ -26,14 +26,14 @@ end
 ---@return integer|false id
 ---@return string|nil error
 function Police.spawnObject(officerSrc, objectType)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
     local definition = type(objectType) == 'string' and Config.objects.types[objectType]
-    if not definition then return false, 'unknown object type' end
+    if not definition then return false, Kora.lang('Notify.unknown_object_type') end
     local now = GetGameTimer()
-    if lastPlacedAt[officerSrc] and now - lastPlacedAt[officerSrc] < Config.objects.cooldown then return false, 'too fast' end
-    if (Police.objectsByOfficer[officerSrc] or 0) >= Config.objects.maxPerOfficer then return false, 'too many objects placed' end
+    if lastPlacedAt[officerSrc] and now - lastPlacedAt[officerSrc] < Config.objects.cooldown then return false, Kora.lang('Notify.too_fast') end
+    if (Police.objectsByOfficer[officerSrc] or 0) >= Config.objects.maxPerOfficer then return false, Kora.lang('Notify.too_many_objects_placed') end
     local ped = GetPlayerPed(officerSrc)
-    if not ped or ped == 0 then return false, 'no ped' end
+    if not ped or ped == 0 then return false, Kora.lang('Notify.no_ped') end
     lastPlacedAt[officerSrc] = now
 
     local position, heading = GetEntityCoords(ped), GetEntityHeading(ped)
@@ -44,7 +44,7 @@ function Police.spawnObject(officerSrc, objectType)
         z = position.z - 0.9,
     }
     local entity = CreateObject(joaat(definition.model), coords.x, coords.y, coords.z, true, true, false)
-    if not entity or entity == 0 then return false, 'failed to create object' end
+    if not entity or entity == 0 then return false, Kora.lang('Notify.failed_to_create_object') end
     SetEntityHeading(entity, heading)
     if definition.freeze then FreezeEntityPosition(entity, true) end
 
@@ -64,23 +64,23 @@ end
 ---@param objectId any
 ---@return boolean, string|nil
 function Police.deleteObject(officerSrc, objectId)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
     objectId = tonumber(objectId)
     local entry = objectId and Police.objects[objectId]
-    if not entry then return false, 'unknown object' end
+    if not entry then return false, Kora.lang('Notify.unknown_object') end
     local ped = GetPlayerPed(officerSrc)
-    if not ped or ped == 0 then return false, 'no ped' end
+    if not ped or ped == 0 then return false, Kora.lang('Notify.no_ped') end
     local at = vector3(entry.coords.x, entry.coords.y, entry.coords.z)
-    if #(GetEntityCoords(ped) - at) > Config.objects.deleteDistance then return false, 'too far away' end
+    if #(GetEntityCoords(ped) - at) > Config.objects.deleteDistance then return false, Kora.lang('Notify.too_far_away') end
     return Police.removeObject(objectId)
 end
 
 ---@param officerSrc integer
 ---@return boolean, string|nil
 function Police.deleteNearestObject(officerSrc)
-    if not Police.isPolice(officerSrc) then return false, 'not an on-duty officer' end
+    if not Police.isPolice(officerSrc) then return false, Kora.lang('Notify.on_duty_police') end
     local ped = GetPlayerPed(officerSrc)
-    if not ped or ped == 0 then return false, 'no ped' end
+    if not ped or ped == 0 then return false, Kora.lang('Notify.no_ped') end
     local origin = GetEntityCoords(ped)
     local bestId, bestDistance
     for id, entry in pairs(Police.objects) do
@@ -89,7 +89,7 @@ function Police.deleteNearestObject(officerSrc)
             bestId, bestDistance = id, distance
         end
     end
-    if not bestId then return false, 'no object nearby' end
+    if not bestId then return false, Kora.lang('Notify.no_object_nearby') end
     return Police.removeObject(bestId)
 end
 

@@ -20,7 +20,7 @@ local function registerVehicleTargets()
     Police.target.reset('vehicle')
     Police.target.global('vehicle', 'vehicle', {
         {
-            label = 'Put Suspect In Vehicle',
+            label = Kora.lang('Menu.put_suspect_in_vehicle'),
             icon = 'car',
             canInteract = function()
                 return Police.escortedTarget ~= nil or Police.draggedTarget ~= nil

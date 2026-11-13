@@ -373,7 +373,7 @@ local uncuffCommand = Config.cuff.uncuffCommand
 if type(uncuffCommand) == 'string' and uncuffCommand ~= '' then
     RegisterCommand(uncuffCommand, function()
         local target = nearestCuffedServerId()
-        if not target then return Police.notify('No cuffed player nearby.', 'error') end
+        if not target then return Police.notify(Kora.lang('Notify.no_cuffed_player_nearby'), 'error') end
         TriggerServerEvent('kora_police:server:uncuff', target)
     end, false)
 end
@@ -382,7 +382,7 @@ local function registerCuffTargets()
     Police.target.reset('cuff')
     Police.target.global('cuff', 'player', {
         {
-            label = 'Cuff',
+            label = Kora.lang('Menu.cuff'),
             icon = 'lock',
             canInteract = function(entity)
                 return Police.isOnDuty() and not Police.isPedCuffed(entity)
@@ -390,13 +390,13 @@ local function registerCuffTargets()
             onSelect = function(entity)
                 local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
                 if not targetServerId or targetServerId <= 0 then
-                    return Police.notify('No player to cuff.', 'error')
+                    return Police.notify(Kora.lang('Notify.no_player_to_cuff'), 'error')
                 end
                 TriggerServerEvent('kora_police:server:cuff', targetServerId)
             end,
         },
         {
-            label = 'Uncuff',
+            label = Kora.lang('Menu.uncuff'),
             icon = 'lock-open',
             canInteract = function(entity)
                 return Police.isOnDuty() and Police.isPedCuffed(entity)
@@ -404,7 +404,7 @@ local function registerCuffTargets()
             onSelect = function(entity)
                 local targetServerId = GetPlayerServerId(NetworkGetPlayerIndexFromPed(entity))
                 if not targetServerId or targetServerId <= 0 then
-                    return Police.notify('No player to uncuff.', 'error')
+                    return Police.notify(Kora.lang('Notify.no_player_to_uncuff'), 'error')
                 end
                 TriggerServerEvent('kora_police:server:uncuff', targetServerId)
             end,
