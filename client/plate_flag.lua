@@ -88,7 +88,7 @@ local function startScan()
 
         scanRunning = false
         if Config.performance.diagnostics then
-            print(('[kora_police] ALPR scanner stopped after %d scans / %d vehicle checks'):format(scans, vehicles))
+            Kora.logging.info('plate_flag.scanner_stopped', 'ALPR scanner stopped', { scans = scans, vehicleChecks = vehicles })
         end
     end)
 end

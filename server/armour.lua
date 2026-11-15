@@ -42,7 +42,7 @@ local function useArmour(src, name, entry, item)
     if not ok or not finished then return false end
     -- The client reports its own result; a real use cannot finish before the duration.
     if GetGameTimer() - startedAt < progress.duration - PROGRESS_TOLERANCE then
-        print(("[kora_police] %s used %s faster than its %sms duration; ignored"):format(src, name, progress.duration))
+        Kora.logging.warn('armour.use_too_fast', 'Armour use finished faster than its duration and was ignored', { playerId = src, item = name, durationMs = progress.duration })
         return false
     end
 

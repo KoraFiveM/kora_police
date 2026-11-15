@@ -45,7 +45,7 @@ local playerAlerts = {
 
 for key, definition in pairs(playerAlerts) do
     local ok, err = exports.kora_dispatch:registerPlayerAlert(key, definition)
-    if not ok then print(('^3[kora_police]^7 could not register dispatch alert %s: %s'):format(key, err)) end
+    if not ok then Kora.logging.error('dispatch.alert_register_failed', 'Could not register dispatch alert', { alert = key, error = tostring(err) }) end
 end
 
 ---Raises a law-enforcement call. Defaults target the whole LEO service (police,

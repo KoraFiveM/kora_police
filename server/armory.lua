@@ -43,7 +43,7 @@ function Police.restockArmory(shop)
     if not changed then return false end
     local ok, err = exports.kora_inventory:SetShopItems(shop.id, current)
     if not ok then
-        print(('^3[kora_police] armory %s could not be restocked: %s^7'):format(shop.id, tostring(err)))
+        Kora.logging.warn('armory.restock_failed', 'Armory could not be restocked', { shopId = shop.id, error = tostring(err) })
         return false
     end
     return true

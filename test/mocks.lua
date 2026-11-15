@@ -111,7 +111,10 @@ function M.install()
     -- than discarded so a restart test can assert a station blip is created
     -- once per registration pass and not duplicated on the next one.
     local blips = {}
+    -- Diagnostics go through Kora.logging; default to no-op sinks (a test that cares installs its own spy).
+    local noopLog = function() return true end
     _G.Kora = {
+        logging = { trace = noopLog, debug = noopLog, info = noopLog, warn = noopLog, error = noopLog, fatal = noopLog, isEnabled = function() return false end },
         util = {
             isFiniteNumber = function(value)
                 return type(value) == 'number' and value == value and value > -math.huge and value < math.huge

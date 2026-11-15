@@ -46,7 +46,7 @@ local function warnOnce(message)
     message = tostring(message)
     if warned[message] then return end
     warned[message] = true
-    print(('^3[kora_police] handcuffs prop: %s^7'):format(message))
+    Kora.logging.warn('cuff.prop_unavailable', 'Handcuffs prop could not be created', { reason = message })
 end
 
 local function deleteProp(prop)

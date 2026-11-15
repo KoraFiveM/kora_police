@@ -142,7 +142,7 @@ function Police.createBallisticCasing(src, round)
             caseId, round.id, round.weaponSerial, round.weapon, round.ammoType, round.lot,
             coords.x, coords.y, coords.z, GetPlayerRoutingBucket(src),
         })
-        if err then print(('^1[kora_police:ballistics]^7 could not save casing %s: %s'):format(caseId, tostring(err))) end
+        if err then Kora.logging.error('ballistics.casing_save_failed', 'Could not save ballistic casing', { caseId = caseId, error = tostring(err) }) end
     end)
     return caseId
 end
@@ -207,7 +207,7 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
         CreateThread(function()
             local _, err = Kora.sql.execute('UPDATE `kora_police_ballistic_casings` SET `collected_by` = ?, `collected_at` = CURRENT_TIMESTAMP WHERE `case_id` = ?',
                 { cid, marker.ballistic.caseId })
-            if err then print(('^1[kora_police:ballistics]^7 could not mark collected casing: %s'):format(tostring(err))) end
+            if err then Kora.logging.error('ballistics.casing_collect_failed', 'Could not mark ballistic casing as collected', { error = tostring(err) }) end
         end)
     end
     Police.collectedEvidence[cid] = Police.collectedEvidence[cid] or {}

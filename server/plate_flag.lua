@@ -14,7 +14,7 @@ local function mdtMirrorEnabled()
 end
 
 local function mdtWarn(action, err)
-    print(('^3[kora_police:plateFlag]^7 could not %s the kora_mdt BOLO: %s'):format(action, tostring(err)))
+    Kora.logging.warn('plate_flag.mdt_bolo_failed', 'Could not mirror plate flag to the kora_mdt BOLO', { action = action, error = tostring(err) })
 end
 
 ---Plates read from a vehicle come space-padded and mixed case; the MDT looks plates up trimmed and upper-case.
