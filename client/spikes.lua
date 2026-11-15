@@ -51,7 +51,7 @@ local function startScan()
 
         scanRunning = false
         if Config.performance.diagnostics then
-            print(('[kora_police] spike scanner stopped after %d vehicle scans'):format(scans))
+            Kora.logging.info('spikes.scanner_stopped', 'Spike scanner stopped', { scans = scans })
         end
     end)
 end

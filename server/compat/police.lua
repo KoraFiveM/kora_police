@@ -195,7 +195,7 @@ RegisterNetEvent('police:server:policeAlert', function(text)
         data = { reporter = src, legacy = true },
     })
     raisingLegacyAlert = false
-    if not ok then print(('^3[kora_police]^7 police:server:policeAlert failed: %s'):format(err)) end
+    if not ok then Kora.logging.error('compat.police_alert_failed', 'Legacy police:server:policeAlert handler failed', { error = tostring(err) }) end
 end)
 AddEventHandler('playerDropped', function() lastLegacyAlertAt[source] = nil end)
 

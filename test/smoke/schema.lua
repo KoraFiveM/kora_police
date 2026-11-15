@@ -6,7 +6,7 @@ _G.Kora = { sql = {
     NULL = {},
     ready = function() return true end,
     ensureTables = function(specs) captured = specs; return { { table = specs[1].name, warnings = { 'w' } } }, nil end,
-} }
+}, logging = { warn = function() return true end, error = function() return true end } }
 _G.CreateThread = function(fn) threads[#threads + 1] = fn end
 
 dofile('server/schema.lua')

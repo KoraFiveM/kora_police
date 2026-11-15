@@ -3,17 +3,17 @@
 
 CreateThread(function()
     if not Kora.sql.ready(60000) then
-        print('^1[kora_police:ballistics]^7 kora_sql was unavailable; ballistic evidence is disabled until restart.')
+        Kora.logging.error('ballistics.sql_unavailable', 'kora_sql was unavailable; ballistic evidence is disabled until restart')
         return
     end
     local reports, err = Kora.sql.ensureTables(KoraPoliceSchema)
     if err then
-        print(('^1[kora_police:ballistics]^7 schema failed: %s'):format(tostring(err)))
+        Kora.logging.error('ballistics.schema_failed', 'Ballistic evidence schema setup failed', { error = tostring(err) })
         return
     end
     for _, report in ipairs(reports or {}) do
         for _, warning in ipairs(report.warnings or {}) do
-            print(('^3[kora_police:ballistics]^7 %s: %s'):format(tostring(report.table), tostring(warning)))
+            Kora.logging.warn('ballistics.schema_warning', 'Ballistic evidence schema warning', { table = tostring(report.table), warning = tostring(warning) })
         end
     end
 end)

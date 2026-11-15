@@ -71,6 +71,6 @@ CreateThread(function()
         -- is the worst failure mode for a reporting system, so the error is
         -- surfaced instead of ending the thread.
         local ok, err = pcall(tick)
-        if not ok then Kora.print.error('kora_police detector tick failed:', err) end
+        if not ok then Kora.logging.error('detectors.tick_failed', 'Detector tick failed', { error = tostring(err) }) end
     end
 end)
