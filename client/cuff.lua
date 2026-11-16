@@ -196,7 +196,7 @@ local function onCuffStart(ped)
         SetCurrentPedWeapon(ped, GetHashKey('WEAPON_UNARMED'), true)
     end
     if Config.cuff.closePhone ~= false and GetResourceState('kora_phone') == 'started' then
-        pcall(function() exports.kora_phone:close() end)
+        pcall(function() exports.kora_phone:ClosePhone() end)
     end
 end
 
