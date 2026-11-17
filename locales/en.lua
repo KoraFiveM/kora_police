@@ -135,6 +135,10 @@ return {
         package_casing_failed = 'Could not package casing.',
         evidence_collected = 'Evidence collected.',
         package_evidence_failed = 'Could not package evidence.',
+        title = 'Evidence',
+        type_blood = 'blood',
+        type_casing = 'casing',
+        type_fingerprint = 'fingerprint',
     },
     Dispatch = {
         panic_button = 'Police: panic button (officer down)',

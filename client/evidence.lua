@@ -30,6 +30,19 @@ registerEvidenceLockerTargets()
 
 local markers = {}
 
+-- The type stays an id ('blood', 'casing', 'fingerprint'); players see its
+-- localised name.
+local typeKeys = {
+    blood = 'Evidence.type_blood',
+    casing = 'Evidence.type_casing',
+    fingerprint = 'Evidence.type_fingerprint',
+}
+
+local function typeLabel(evType)
+    local key = typeKeys[evType]
+    return key and Kora.lang(key) or tostring(evType)
+end
+
 local function removeWorldEvidence(id)
     local marker = markers[id]
     if not marker then return end
@@ -46,7 +59,7 @@ local function registerWorldEvidenceTarget(id, marker)
         distance = 2.0,
         options = {
             {
-                label = (Kora.lang('Progress.collect_evidence')):format(marker.type),
+                label = (Kora.lang('Progress.collect_evidence')):format(typeLabel(marker.type)),
                 icon = 'search',
                 canInteract = function() return Police.isOnDuty() end,
                 onSelect = function()
@@ -65,11 +78,11 @@ local function showWorldEvidence(id, evType, coords, displayOnly)
         color = 1,
         scale = 0.7,
         category = 'Evidence',
-        name = evType,
+        name = typeLabel(evType),
         info = {
             title = Kora.lang('Evidence.evidence_marker'),
             rows = {
-                { kind = 'name', label = Kora.lang('Evidence.type'), value = evType },
+                { kind = 'name', label = Kora.lang('Evidence.type'), value = typeLabel(evType) },
                 { kind = 'wrappedText', value = 'On-duty officers can collect this evidence at the scene.' },
             },
         },

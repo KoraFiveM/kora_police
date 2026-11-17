@@ -86,6 +86,7 @@ _G.Kora = {
     },
     keybind = { add = function() return nil end },  -- client/escort.lua's release key
     state = { onChange = function() return 1 end },  -- client/cuff.lua's cuffed-bag listeners
+    lang = function(key) return key end,  -- option labels; only registrations are counted here
 }
 _G.LocalPlayer = { state = {} }
 
