@@ -33,4 +33,14 @@ h.test('progress disabled impounds instantly', function()
     h.assertTrue(started == nil); h.assertEqual(#sent, 1)
 end)
 
+h.test('a progress bar that cannot start names the reason in the message', function()
+    sent = {}; Config.impound.progress.enabled = true
+    local notice
+    Police.notify = function(message) notice = message end
+    Kora.progressbar.start = function() error('busy', 0) end
+    Police.impoundOption.onSelect(1)
+    h.assertEqual(notice, 'Impound progress could not start: busy')
+    h.assertEqual(#sent, 0)
+end)
+
 h.report('impound_progress')

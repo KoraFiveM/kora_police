@@ -22,7 +22,7 @@ local function impoundVehicle(entity)
             disable = { move = true, combat = true, car = true },
         })
         impounding = false
-        if not ok then return Police.notify(Kora.lang('Progress.impound_progress_failed') .. ': ' .. tostring(completed), 'error') end
+        if not ok then return Police.notify(Kora.lang('Progress.impound_progress_failed', tostring(completed)), 'error') end
         if not completed then return Police.notify(Kora.lang('Notify.impound_cancelled'), 'warning') end
         if not DoesEntityExist(entity) then return end
     end

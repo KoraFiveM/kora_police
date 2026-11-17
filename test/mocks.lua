@@ -113,8 +113,29 @@ function M.install()
     local blips = {}
     -- Diagnostics go through Kora.logging; default to no-op sinks (a test that cares installs its own spy).
     local noopLog = function() return true end
+    -- Kora.lang as kora_lib resolves it for an English server: the key's text
+    -- from locales/en.lua with positional arguments formatted in, the key
+    -- itself when it is missing. Tests can assert on what a player reads.
+    local english
+    local function englishLang(key, ...)
+        if english == nil then
+            local ok, loaded = pcall(dofile, 'locales/en.lua')
+            english = ok and type(loaded) == 'table' and loaded or false
+        end
+        local value = english or nil
+        for part in tostring(key):gmatch('[^%.]+') do
+            value = type(value) == 'table' and value[part] or nil
+        end
+        if type(value) ~= 'string' then return key end
+        if select('#', ...) > 0 then
+            local ok, formatted = pcall(string.format, value, ...)
+            if ok then return formatted end
+        end
+        return value
+    end
     _G.Kora = {
         logging = { trace = noopLog, debug = noopLog, info = noopLog, warn = noopLog, error = noopLog, fatal = noopLog, isEnabled = function() return false end },
+        lang = englishLang,
         util = {
             isFiniteNumber = function(value)
                 return type(value) == 'number' and value == value and value > -math.huge and value < math.huge

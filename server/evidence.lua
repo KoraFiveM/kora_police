@@ -192,7 +192,7 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
     if marker.ballistic then
         local removed, removeErr = exports.kora_inventory:RemoveItem(src, bagItem(), 1, false, 'ballistic-casing-collection')
         if not removed then
-            Kora.notify.send(src, { title = 'Evidence', message = bagFailureMessage(removeErr, 'casings'), type = 'error' })
+            Kora.notify.send(src, { title = Kora.lang('Evidence.title'), message = bagFailureMessage(removeErr, 'casings'), type = 'error' })
             return
         end
         local added, addErr = exports.kora_inventory:AddItem(src, 'filled_evidence_bag', 1, false, {
@@ -201,7 +201,7 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
         }, 'ballistic-casing-collection')
         if not added then
             exports.kora_inventory:AddItem(src, bagItem(), 1, false, {}, 'ballistic-casing-rollback')
-            Kora.notify.send(src, { title = 'Evidence', message = addErr or 'Could not package casing.', type = 'error' })
+            Kora.notify.send(src, { title = Kora.lang('Evidence.title'), message = addErr or Kora.lang('Evidence.package_casing_failed'), type = 'error' })
             return
         end
         CreateThread(function()
@@ -213,7 +213,7 @@ RegisterNetEvent('evidence:server:AddToInventory', function(evidenceId)
     Police.collectedEvidence[cid] = Police.collectedEvidence[cid] or {}
     Police.collectedEvidence[cid][evidenceId] = true
     removeWorldEvidence(evidenceId)
-    Kora.notify.send(src, { title = 'Evidence', message = 'Evidence collected.', type = 'success' })
+    Kora.notify.send(src, { title = Kora.lang('Evidence.title'), message = Kora.lang('Evidence.evidence_collected'), type = 'success' })
 end)
 
 ---Server-only lookup for the authorised MDT. No client event exposes this
@@ -285,13 +285,13 @@ local function collectSample(src, evidenceId, wantedType)
     if not sameBucketAndNear(src, marker, Config.evidence.collectDistance) then return end
     local removed, removeErr = exports.kora_inventory:RemoveItem(src, bagItem(), 1, false, 'evidence-sample-collection')
     if not removed then
-        Kora.notify.send(src, { title = 'Evidence', message = bagFailureMessage(removeErr, marker.type == 'casing' and 'casings' or 'evidence samples'), type = 'error' })
+        Kora.notify.send(src, { title = Kora.lang('Evidence.title'), message = bagFailureMessage(removeErr, marker.type == 'casing' and 'casings' or 'evidence samples'), type = 'error' })
         return
     end
     local added, addErr = exports.kora_inventory:AddItem(src, 'filled_evidence_bag', 1, false, sampleInfo(marker), 'evidence-sample-collection')
     if not added then
         exports.kora_inventory:AddItem(src, bagItem(), 1, false, {}, 'evidence-sample-rollback')
-        Kora.notify.send(src, { title = 'Evidence', message = addErr or 'Could not package evidence.', type = 'error' })
+        Kora.notify.send(src, { title = Kora.lang('Evidence.title'), message = addErr or Kora.lang('Evidence.package_evidence_failed'), type = 'error' })
         return
     end
     local cid = Police.citizenId(src)

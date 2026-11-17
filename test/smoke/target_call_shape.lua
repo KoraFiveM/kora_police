@@ -67,7 +67,7 @@ h.test('every police blip caller uses kora_lib canonical category/name fields', 
     local tracker = source('client/tracker.lua')
     h.assertTrue(duty:find("category = 'Police'", 1, true) ~= nil, 'stations use Police')
     h.assertTrue(evidence:find("category = 'Evidence'", 1, true) ~= nil, 'evidence uses Evidence')
-    h.assertTrue(evidence:find('name = evType', 1, true) ~= nil, 'evidence type is the marker name')
+    h.assertTrue(evidence:find('name = typeLabel(evType)', 1, true) ~= nil, 'the localised evidence type is the marker name')
     h.assertTrue(tracker:find("category = 'Vehicle Tracking'", 1, true) ~= nil, 'trackers use Vehicle Tracking')
     h.assertTrue(tracker:find('name = tostring(targetServerId)', 1, true) ~= nil, 'tracker id is the marker name')
 end)

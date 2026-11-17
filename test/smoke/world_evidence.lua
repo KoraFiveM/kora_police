@@ -56,6 +56,7 @@ local function client(src)
     env.RegisterNetEvent = env.AddEventHandler
     env.TriggerServerEvent = function(name, ...) requests[#requests + 1] = { src = src, name = name, args = table.pack(...) } end
     env.Kora = {
+        lang = Kora.lang,
         notify = { send = function(payload) c.notices[#c.notices + 1] = payload end },
         blips = {
             create = function()
