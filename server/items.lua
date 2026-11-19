@@ -4,10 +4,10 @@
 -- registerShared is server-only (kora_core refuses a client-side call); the
 -- registry replicates every record to clients automatically.
 
-local ITEMS = {
-    { name = 'handcuffs', label = 'Handcuffs', weight = 250, type = 'item', image = 'handcuffs.png', unique = false, useable = true, shouldClose = true, description = 'Restrain a suspect.' },
-    { name = 'moneybag', label = 'Money Bag', weight = 500, type = 'item', image = 'moneybag.png', unique = true, useable = true, shouldClose = true, description = 'A bag of cash, ready to deposit.' },
-    { name = 'armor', label = 'Bulletproof Vest', weight = 3000, type = 'item', image = 'armor.png', unique = false, useable = true, shouldClose = true, description = 'Body armor.' },
+local ITEMS = { -- dont uncomment, these all exist in kora_core. this is left here to show HOW to register items if needed
+   -- { name = 'handcuffs', label = 'Handcuffs', weight = 250, type = 'item', image = 'handcuffs.png', unique = false, useable = true, shouldClose = true, description = 'Restrain a suspect.' },
+   -- { name = 'moneybag', label = 'Money Bag', weight = 500, type = 'item', image = 'moneybag.png', unique = true, useable = true, shouldClose = true, description = 'A bag of cash, ready to deposit.' },
+   -- { name = 'armor', label = 'Bulletproof Vest', weight = 3000, type = 'item', image = 'armor.png', unique = false, useable = true, shouldClose = true, description = 'Body armor.' },
 }
 
 CreateThread(function()
