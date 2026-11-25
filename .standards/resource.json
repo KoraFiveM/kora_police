@@ -31,6 +31,7 @@
       "client/vehicle.lua"
     ],
     "server": [
+      "kora_versioncheck.lua",
       "server/armory.lua",
       "server/armour.lua",
       "server/bill.lua",
