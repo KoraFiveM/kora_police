@@ -34,7 +34,7 @@ local function toggleDuty(src)
     local job = exports.kora_core:getJob(src)
     local onDuty = job ~= nil and not job.onduty
     local changed, err = setDuty(src, onDuty)
-    Kora.notify.send(src, {
+    Kora.bridge.sendNotify(src, {
         message = changed and (onDuty and Kora.lang('Notify.now_on_duty') or Kora.lang('Notify.now_off_duty'))
             or (err or Kora.lang('Notify.duty_change_failed')),
         type = changed and 'success' or 'error',

@@ -78,7 +78,7 @@ function Police.myGradeLevel()
 end
 
 function Police.notify(message, type_)
-    Kora.notify.send({ message = message, type = type_ or 'info' })
+    Kora.bridge.sendNotify({ message = message, type = type_ or 'info' })
 end
 
 -- The server publishes the restraint on the replicated player state bag

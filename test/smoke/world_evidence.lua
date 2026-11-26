@@ -58,6 +58,7 @@ local function client(src)
     env.Kora = {
         lang = Kora.lang,
         notify = { send = function(payload) c.notices[#c.notices + 1] = payload end },
+        bridge = {},
         blips = {
             create = function()
                 c.nextBlip = c.nextBlip + 1; c.blips[c.nextBlip] = true; return c.nextBlip
@@ -107,7 +108,7 @@ TriggerClientEvent = function(name, target, ...)
     oldClientEvent(name, target, ...)
     for src, c in pairs(clients) do if target == -1 or target == src then c.fire(name, ...) end end
 end
-Kora.notify.send = function(src, payload) clients[src].notices[#clients[src].notices + 1] = payload end
+Kora.bridge.sendNotify = function(src, payload) clients[src].notices[#clients[src].notices + 1] = payload end
 local function count(values) local n = 0; for _ in pairs(values) do n = n + 1 end; return n end
 local function zones(c)
     local n = 0; for _, opts in pairs(c.targets) do if opts.options[1].label:find('Collect ', 1, true) then n = n + 1 end end; return n

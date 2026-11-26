@@ -166,7 +166,7 @@ local releasePromptId
 
 local function hideReleasePrompt()
     if not releasePromptId then return end
-    pcall(Kora.textui.hide, releasePromptId)
+    pcall(Kora.bridge.hideText, releasePromptId)
     releasePromptId = nil
 end
 
@@ -175,7 +175,7 @@ local function showReleasePrompt()
     if cfg.releasePrompt == false then return end
     hideReleasePrompt()
     local key = type(cfg.releaseKey) == 'string' and cfg.releaseKey ~= '' and cfg.releaseKey or nil
-    local ok, id = pcall(Kora.textui.show, Kora.lang('Dispatch.release_drag'), { key = key, icon = 'hand', position = 'right-center' })
+    local ok, id = pcall(Kora.bridge.drawText, Kora.lang('Dispatch.release_drag'), { key = key, icon = 'hand', position = 'right-center' })
     if ok then releasePromptId = id end
 end
 
