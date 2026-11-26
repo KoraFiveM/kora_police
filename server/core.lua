@@ -147,7 +147,7 @@ Police.citizenId = citizenId
 ---@param type_ string|nil `error`, `success` or `inform` (default `error`)
 function Police.notify(src, message, type_)
     if not src or not message then return end
-    Kora.notify.send(src, { message = message, type = type_ or "error" })
+    Kora.bridge.sendNotify(src, { message = message, type = type_ or "error" })
 end
 
 AddEventHandler('playerDropped', function()

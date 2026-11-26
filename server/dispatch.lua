@@ -131,7 +131,7 @@ Kora.events.register('kora_police:server:requestBackup', function(src)
 
     local callId, reason, remaining = exports.kora_dispatch:createPlayerCall(src, 'kora_police:backup')
     if not callId then
-        Kora.notify.send(src, {
+        Kora.bridge.sendNotify(src, {
             message = remaining
                 and ('A backup request is already active (%ds).'):format(math.ceil(remaining / 1000))
                 or ('Dispatch could not create the call: %s.'):format(reason or 'unknown error'),
@@ -175,7 +175,7 @@ RegisterNetEvent('kora_police:server:panic', function()
     -- their shift and needs to know it was heard.
     local elapsed, remaining = Police.panicCooldownElapsed(src)
     if not elapsed then
-        Kora.notify.send(src, {
+        Kora.bridge.sendNotify(src, {
             message = ('Your panic alarm is already active (%ds).'):format(math.ceil(remaining / 1000)),
             type = 'error',
         })
