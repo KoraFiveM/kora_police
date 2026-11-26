@@ -58,6 +58,7 @@ local function client(src)
     env.Kora = {
         lang = Kora.lang,
         notify = { send = function(payload) c.notices[#c.notices + 1] = payload end },
+        bridge = {},
         blips = {
             create = function()
                 c.nextBlip = c.nextBlip + 1; c.blips[c.nextBlip] = true; return c.nextBlip
