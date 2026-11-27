@@ -28,7 +28,7 @@ local function registerVehicleTargets()
             onSelect = function(entity)
                 local target = Police.escortedTarget or Police.draggedTarget
                 if not target then return end
-                local netId = NetworkGetNetworkIdFromEntity(entity)
+                local netId = NetworkGetEntityIsNetworked(entity) and NetworkGetNetworkIdFromEntity(entity) or 0
                 TriggerServerEvent('kora_police:server:putInVehicle', target, netId, -1)
             end,
         },
